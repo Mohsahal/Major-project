@@ -1,7 +1,10 @@
-
-import { Mic, Play, ArrowRight } from "lucide-react";
+import { Mic, Play, ArrowRight, Clock, Users, Target, Star, Trophy, Brain, Zap, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type InterviewType = {
   title: string;
@@ -10,6 +13,11 @@ type InterviewType = {
   questions: number;
   duration: string;
   color: string;
+  topics: string[];
+  successRate: number;
+  attempts: number;
+  lastAttempt?: string;
+  rating: number;
 };
 
 export default function MockInterviews() {
@@ -26,7 +34,12 @@ export default function MockInterviews() {
       difficulty: "Medium",
       questions: 15,
       duration: "30 mins",
-      color: "bg-indigo-500"
+      color: "bg-indigo-500",
+      topics: ["React", "JavaScript", "CSS", "HTML", "Web Performance"],
+      successRate: 75,
+      attempts: 120,
+      lastAttempt: "2 days ago",
+      rating: 4.5
     },
     {
       title: "Behavioral Questions",
@@ -34,7 +47,12 @@ export default function MockInterviews() {
       difficulty: "Easy",
       questions: 12,
       duration: "25 mins",
-      color: "bg-green-500"
+      color: "bg-green-500",
+      topics: ["Leadership", "Teamwork", "Problem Solving", "Communication"],
+      successRate: 85,
+      attempts: 95,
+      lastAttempt: "1 week ago",
+      rating: 4.8
     },
     {
       title: "System Design",
@@ -42,7 +60,12 @@ export default function MockInterviews() {
       difficulty: "Hard",
       questions: 8,
       duration: "45 mins",
-      color: "bg-purple-500"
+      color: "bg-purple-500",
+      topics: ["Architecture", "Scalability", "Database Design", "API Design"],
+      successRate: 60,
+      attempts: 75,
+      lastAttempt: "3 days ago",
+      rating: 4.2
     }
   ];
 
@@ -56,58 +79,175 @@ export default function MockInterviews() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-6 mb-8 animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-indigo-900">Mock Interviews</h2>
-        <Button variant="ghost" size="sm" className="text-indigo-600 hover:bg-indigo-50" onClick={handleNavigateToInterview}>
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-indigo-900">Mock Interviews</h2>
+          <p className="text-gray-500">Practice with AI-powered interview simulations</p>
+        </div>
+        <Button variant="outline" size="sm" className="text-indigo-600" onClick={handleNavigateToInterview}>
           View all <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {interviews.map((interview, index) => (
-          <div 
-            key={index} 
-            className="border border-gray-100 rounded-lg overflow-hidden group hover:shadow-lg transition-all duration-300  hover:translate-y-[-3px]"
-            style={{ animationDelay: `${index * 100}ms` }}
-          >
-            <div className={`h-2 w-full ${interview.color}`}></div>
-            <div className="p-4">
-              <div className="flex justify-between items-start mb-3">
-                <h3 className="font-medium group-hover:text-indigo-600 transition-all duration-200">
-                  {interview.title}
-                </h3>
-                <span className={`text-xs px-2 py-1 rounded-full ${getDifficultyColor(interview.difficulty)}`}>
-                  {interview.difficulty}
-                </span>
+      {/* Stats Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-indigo-100 rounded-lg">
+                <Target className="h-5 w-5 text-indigo-600" />
               </div>
-              <div className="text-sm text-gray-500 mb-4">
-                <p>{interview.category}</p>
-                <p>{interview.questions} questions • {interview.duration}</p>
+              <div>
+                <p className="text-sm text-gray-500">Total Attempts</p>
+                <p className="text-xl font-bold">{interviews.reduce((acc, curr) => acc + curr.attempts, 0)}</p>
               </div>
-              <Button 
-                className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 group shadow-sm"
-                onClick={handleNavigateToInterview}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Trophy className="h-5 w-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Success Rate</p>
+                <p className="text-xl font-bold">
+                  {Math.round(interviews.reduce((acc, curr) => acc + curr.successRate, 0) / interviews.length)}%
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Brain className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Categories</p>
+                <p className="text-xl font-bold">{new Set(interviews.map(i => i.category)).size}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <Star className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Average Rating</p>
+                <p className="text-xl font-bold">
+                  {(interviews.reduce((acc, curr) => acc + curr.rating, 0) / interviews.length).toFixed(1)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="all" className="w-full">
+        <TabsList className="grid grid-cols-4 mb-6">
+          <TabsTrigger value="all">All Interviews</TabsTrigger>
+          <TabsTrigger value="technical">Technical</TabsTrigger>
+          <TabsTrigger value="behavioral">Behavioral</TabsTrigger>
+          <TabsTrigger value="system">System Design</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="all">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {interviews.map((interview, index) => (
+              <Card 
+                key={index}
+                className="group hover:shadow-lg transition-all duration-300 hover:translate-y-[-3px]"
               >
-                <Play className="h-4 w-4 mr-2 group-hover:animate-pulse" /> Start Practice
+                <div className={`h-2 w-full ${interview.color}`}></div>
+                <CardContent className="pt-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="font-medium group-hover:text-indigo-600 transition-all duration-200">
+                        {interview.title}
+                      </h3>
+                      <p className="text-sm text-gray-500">{interview.category}</p>
+                    </div>
+                    <Badge variant="outline" className={getDifficultyColor(interview.difficulty)}>
+                      {interview.difficulty}
+                    </Badge>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-gray-400" />
+                        <span>{interview.duration}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-gray-400" />
+                        <span>{interview.attempts} attempts</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-500">Success Rate</span>
+                        <span className="font-medium">{interview.successRate}%</span>
+                      </div>
+                      <Progress value={interview.successRate} className="h-2" />
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      {interview.topics.map((topic, idx) => (
+                        <Badge key={idx} variant="outline" className="bg-gray-50">
+                          {topic}
+                        </Badge>
+                      ))}
+                    </div>
+
+                    <Button 
+                      className="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 group"
+                      onClick={handleNavigateToInterview}
+                    >
+                      <Play className="h-4 w-4 mr-2 group-hover:animate-pulse" /> Start Practice
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* AI Interview Coach Banner */}
+      <Card className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                <Mic className="h-8 w-8 animate-float" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg">AI Interview Coach</h3>
+                <p className="text-sm opacity-90">Get real-time feedback and personalized tips</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-2">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="w-8 h-8 rounded-full bg-white/20 border-2 border-white"></div>
+                ))}
+              </div>
+              <Button variant="secondary" size="sm" className="whitespace-nowrap bg-white text-indigo-700 hover:bg-gray-100">
+                <Sparkles className="h-4 w-4 mr-2" /> Try Now
               </Button>
             </div>
           </div>
-        ))}
-      </div>
-
-      <div className="mt-6 p-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-lg text-white flex items-center justify-between animate-pulse-slow">
-        <div className="flex items-center">
-          <Mic className="h-8 w-8 mr-3 animate-float" />
-          <div>
-            <h3 className="font-bold">AI Interview Coach</h3>
-            <p className="text-sm opacity-90">Get real-time feedback on your interview responses</p>
-          </div>
-        </div>
-        <Button variant="secondary" size="sm" className="whitespace-nowrap bg-white text-indigo-700 hover:bg-gray-100" onClick={handleNavigateToInterview}>
-          Try Now
-        </Button>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
