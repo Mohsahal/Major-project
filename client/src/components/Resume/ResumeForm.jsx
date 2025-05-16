@@ -1,12 +1,11 @@
-import React from 'react';
-import { useForm, useFieldArray, FieldArrayPath } from 'react-hook-form';
+import React, { useState, useCallback } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ResumeData } from '@/types/resume';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Minus, ArrowRight, Briefcase } from 'lucide-react';
+import { Plus, Minus, ArrowRight, ArrowLeft, Sparkles, Loader2, CheckCircle2, Save, AlertCircle } from 'lucide-react';
 import {
   Form,
   FormControl,
@@ -17,6 +16,7 @@ import {
 } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
+import { generateSummaryWithAI } from '@/service/AIModel';
 
 const personalInfoSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -68,23 +68,24 @@ const resumeFormSchema = z.object({
   certifications: z.array(certificationSchema),
 });
 
-interface ResumeFormProps {
-  initialData: ResumeData;
-  onUpdate: (data: ResumeData) => void;
-  onGenerateAI: () => void;
-}
-
-const ResumeForm: React.FC<ResumeFormProps> = ({ initialData, onUpdate, onGenerateAI }) => {
-  const form = useForm<ResumeData>({
+const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [currentTab, setCurrentTab] = useState('personal');
+  const [hasChanges, setHasChanges] = useState(false);
+  const [validationErrors, setValidationErrors] = useState([]);
+  
+  const form = useForm({
     resolver: zodResolver(resumeFormSchema),
     defaultValues: initialData,
+    mode: 'onChange',
   });
 
-  // Create properly typed field arrays
   const { fields: skillFields, append: appendSkill, remove: removeSkill } = 
     useFieldArray({
       control: form.control,
-      name: "skills" as FieldArrayPath<ResumeData>
+      name: "skills"
     });
   
   const { fields: experienceFields, append: appendExperience, remove: removeExperience } = 
@@ -99,39 +100,184 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ initialData, onUpdate, onGenera
   const { fields: certificationFields, append: appendCertification, remove: removeCertification } = 
     useFieldArray({ control: form.control, name: "certifications" });
 
-  const onSubmit = (data: ResumeData) => {
-    onUpdate(data);
-    toast({
-      title: "Resume updated",
-      description: "Your resume has been updated successfully",
-    });
-  };
-
+  // Watch for form changes
   React.useEffect(() => {
     const subscription = form.watch((value) => {
-      onUpdate(value as ResumeData);
+      onUpdate(value);
+      setHasChanges(true);
+      // Clear validation errors when form changes
+      setValidationErrors([]);
     });
     
     return () => subscription.unsubscribe();
   }, [form.watch, onUpdate]);
 
+  const validateForm = useCallback(() => {
+    const errors = [];
+    const values = form.getValues();
+
+    // Validate required fields
+    if (!values.personalInfo?.firstName) errors.push('First name is required');
+    if (!values.personalInfo?.lastName) errors.push('Last name is required');
+    if (!values.personalInfo?.jobTitle) errors.push('Job title is required');
+    if (!values.personalInfo?.email) errors.push('Email is required');
+    if (!values.personalInfo?.phone) errors.push('Phone number is required');
+
+    // Validate at least one experience entry
+    if (!values.experience?.length) {
+      errors.push('At least one work experience is required');
+    }
+
+    // Validate at least one education entry
+    if (!values.education?.length) {
+      errors.push('At least one education entry is required');
+    }
+
+    // Validate at least one skill
+    if (!values.skills?.length) {
+      errors.push('At least one skill is required');
+    }
+
+    setValidationErrors(errors);
+    return errors.length === 0;
+  }, [form]);
+
+  const handleSave = async () => {
+    if (!hasChanges) {
+      toast({
+        title: "No changes to save",
+        description: "Make some changes to your resume before saving",
+      });
+      return;
+    }
+
+    // Validate form before saving
+    if (!validateForm()) {
+      toast({
+        title: "Validation failed",
+        description: (
+          <div className="mt-2">
+            <p className="font-medium">Please fix the following issues:</p>
+            <ul className="list-disc list-inside mt-1">
+              {validationErrors.map((error, index) => (
+                <li key={index} className="text-sm">{error}</li>
+              ))}
+            </ul>
+          </div>
+        ),
+        variant: "destructive",
+        duration: 5000,
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const formData = form.getValues();
+      await onUpdate(formData);
+      setSaveSuccess(true);
+      setHasChanges(false);
+      setValidationErrors([]);
+      
+      toast({
+        title: "Resume saved successfully",
+        description: "Your changes have been saved",
+        className: "bg-green-50 border-green-200",
+      });
+
+      // Reset success state after 2 seconds
+      setTimeout(() => {
+        setSaveSuccess(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Save error:', error);
+      toast({
+        title: "Save failed",
+        description: error.message || "Failed to save resume. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleGenerateSummary = async () => {
+    const jobTitle = form.getValues('personalInfo.jobTitle');
+    if (!jobTitle) {
+      toast({
+        title: "Job title required",
+        description: "Please enter your job title first to generate a summary",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const summary = await generateSummaryWithAI(jobTitle);
+      form.setValue('summary', summary);
+      toast({
+        title: "Summary generated",
+        description: "AI has generated a professional summary for your resume",
+      });
+    } catch (error) {
+      toast({
+        title: "Generation failed",
+        description: "Failed to generate summary. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleNextTab = () => {
+    const tabs = ['personal', 'experience', 'education', 'skills', 'projects', 'certifications'];
+    const currentIndex = tabs.indexOf(currentTab);
+    if (currentIndex < tabs.length - 1) {
+      setCurrentTab(tabs[currentIndex + 1]);
+    }
+  };
+
+  const handlePrevTab = () => {
+    const tabs = ['personal', 'experience', 'education', 'skills', 'projects', 'certifications'];
+    const currentIndex = tabs.indexOf(currentTab);
+    if (currentIndex > 0) {
+      setCurrentTab(tabs[currentIndex - 1]);
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-semibold">Resume Information</h2>
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={onGenerateAI}
-            className="flex items-center gap-2"
-          >
-            <span>AI Generate</span>
-            <span className="text-xs px-1.5 py-0.5 bg-brand-blue/10 rounded text-brand-blue">Beta</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handlePrevTab}
+              disabled={currentTab === 'personal'}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={handleNextTab}
+              disabled={currentTab === 'certifications'}
+              className="flex items-center gap-2"
+            >
+              Next
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
-        <Tabs defaultValue="personal" className="w-full">
+        <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
           <TabsList className="grid grid-cols-6 mb-4">
             <TabsTrigger value="personal">Personal</TabsTrigger>
             <TabsTrigger value="experience">Experience</TabsTrigger>
@@ -231,7 +377,29 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ initialData, onUpdate, onGenera
                 name="summary"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Professional Summary</FormLabel>
+                    <div className="flex justify-between items-center mb-2">
+                      <FormLabel>Professional Summary</FormLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGenerateSummary}
+                        disabled={isGenerating}
+                        className="flex items-center gap-2"
+                      >
+                        {isGenerating ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Generating...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="h-4 w-4" />
+                            <span>Generate Summary</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
                     <FormControl>
                       <Textarea
                         placeholder="Brief overview of your skills and career goals"
@@ -491,7 +659,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ initialData, onUpdate, onGenera
                 type="button"
                 variant="outline"
                 className="w-full"
-                onClick={() => appendSkill("" as any)}
+                onClick={() => appendSkill("")}
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Add Skill
@@ -684,10 +852,46 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ initialData, onUpdate, onGenera
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end">
-          <Button type="submit" className="flex items-center gap-2">
-            Save Changes
-            <ArrowRight className="h-4 w-4" />
+        <div className="flex justify-end items-center gap-4">
+          {validationErrors.length > 0 && (
+            <div className="flex items-center gap-2 text-destructive animate-fade-in">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm">{validationErrors.length} validation errors</span>
+            </div>
+          )}
+          {hasChanges && !isSaving && !saveSuccess && (
+            <span className="text-sm text-muted-foreground animate-fade-in">
+              You have unsaved changes
+            </span>
+          )}
+          <Button 
+            type="submit" 
+            className={`flex items-center gap-2 transition-all duration-200 ${
+              saveSuccess 
+                ? 'bg-green-600 hover:bg-green-700' 
+                : hasChanges 
+                  ? 'bg-blue-600 hover:bg-blue-700' 
+                  : 'bg-gray-600 hover:bg-gray-700'
+            }`}
+            disabled={isSaving || (!hasChanges && !saveSuccess)}
+            size="lg"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Saving...</span>
+              </>
+            ) : saveSuccess ? (
+              <>
+                <CheckCircle2 className="h-4 w-4" />
+                <span>Saved!</span>
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" />
+                <span>Save Changes</span>
+              </>
+            )}
           </Button>
         </div>
       </form>

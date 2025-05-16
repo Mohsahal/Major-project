@@ -11,8 +11,24 @@ import {
     };
     const model = 'gemini-1.5-flash';
     const prompt = `
-You are an expert resume writer. Write a single, concise, professional summary for a resume for the following job title: "${jobTitle}".
-The summary should be 4-5 lines, tailored for a resume, and should not include any options, instructions, or extra text. Only return the summary itself.
+You are an expert resume writer specializing in entry-level positions and fresh graduates. Write a compelling professional summary for a resume for the following job title: "${jobTitle}".
+
+Focus on:
+- Academic achievements and relevant coursework
+- Key technical skills and tools learned
+- Any internships, projects, or relevant experience
+- Soft skills and learning capabilities
+- Career goals and enthusiasm for the role
+
+The summary should:
+- Be 3-4 lines long
+- Highlight potential and eagerness to learn
+- Emphasize transferable skills
+- Be tailored for an entry-level position
+- Use professional but enthusiastic tone
+- Not include any options, instructions, or extra text
+
+Only return the summary itself, written in first person.
 `;
   
     const contents = [

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ResumeBuilder from "./pages/ResumeBuilder";
+import SharedResume from "./pages/SharedResume";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import PrivateRoute from "./components/PrivateRoute";
@@ -41,6 +42,7 @@ const App = () => (
                 <Route path="/features" element={<FeaturesPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
+                <Route path="/shared-resume/:encodedData" element={<SharedResume />} />
                 
                 {/* Protected Routes */}
                 <Route element={<PrivateRoute />}>

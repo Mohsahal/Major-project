@@ -85,7 +85,7 @@ const ModernTemplate: React.FC<ModernTemplateProps> = ({ data }) => {
         )}
 
         {/* Projects */}
-        {data.projects.length > 0 && (
+        {data.projects && data.projects.length > 0 && (
           <div className="mb-6">
             <h2 className="text-brand-blue text-lg font-semibold border-b-2 border-brand-blue pb-1 mb-2">
               Projects
@@ -110,7 +110,7 @@ const ModernTemplate: React.FC<ModernTemplateProps> = ({ data }) => {
         )}
 
         {/* Certifications */}
-        {data.certifications.length > 0 && (
+        {data.certifications && data.certifications.length > 0 && (
           <div>
             <h2 className="text-brand-blue text-lg font-semibold border-b-2 border-brand-blue pb-1 mb-2">
               Certifications & Achievements
