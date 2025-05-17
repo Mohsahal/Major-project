@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
-import { generateSummaryWithAI, generateExperienceDescription } from '@/service/AIModel';
+import { generateSummaryWithAI, generateExperienceDescription, generateProjectDescription } from '@/service/AIModel';
 
 const personalInfoSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -76,6 +76,7 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
   const [hasChanges, setHasChanges] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
   const [generatingExperience, setGeneratingExperience] = useState(null);
+  const [generatingProject, setGeneratingProject] = useState(null);
   
   const form = useForm({
     resolver: zodResolver(resumeFormSchema),
@@ -262,6 +263,42 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
       });
     } finally {
       setGeneratingExperience(null);
+    }
+  };
+
+  const handleGenerateProjectDescription = async (index) => {
+    const project = form.getValues(`projects.${index}`);
+    if (!project.name) {
+      toast({
+        title: "Project name required",
+        description: "Please enter a project name first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGeneratingProject(index);
+    try {
+      const description = await generateProjectDescription(
+        project.name,
+        form.getValues('skills') || [],
+        form.getValues('personalInfo.jobTitle') || 'Developer'
+      );
+      
+      form.setValue(`projects.${index}.description`, description);
+      toast({
+        title: "Project description generated",
+        description: "AI has generated a professional project description",
+      });
+    } catch (error) {
+      console.error('Error generating project description:', error);
+      toast({
+        title: "Generation failed",
+        description: error.message || "Failed to generate project description",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingProject(null);
     }
   };
 
@@ -726,9 +763,9 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
           <TabsContent value="projects" className="animate-fade-in">
             <div className="space-y-4">
               {projectFields.map((field, index) => (
-                <div key={field.id} className="p-4 border rounded-lg bg-white">
-                  <div className="flex justify-between mb-2">
-                    <h3 className="font-medium">Project #{index + 1}</h3>
+                <div key={field.id} className="p-4 border rounded-lg space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-medium">Project {index + 1}</h3>
                     <Button
                       type="button"
                       variant="ghost"
@@ -739,78 +776,96 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
                     </Button>
                   </div>
                   
-                  <div className="space-y-3">
-                    <FormField
-                      control={form.control}
-                      name={`projects.${index}.name`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Project Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="E-commerce Website" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`projects.${index}.date`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Date</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Jan 2022 - Mar 2022" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`projects.${index}.description`}
-                      render={({ field }) => (
-                        <FormItem>
+                  <FormField
+                    control={form.control}
+                    name={`projects.${index}.name`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Project Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`projects.${index}.description`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <div className="flex justify-between items-center mb-2">
                           <FormLabel>Description</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              placeholder="Brief description of the project"
-                              {...field}
-                              rows={3}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name={`projects.${index}.link`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Link (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="https://github.com/yourusername/project" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleGenerateProjectDescription(index)}
+                            disabled={generatingProject === index}
+                            className="flex items-center gap-2"
+                          >
+                            {generatingProject === index ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>Generating...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Sparkles className="h-4 w-4" />
+                                <span>Generate with AI</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Describe your project's features and your contributions"
+                            {...field}
+                            rows={3}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`projects.${index}.date`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name={`projects.${index}.link`}
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Project Link (Optional)</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               ))}
+
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
-                onClick={() => appendProject({ 
-                  name: "", 
-                  description: "", 
-                  date: "", 
-                  link: "" 
-                })}
+                onClick={() => appendProject({ name: '', description: '', date: '', link: '' })}
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="h-4 w-4 mr-2" />
                 Add Project
               </Button>
             </div>
