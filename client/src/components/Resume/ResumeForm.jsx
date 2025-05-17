@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
-import { generateSummaryWithAI } from '@/service/AIModel';
+import { generateSummaryWithAI, generateExperienceDescription } from '@/service/AIModel';
 
 const personalInfoSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -75,6 +75,7 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
   const [currentTab, setCurrentTab] = useState('personal');
   const [hasChanges, setHasChanges] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
+  const [generatingExperience, setGeneratingExperience] = useState(null);
   
   const form = useForm({
     resolver: zodResolver(resumeFormSchema),
@@ -229,6 +230,38 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
       });
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateExperienceDescription = async (index) => {
+    const position = form.getValues(`experience.${index}.position`);
+    const company = form.getValues(`experience.${index}.company`);
+
+    if (!position || !company) {
+      toast({
+        title: "Missing information",
+        description: "Please enter both position and company name to generate a description",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setGeneratingExperience(index);
+    try {
+      const description = await generateExperienceDescription(position, company);
+      form.setValue(`experience.${index}.description`, description);
+      toast({
+        title: "Description generated",
+        description: "AI has generated a professional description for your experience",
+      });
+    } catch (error) {
+      toast({
+        title: "Generation failed",
+        description: "Failed to generate description. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setGeneratingExperience(null);
     }
   };
 
@@ -504,7 +537,29 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
                       name={`experience.${index}.description`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Description</FormLabel>
+                          <div className="flex justify-between items-center mb-2">
+                            <FormLabel>Description</FormLabel>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleGenerateExperienceDescription(index)}
+                              disabled={generatingExperience === index}
+                              className="flex items-center gap-2"
+                            >
+                              {generatingExperience === index ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span>Generating...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="h-4 w-4" />
+                                  <span>Generate with AI</span>
+                                </>
+                              )}
+                            </Button>
+                          </div>
                           <FormControl>
                             <Textarea
                               placeholder="Describe your responsibilities and achievements"
