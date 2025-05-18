@@ -3,7 +3,7 @@ const router = express.Router();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Use environment variable with fallback for development
-const apiKey = process.env.GOOGLE_AI_KEY || 'AIzaSyCb4NZGfgyKPWsd4eG4kYuZ2RLKNbHY6Yw';
+const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyCb4NZGfgyKPWsd4eG4kYuZ2RLKNbHY6Yw';
 const ai = new GoogleGenerativeAI(apiKey);
 
 // Generate professional summary
@@ -82,7 +82,6 @@ Format as bullet points, starting each with a strong action verb.
 
 // Generate project description
 router.post('/generate-project', async (req, res) => {
-  
   try {
     const { projectName, technologies, role } = req.body;
     

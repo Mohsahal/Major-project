@@ -1,13 +1,10 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const apiKey = 'AIzaSyCb4NZGfgyKPWsd4eG4kYuZ2RLKNbHY6Yw'; // (move to .env for security in real apps)
-
-export async function generateSummaryWithAI(jobTitle) {
+export async function generateSummaryWithAI(jobTitle, token) {
   try {
     const response = await fetch('http://localhost:5000/api/ai/generate-summary', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ jobTitle }),
     });
@@ -25,12 +22,13 @@ export async function generateSummaryWithAI(jobTitle) {
   }
 }
 
-export async function generateExperienceDescription(position, company, industry = "Technology") {
+export async function generateExperienceDescription(position, company, industry = "Technology", token) {
   try {
     const response = await fetch('http://localhost:5000/api/ai/generate-experience', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
         position,
@@ -51,12 +49,13 @@ export async function generateExperienceDescription(position, company, industry 
   }
 }
 
-export async function generateProjectDescription(projectName, technologies, role) {
+export async function generateProjectDescription(projectName, technologies, role, token) {
   try {
     const response = await fetch('http://localhost:5000/api/ai/generate-project', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({
         projectName,
@@ -78,5 +77,7 @@ export async function generateProjectDescription(projectName, technologies, role
   }
 }
   
+
+
   
   

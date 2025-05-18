@@ -9,6 +9,7 @@ import SharedResume from "./pages/SharedResume";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import PrivateRoute from "./components/PrivateRoute";
+import MyResumes from "./pages/MyResumes";
 
 import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
@@ -22,6 +23,8 @@ import MockInterviewPage from "./pages/MockInterviewPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
+import ResumePreview from '@/pages/ResumePreview';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 const queryClient = new QueryClient();
 
@@ -48,10 +51,13 @@ const App = () => (
                 <Route element={<PrivateRoute />}>
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/dashboard/:feature" element={<Dashboard />} />
-                  <Route path="/resume-builder" element={<ResumeBuilder />} />
+                  <Route path="/resume-builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
+                  <Route path="/resume-builder/:id" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
+                  <Route path="/my-resumes" element={<ProtectedRoute><MyResumes /></ProtectedRoute>} />
                   <Route path="/mock-interview" element={<MockInterviewPage />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/resume-preview/:id" element={<ProtectedRoute><ResumePreview /></ProtectedRoute>} />
                 </Route>
                 
                 {/* 404 Page */}

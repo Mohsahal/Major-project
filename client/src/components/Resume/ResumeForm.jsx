@@ -17,6 +17,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
 import { generateSummaryWithAI, generateExperienceDescription, generateProjectDescription } from '@/service/AIModel';
+import { useAuth } from '@/contexts/AuthContext';
 
 const personalInfoSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -49,6 +50,7 @@ const projectSchema = z.object({
   description: z.string().min(1, "Description is required"),
   date: z.string().min(1, "Date is required"),
   link: z.string().optional(),
+  technologies: z.array(z.string()).optional(),
 });
 
 const certificationSchema = z.object({
@@ -68,7 +70,8 @@ const resumeFormSchema = z.object({
   certifications: z.array(certificationSchema),
 });
 
-const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
+const ResumeForm = ({ initialData, onUpdate }) => {
+  const { getToken } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -205,29 +208,42 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
   };
 
   const handleGenerateSummary = async () => {
-    const jobTitle = form.getValues('personalInfo.jobTitle');
-    if (!jobTitle) {
-      toast({
-        title: "Job title required",
-        description: "Please enter your job title first to generate a summary",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsGenerating(true);
     try {
-      const summary = await generateSummaryWithAI(jobTitle);
+      setIsGenerating(true);
+      const token = getToken();
+      if (!token) {
+        toast({
+          title: "Authentication Error",
+          description: "Please log in to use AI features",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const jobTitle = form.getValues('personalInfo.jobTitle');
+      if (!jobTitle) {
+        toast({
+          title: "Job title required",
+          description: "Please enter your job title first to generate a summary",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const summary = await generateSummaryWithAI(jobTitle, token);
       form.setValue('summary', summary);
       toast({
-        title: "Summary generated",
+        title: "Summary Generated",
         description: "AI has generated a professional summary for your resume",
+        className: "bg-green-50 border-green-200",
       });
     } catch (error) {
+      console.error('Error generating summary:', error);
       toast({
-        title: "Generation failed",
-        description: "Failed to generate summary. Please try again.",
-        variant: "destructive"
+        title: "Generation Failed",
+        description: error.message || "Failed to generate summary. Please try again.",
+        variant: "destructive",
+        duration: 5000,
       });
     } finally {
       setIsGenerating(false);
@@ -235,31 +251,50 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
   };
 
   const handleGenerateExperienceDescription = async (index) => {
-    const position = form.getValues(`experience.${index}.position`);
-    const company = form.getValues(`experience.${index}.company`);
-
-    if (!position || !company) {
-      toast({
-        title: "Missing information",
-        description: "Please enter both position and company name to generate a description",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setGeneratingExperience(index);
     try {
-      const description = await generateExperienceDescription(position, company);
-      form.setValue(`experience.${index}.description`, description);
+      setGeneratingExperience(index);
+      const token = getToken();
+      if (!token) {
+        toast({
+          title: "Authentication Error",
+          description: "Please log in to use AI features",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { position, company } = form.getValues(`experience.${index}`);
+      if (!position || !company) {
+        toast({
+          title: "Missing Information",
+          description: "Please enter both position and company name to generate a description",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const description = await generateExperienceDescription(position, company, "Technology", token);
+      
+      const updatedExperience = [...form.getValues('experience')];
+      updatedExperience[index] = {
+        ...updatedExperience[index],
+        description
+      };
+
+      form.setValue('experience', updatedExperience);
+
       toast({
-        title: "Description generated",
+        title: "Description Generated",
         description: "AI has generated a professional description for your experience",
+        className: "bg-green-50 border-green-200",
       });
     } catch (error) {
+      console.error('Error generating experience description:', error);
       toast({
-        title: "Generation failed",
-        description: "Failed to generate description. Please try again.",
-        variant: "destructive"
+        title: "Generation Failed",
+        description: error.message || "Failed to generate description. Please try again.",
+        variant: "destructive",
+        duration: 5000,
       });
     } finally {
       setGeneratingExperience(null);
@@ -267,35 +302,55 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
   };
 
   const handleGenerateProjectDescription = async (index) => {
-    const project = form.getValues(`projects.${index}`);
-    if (!project.name) {
-      toast({
-        title: "Project name required",
-        description: "Please enter a project name first",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setGeneratingProject(index);
     try {
+      setGeneratingProject(index);
+      const token = getToken();
+      if (!token) {
+        toast({
+          title: "Authentication Error",
+          description: "Please log in to use AI features",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const { name, technologies } = form.getValues(`projects.${index}`);
+      if (!name) {
+        toast({
+          title: "Missing Information",
+          description: "Please enter the project name to generate a description",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const description = await generateProjectDescription(
-        project.name,
-        form.getValues('skills') || [],
-        form.getValues('personalInfo.jobTitle') || 'Developer'
+        name,
+        technologies || [],
+        "Developer",
+        token
       );
       
-      form.setValue(`projects.${index}.description`, description);
+      const updatedProjects = [...form.getValues('projects')];
+      updatedProjects[index] = {
+        ...updatedProjects[index],
+        description
+      };
+
+      form.setValue('projects', updatedProjects);
+
       toast({
-        title: "Project description generated",
-        description: "AI has generated a professional project description",
+        title: "Description Generated",
+        description: "AI has generated a professional description for your project",
+        className: "bg-green-50 border-green-200",
       });
     } catch (error) {
       console.error('Error generating project description:', error);
       toast({
-        title: "Generation failed",
-        description: error.message || "Failed to generate project description",
+        title: "Generation Failed",
+        description: error.message || "Failed to generate description. Please try again.",
         variant: "destructive",
+        duration: 5000,
       });
     } finally {
       setGeneratingProject(null);
@@ -455,17 +510,21 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
                         size="sm"
                         onClick={handleGenerateSummary}
                         disabled={isGenerating}
-                        className="flex items-center gap-2"
+                        className={`flex items-center gap-2 transition-all duration-200 ${
+                          isGenerating 
+                            ? 'bg-gray-100 dark:bg-gray-800' 
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                        }`}
                       >
                         {isGenerating ? (
                           <>
                             <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Generating...</span>
+                            <span>Generating Summary...</span>
                           </>
                         ) : (
                           <>
                             <Sparkles className="h-4 w-4" />
-                            <span>Generate Summary</span>
+                            <span>Generate with AI</span>
                           </>
                         )}
                       </Button>
@@ -582,12 +641,16 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
                               size="sm"
                               onClick={() => handleGenerateExperienceDescription(index)}
                               disabled={generatingExperience === index}
-                              className="flex items-center gap-2"
+                              className={`flex items-center gap-2 transition-all duration-200 ${
+                                generatingExperience === index 
+                                  ? 'bg-gray-100 dark:bg-gray-800' 
+                                  : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                              }`}
                             >
                               {generatingExperience === index ? (
                                 <>
                                   <Loader2 className="h-4 w-4 animate-spin" />
-                                  <span>Generating...</span>
+                                  <span>Generating Description...</span>
                                 </>
                               ) : (
                                 <>
@@ -763,9 +826,9 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
           <TabsContent value="projects" className="animate-fade-in">
             <div className="space-y-4">
               {projectFields.map((field, index) => (
-                <div key={field.id} className="p-4 border rounded-lg space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="text-lg font-medium">Project {index + 1}</h3>
+                <div key={field.id} className="p-4 border rounded-lg bg-white">
+                  <div className="flex justify-between mb-2">
+                    <h3 className="font-medium">Project #{index + 1}</h3>
                     <Button
                       type="button"
                       variant="ghost"
@@ -776,96 +839,126 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
                     </Button>
                   </div>
                   
-                  <FormField
-                    control={form.control}
-                    name={`projects.${index}.name`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Project Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`projects.${index}.description`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <div className="flex justify-between items-center mb-2">
-                          <FormLabel>Description</FormLabel>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleGenerateProjectDescription(index)}
-                            disabled={generatingProject === index}
-                            className="flex items-center gap-2"
-                          >
-                            {generatingProject === index ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                <span>Generating...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Sparkles className="h-4 w-4" />
-                                <span>Generate with AI</span>
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Describe your project's features and your contributions"
-                            {...field}
-                            rows={3}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`projects.${index}.date`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Date</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`projects.${index}.link`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Project Link (Optional)</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="space-y-3">
+                    <FormField
+                      control={form.control}
+                      name={`projects.${index}.name`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Project Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="E-commerce Website" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`projects.${index}.technologies`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Technologies Used</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="React, Node.js, MongoDB (comma separated)" 
+                              {...field}
+                              onChange={(e) => {
+                                const technologies = e.target.value.split(',').map(tech => tech.trim()).filter(Boolean);
+                                field.onChange(technologies);
+                              }}
+                              value={field.value?.join(', ') || ''}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`projects.${index}.date`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Date</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Jan 2022 - Mar 2022" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`projects.${index}.description`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex justify-between items-center mb-2">
+                            <FormLabel>Description</FormLabel>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleGenerateProjectDescription(index)}
+                              disabled={generatingProject === index}
+                              className={`flex items-center gap-2 transition-all duration-200 ${
+                                generatingProject === index 
+                                  ? 'bg-gray-100 dark:bg-gray-800' 
+                                  : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                              }`}
+                            >
+                              {generatingProject === index ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <span>Generating Description...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles className="h-4 w-4" />
+                                  <span>Generate with AI</span>
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Brief description of the project"
+                              {...field}
+                              rows={3}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`projects.${index}.link`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Link (Optional)</FormLabel>
+                          <FormControl>
+                            <Input placeholder="https://github.com/yourusername/project" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               ))}
-
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => appendProject({ name: '', description: '', date: '', link: '' })}
+                className="w-full"
+                onClick={() => appendProject({ 
+                  name: "", 
+                  description: "", 
+                  date: "", 
+                  link: "",
+                  technologies: []
+                })}
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="mr-2 h-4 w-4" />
                 Add Project
               </Button>
             </div>
@@ -976,15 +1069,9 @@ const ResumeForm = ({ initialData, onUpdate, onGenerateAI }) => {
           )}
           <Button 
             type="submit" 
-            className={`flex items-center gap-2 transition-all duration-200 ${
-              saveSuccess 
-                ? 'bg-green-600 hover:bg-green-700' 
-                : hasChanges 
-                  ? 'bg-blue-600 hover:bg-blue-700' 
-                  : 'bg-gray-600 hover:bg-gray-700'
-            }`}
+            variant="outline"
+            className="flex items-center gap-2"
             disabled={isSaving || (!hasChanges && !saveSuccess)}
-            size="lg"
           >
             {isSaving ? (
               <>

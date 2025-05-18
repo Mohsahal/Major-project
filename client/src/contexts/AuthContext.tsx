@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
 
@@ -15,6 +14,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
+  getToken: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,35 +27,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check if user is already logged in
   useEffect(() => {
     const storedUser = localStorage.getItem('futurefind_user');
-    if (storedUser) {
+    const token = localStorage.getItem('futurefind_token');
+    if (storedUser && token) {
       setUser(JSON.parse(storedUser));
     }
     setIsLoading(false);
   }, []);
 
-  // Mock login functionality
+  // Get the authentication token
+  const getToken = () => {
+    return localStorage.getItem('futurefind_token');
+  };
+
+  // Login functionality
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Demo user - in a real app, this would be validated against a backend
-      if (email && password) {
-        const userData = {
-          id: '1',
-          email,
-          name: email.split('@')[0]
-        };
-        setUser(userData);
-        localStorage.setItem('futurefind_user', JSON.stringify(userData));
-        toast({
-          title: "Login successful",
-          description: `Welcome back, ${userData.name}!`,
-        });
-      } else {
-        throw new Error('Invalid credentials');
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Login failed');
       }
+
+      const data = await response.json();
+      const userData = {
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name
+      };
+
+      setUser(userData);
+      localStorage.setItem('futurefind_user', JSON.stringify(userData));
+      localStorage.setItem('futurefind_token', data.token);
+
+      toast({
+        title: "Login successful",
+        description: `Welcome back, ${userData.name}!`,
+      });
     } catch (error) {
       console.error('Login failed:', error);
       toast({
@@ -69,21 +83,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Mock signup functionality
+  // Signup functionality
   const signup = async (email: string, password: string, name: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In a real app, this would send data to a backend
+      const response = await fetch('http://localhost:5000/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, name }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Signup failed');
+      }
+
+      const data = await response.json();
       const userData = {
-        id: Math.random().toString(36).substr(2, 9),
-        email,
-        name
+        id: data.user.id,
+        email: data.user.email,
+        name: data.user.name
       };
+
       setUser(userData);
       localStorage.setItem('futurefind_user', JSON.stringify(userData));
+      localStorage.setItem('futurefind_token', data.token);
+
       toast({
         title: "Account created",
         description: `Welcome to FutureFind, ${name}!`,
@@ -105,6 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     setUser(null);
     localStorage.removeItem('futurefind_user');
+    localStorage.removeItem('futurefind_token');
     toast({
       title: "Logged out",
       description: "You have been successfully logged out.",
@@ -119,7 +146,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         login,
         signup,
-        logout
+        logout,
+        getToken
       }}
     >
       {children}
