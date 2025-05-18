@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import PlainLayout from '@/components/layout/PlainLayout';
+import ResumeBuilderLayout from '@/components/layout/ResumeBuilderLayout';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
@@ -25,15 +25,9 @@ import {
   MessageCircle,
   Twitter,
   Github,
-  Loader2
+  Loader2,
+  ArrowLeft
 } from 'lucide-react';
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator
-} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { defaultResumeData } from '@/data/defaultResumeData';
 
@@ -236,16 +230,21 @@ const ResumeBuilder = () => {
   }
 
   return (
-    <PlainLayout>
-      <div className="container mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">{id ? 'Edit Resume' : 'Resume Builder'}</h1>
-          <div className="flex items-center gap-2">
+    <ResumeBuilderLayout>
+      <div className="container mx-auto px-4 py-6 md:py-8 mt-14">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-6 md:mb-8">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-600 via-purple-600 to-brand-500">
+              {id ? 'Edit Resume' : 'Resume Builder'}
+            </h1>
+            <p className="text-gray-500 mt-2">Create a professional resume that stands out</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             <Button 
               onClick={handleSaveResume} 
               disabled={isSaving}
               variant="outline"
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200"
             >
               {isSaving ? (
                 <>
@@ -265,16 +264,26 @@ const ResumeBuilder = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="build">Build Resume</TabsTrigger>
-            <TabsTrigger value="templates">Choose Template</TabsTrigger>
+          <TabsList className="mb-6 bg-transparent border-b border-gray-200">
+            <TabsTrigger 
+              value="build" 
+              className="data-[state=active]:border-b-2 data-[state=active]:border-brand-500 rounded-none data-[state=active]:shadow-none"
+            >
+              Build Resume
+            </TabsTrigger>
+            <TabsTrigger 
+              value="templates"
+              className="data-[state=active]:border-b-2 data-[state=active]:border-brand-500 rounded-none data-[state=active]:shadow-none"
+            >
+              Choose Template
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="build" className="animate-fade-in">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
               <div className="order-2 lg:order-1">
-                <Card className="shadow-sm">
-                  <CardContent className="p-6">
+                <Card className="shadow-sm hover:shadow-md transition-shadow duration-300 border-gray-100">
+                  <CardContent className="p-4 md:p-6">
                     <ResumeForm 
                       initialData={resumeData}
                       onUpdate={handleUpdateResume}
@@ -284,8 +293,8 @@ const ResumeBuilder = () => {
               </div>
               
               <div className="order-1 lg:order-2">
-                <Card className="shadow-sm sticky top-4">
-                  <CardContent className="p-6">
+                <Card className="shadow-sm hover:shadow-md transition-shadow duration-300 border-gray-100 sticky top-4">
+                  <CardContent className="p-4 md:p-6">
                     <div className="resume-preview">
                       {renderTemplate()}
                     </div>
@@ -304,7 +313,7 @@ const ResumeBuilder = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </PlainLayout>
+    </ResumeBuilderLayout>
   );
 };
 

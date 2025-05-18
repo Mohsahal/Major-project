@@ -26,6 +26,7 @@ import Settings from "./pages/Settings";
 import ResumePreview from '@/pages/ResumePreview';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import MainLayout from "@/components/layout/MainLayout";
+import DashboardLayout from "@/components/layout/DashboardLayout";
 
 const queryClient = new QueryClient();
 
@@ -63,14 +64,14 @@ const App = () => (
                 {/* Protected Routes */}
                 <Route element={<PrivateRoute />}>
                   <Route path="/dashboard" element={
-                    <MainLayout>
+                    <DashboardLayout>
                       <Dashboard />
-                    </MainLayout>
+                    </DashboardLayout>
                   } />
                   <Route path="/dashboard/:feature" element={
-                    <MainLayout>
+                    <DashboardLayout>
                       <Dashboard />
-                    </MainLayout>
+                    </DashboardLayout>
                   } />
                   <Route path="/resume-builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
                   <Route path="/resume-builder/:id" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />

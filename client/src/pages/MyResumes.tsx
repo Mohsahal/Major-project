@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Link, useNavigate } from 'react-router-dom'
-import { FileText, Edit, Trash2, Eye, MoreVertical } from 'lucide-react'
+import { FileText, Edit, Trash2, Eye, MoreVertical, Plus, Calendar, Clock, ArrowLeft } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast'
 import { useAuth } from '@/contexts/AuthContext'
 import { Loader2 } from 'lucide-react'
@@ -146,34 +146,50 @@ const MyResumes = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 mt-20">
+    <div className="container mx-auto py-8 px-4 mt-10">
+      <Button 
+        onClick={() => navigate('/dashboard')}
+        variant="outline"
+        className="flex items-center gap-2 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 mb-6"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Dashboard
+      </Button>
+
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold">My Resumes</h1>
-          <p className="text-gray-500 mt-2">Manage and edit your resumes</p>
+          <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-600 via-purple-600 to-brand-500">
+            My Resumes
+          </h1>
+          <p className="text-gray-500 mt-2">Manage and edit your professional resumes</p>
         </div>
         <Button 
           onClick={() => navigate('/resume-builder')}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-700 hover:to-purple-700 text-white"
         >
-          <FileText className="h-4 w-4" />
+          <Plus className="h-4 w-4" />
           Create New Resume
         </Button>
       </div>
 
       {resumes.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <FileText className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Resumes Yet</h3>
-            <p className="text-gray-500 mb-4">Create your first resume to get started</p>
-            <Button onClick={() => navigate('/resume-builder')}>
+        <Card className="border-2 border-dashed border-gray-200 hover:border-brand-200 transition-colors duration-300">
+          <CardContent className="p-12 text-center">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-brand-50 flex items-center justify-center">
+              <FileText className="h-10 w-10 text-brand-600" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">No Resumes Yet</h3>
+            <p className="text-gray-500 mb-6">Create your first resume to get started with your career journey</p>
+            <Button 
+              onClick={() => navigate('/resume-builder')}
+              className="bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-700 hover:to-purple-700 text-white"
+            >
               Create Resume
             </Button>
           </CardContent>
@@ -181,18 +197,35 @@ const MyResumes = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {resumes.map((resume) => (
-            <Card key={resume._id} className="hover:shadow-lg transition-shadow">
+            <Card 
+              key={resume._id} 
+              className="group hover:shadow-lg transition-all duration-300 border-gray-100 hover:border-brand-100"
+            >
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1">{resume.title}</h3>
-                    <p className="text-sm text-gray-500">
-                      Last modified: {new Date(resume.lastModified).toLocaleDateString()}
-                    </p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-brand-600" />
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">
+                        {resume.title}
+                      </h3>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        <span>{new Date(resume.lastModified).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        <span>{new Date(resume.lastModified).toLocaleTimeString()}</span>
+                      </div>
+                    </div>
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" className="hover:bg-brand-50">
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -207,7 +240,7 @@ const MyResumes = () => {
                       </DropdownMenuItem>
                       <DropdownMenuItem 
                         onClick={() => handleDeleteClick(resume._id)}
-                        className="text-red-600"
+                        className="text-red-600 focus:text-red-600"
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete
@@ -215,11 +248,12 @@ const MyResumes = () => {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                <div className="flex gap-2">
+                
+                <div className="flex gap-2 mt-4">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200"
                     onClick={() => handlePreviewResume(resume._id)}
                   >
                     <Eye className="h-4 w-4 mr-2" />
@@ -228,7 +262,7 @@ const MyResumes = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200"
                     onClick={() => handleEditResume(resume._id)}
                   >
                     <Edit className="h-4 w-4 mr-2" />
