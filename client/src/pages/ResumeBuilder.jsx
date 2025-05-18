@@ -237,13 +237,14 @@ const ResumeBuilder = () => {
 
   return (
     <PlainLayout>
-      <div className="container mx-auto mt-14 py-8">
+      <div className="container mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">{id ? 'Edit Resume' : 'Resume Builder'}</h1>
           <div className="flex items-center gap-2">
             <Button 
               onClick={handleSaveResume} 
               disabled={isSaving}
+              variant="outline"
               className="flex items-center gap-2"
             >
               {isSaving ? (

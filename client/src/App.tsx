@@ -25,6 +25,7 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import ResumePreview from '@/pages/ResumePreview';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import MainLayout from "@/components/layout/MainLayout";
 
 const queryClient = new QueryClient();
 
@@ -37,20 +38,40 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <div className="flex flex-col min-h-screen">
-            <Header />
             <main className="flex-grow">
               <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/about" element={<AboutPage />} />
-                <Route path="/features" element={<FeaturesPage />} />
+                {/* Home page with header/footer */}
+                <Route path="/" element={
+                  <MainLayout>
+                    <HomePage />
+                  </MainLayout>
+                } />
+                {/* Other pages without header/footer */}
+                <Route path="/about" element={
+                  <MainLayout>
+                    <AboutPage />
+                  </MainLayout>
+                } />
+                <Route path="/features" element={
+                  <MainLayout>
+                    <FeaturesPage />
+                  </MainLayout>
+                } />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/shared-resume/:encodedData" element={<SharedResume />} />
-                
                 {/* Protected Routes */}
                 <Route element={<PrivateRoute />}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/dashboard/:feature" element={<Dashboard />} />
+                  <Route path="/dashboard" element={
+                    <MainLayout>
+                      <Dashboard />
+                    </MainLayout>
+                  } />
+                  <Route path="/dashboard/:feature" element={
+                    <MainLayout>
+                      <Dashboard />
+                    </MainLayout>
+                  } />
                   <Route path="/resume-builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
                   <Route path="/resume-builder/:id" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
                   <Route path="/my-resumes" element={<ProtectedRoute><MyResumes /></ProtectedRoute>} />
@@ -59,12 +80,10 @@ const App = () => (
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/resume-preview/:id" element={<ProtectedRoute><ResumePreview /></ProtectedRoute>} />
                 </Route>
-                
                 {/* 404 Page */}
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </main>
-            <Footer />
           </div>
         </BrowserRouter>
       </TooltipProvider>

@@ -44,7 +44,7 @@ const SignupPage = () => {
     
     try {
       await signup(email, password, name);
-      navigate('/dashboard');
+      navigate('/login');
     } catch (error) {
       console.error('Signup error:', error);
       setIsLoading(false);
