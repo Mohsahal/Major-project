@@ -10,6 +10,7 @@ const NotFoundPage = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
         className="text-center max-w-2xl mx-auto"
+        
       >
         <motion.div 
           className="relative mb-8"

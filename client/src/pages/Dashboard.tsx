@@ -4,8 +4,9 @@ import StatsOverview from "@/components/Dashboard/StatsOverview";
 import JobRecommendations from "@/components/Dashboard/JobRecommendations";
 import ResumeBuilder from "@/components/Dashboard/ResumeBuilder";
 import SkillGapAnalysis from "@/components/Dashboard/SkillGapAnalysis";
-import MockInterviews from "@/components/Dashboard/MockInterviews";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Index from "./Mockinterview";
 
 
 export default function Dashboard() {
@@ -60,7 +61,7 @@ export default function Dashboard() {
                     <SkillGapAnalysis />
                   </div>
                   <div id="mock-interviews">
-                    <MockInterviews />
+                   <Index/>
                   </div>
                 </div>
               </TabsContent>
@@ -85,7 +86,7 @@ export default function Dashboard() {
               
               <TabsContent value="interviews">
                 <div className="mt-6">
-                  <MockInterviews />
+                  <Index/>
                 </div>
               </TabsContent>
             </Tabs>

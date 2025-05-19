@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -57,10 +56,10 @@ const Header = () => {
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-brand-600 to-purple-600 flex items-center justify-center animate-pulse ">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#A044F5] to-[#7c3aed] flex items-center justify-center animate-pulse ">
               <span className="text-white font-bold text-lg">FF</span>
             </div>
-            <span className="font-bold text-lg sm:text-xl bg-clip-text text-transparent bg-gradient-to-r from-brand-600 to-purple-600">
+            <span className="font-bold text-lg sm:text-xl bg-clip-text text-transparent bg-gradient-to-r from-[#A044F5] to-[#7c3aed]">
               FutureFind
             </span>
           </Link>
@@ -107,10 +106,10 @@ const Header = () => {
               </DropdownMenu>
             ) : (
               <>
-                <Link to="/login">
+                <Link to="/auth" state={{ activeTab: 'login' }}>
                   <Button variant="ghost">Log in</Button>
                 </Link>
-                <Link to="/signup">
+                <Link to="/auth" state={{ activeTab: 'signup' }}>
                   <Button variant="default">Sign up</Button>
                 </Link>
               </>
@@ -146,10 +145,10 @@ const Header = () => {
                 </Button>
               ) : (
                 <div className="flex flex-col space-y-2">
-                  <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link to="/auth" state={{ activeTab: 'login' }} onClick={() => setIsMobileMenuOpen(false)}>
                     <Button variant="outline" className="w-full">Log in</Button>
                   </Link>
-                  <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)}>
+                  <Link to="/auth" state={{ activeTab: 'signup' }} onClick={() => setIsMobileMenuOpen(false)}>
                     <Button className="w-full">Sign up</Button>
                   </Link>
                 </div>

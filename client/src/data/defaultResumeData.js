@@ -40,13 +40,15 @@ export const defaultResumeData = {
       name: "E-commerce Website",
       description: "Developed a responsive e-commerce website using React and Firebase, implementing features like user authentication, product filtering, and shopping cart functionality.",
       date: "Jan 2023 - Mar 2023",
-      link: "https://github.com/johndoe/ecommerce-project"
+      link: "https://github.com/johndoe/ecommerce-project",
+      technologies: ["React", "Firebase", "HTML", "CSS", "JavaScript"]
     },
     {
       name: "Weather Dashboard",
       description: "Created a weather dashboard application using OpenWeatherMap API that displays current weather and 5-day forecast for searched cities.",
       date: "Nov 2022 - Dec 2022",
-      link: "https://github.com/johndoe/weather-app"
+      link: "https://github.com/johndoe/weather-app",
+      technologies: ["JavaScript", "HTML", "CSS"]
     }
   ],
   certifications: [
@@ -56,5 +58,9 @@ export const defaultResumeData = {
       date: "Jun 2022",
       description: "Completed 40-hour course covering HTML, CSS, JavaScript, and React"
     }
-  ]
-}; 
+]
+}
+
+
+
+

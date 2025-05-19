@@ -51,11 +51,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ email, password }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Login failed');
+        throw new Error(data.message || 'Login failed');
       }
 
-      const data = await response.json();
       const userData = {
         id: data.user.id,
         email: data.user.email,
@@ -74,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Login failed:', error);
       toast({
         title: "Login failed",
-        description: "Please check your credentials and try again.",
+        description: error instanceof Error ? error.message : "Please check your credentials and try again.",
         variant: "destructive"
       });
       throw error;
@@ -95,11 +96,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ email, password, name }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Signup failed');
+        throw new Error(data.message || 'Signup failed');
       }
 
-      const data = await response.json();
       const userData = {
         id: data.user.id,
         email: data.user.email,
@@ -118,7 +120,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error('Signup failed:', error);
       toast({
         title: "Signup failed",
-        description: "Please try again with different credentials.",
+        description: error instanceof Error ? error.message : "Please try again with different credentials.",
         variant: "destructive"
       });
       throw error;
