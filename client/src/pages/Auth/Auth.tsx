@@ -7,14 +7,14 @@ import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
 import AuthBackground from "@/components/auth/AuthBackground";
 import SocialButton from "@/components/auth/SocialButton";
-
 import AnimatedTransition from "@/components/auth/AnimatedTransition";
 import { useAuth } from "@/contexts/AuthContext";
+import { useGoogleLogin } from '@react-oauth/google';
 
 const Auth = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
-  const { login, signup, isLoading } = useAuth();
+  const { login, signup, isLoading, loginWithGoogle } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -63,7 +63,8 @@ const Auth = () => {
 
     try {
       await login(loginData.email, loginData.password);
-      navigate("/dashboard"); // Redirect to dashboard after successful login
+     
+      navigate("/dashboard"); // Navigate to auth page with signup tab active
     } catch (error) {
       // Error handling is already done in the AuthContext
       console.error("Login error:", error);
@@ -106,12 +107,84 @@ const Auth = () => {
 
     try {
       await signup(signupData.email, signupData.password, signupData.name);
-      navigate("/dashboard"); // Redirect to dashboard after successful signup
+      setActiveTab("login"); // Switch to login tab after successful signup
+      navigate("/auth", { state: { activeTab: "login" } }); // Navigate to auth page with login tab active
     } catch (error) {
       // Error handling is already done in the AuthContext
       console.error("Signup error:", error);
     }
   };
+
+  const handleGoogleSuccess = async (response) => {
+    console.log('Google Sign-In Success:', response);
+    
+    try {
+      // Get the access token from the response
+      const accessToken = response.access_token;
+      
+      if (!accessToken) {
+        throw new Error('No access token received from Google');
+      }
+
+      // Send the access token to your backend for verification and authentication
+      const backendResponse = await fetch('http://localhost:5000/api/auth/google-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          accessToken: accessToken 
+        }),
+      });
+
+      if (!backendResponse.ok) {
+        const errorData = await backendResponse.json();
+        throw new Error(errorData.message || 'Backend authentication failed');
+      }
+
+      const data = await backendResponse.json();
+      console.log('Backend Authentication Success:', data);
+
+      // Use the new loginWithGoogle function from AuthContext
+      await loginWithGoogle(data.token, data.user);
+      
+      // If we're on the signup tab, show account created message and redirect to login
+      if (activeTab === "signup") {
+        toast({
+          title: "Account Created",
+          description: "Your account has been created successfully. Please sign in.",
+        });
+        setActiveTab("login");
+        navigate("/auth", { state: { activeTab: "login" } });
+      } else {
+        // If we're on the login tab, redirect to dashboard
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      console.error('Backend authentication error:', error);
+      toast({
+        title: "Authentication Failed",
+        description: error.message || "Could not authenticate with backend.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleGoogleError = () => {
+    console.error('Google Sign-In Failed');
+    toast({
+      title: "Google Sign-In Failed",
+      description: "Could not sign in with Google. Please try again.",
+      variant: "destructive",
+    });
+  };
+
+  const initiateGoogleLogin = useGoogleLogin({
+    onSuccess: handleGoogleSuccess,
+    onError: handleGoogleError,
+    flow: 'implicit',
+    scope: 'email profile'
+  });
 
   const formVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -192,7 +265,7 @@ const Auth = () => {
                 className="flex justify-center space-x-4 mb-6"
               >
                 <SocialButton icon={<Facebook size={20} />} />
-                <SocialButton icon={<span className="text-lg font-bold">G+</span>} />
+                <SocialButton icon={<span className="text-lg font-bold">G+</span>} onClick={() => initiateGoogleLogin()} />
                 <SocialButton icon={<Linkedin size={20} />} />
               </motion.div>
               <p className="text-gray-600 text-sm">

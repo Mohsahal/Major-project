@@ -13,6 +13,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (email: string, password: string, name: string) => Promise<void>;
+  loginWithGoogle: (token: string, userData: User) => Promise<void>;
   logout: () => void;
   getToken: () => string | null;
 }
@@ -76,6 +77,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast({
         title: "Login failed",
         description: error instanceof Error ? error.message : "Please check your credentials and try again.",
+        variant: "destructive"
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Google Login functionality
+  const loginWithGoogle = async (token: string, userData: User) => {
+    setIsLoading(true);
+    try {
+      setUser(userData);
+      localStorage.setItem('futurefind_user', JSON.stringify(userData));
+      localStorage.setItem('futurefind_token', token);
+
+      toast({
+        title: "Login successful",
+        description: `Welcome back, ${userData.name}!`,
+      });
+    } catch (error) {
+      console.error('Google login failed:', error);
+      toast({
+        title: "Login failed",
+        description: error instanceof Error ? error.message : "Google authentication failed.",
         variant: "destructive"
       });
       throw error;
@@ -148,6 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         login,
         signup,
+        loginWithGoogle,
         logout,
         getToken
       }}
