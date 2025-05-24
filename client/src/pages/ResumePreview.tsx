@@ -245,7 +245,7 @@ const ResumePreview = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 mt-20 sm:px-6 lg:px-8">
+    <div className="container mx-auto px-4 py-8 mt-10 sm:px-6 lg:px-8">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8">
         <Button variant="outline" onClick={() => navigate('/my-resumes')} className="self-start sm:self-center">
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -274,8 +274,12 @@ const ResumePreview = () => {
           </Button>
         </div>
       </div>
-      <div className="bg-white shadow-lg rounded-lg p-6 md:p-8" ref={resumeRef}>
-        {renderTemplate()}
+      <div className="flex justify-center">
+        <div className="w-full max-w-3xl">
+          <div className="bg-white shadow-lg rounded-lg p-6" ref={resumeRef}>
+            {renderTemplate()}
+          </div>
+        </div>
       </div>
     </div>
   );
