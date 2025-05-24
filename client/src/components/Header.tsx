@@ -101,7 +101,10 @@ const Header = ({ scrollContainerRef }: HeaderProps) => { // Destructure scrollC
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name}`} alt={user?.name || ""} />
+                      <AvatarImage 
+                        src={user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name}`} 
+                        alt={user?.name || ""} 
+                      />
                       <AvatarFallback>{user?.name?.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                   </Button>

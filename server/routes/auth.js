@@ -133,9 +133,10 @@ router.post('/google-login', async (req, res) => {
     let user = await User.findOne({ email });
 
     if (user) {
-      // Update user's Google ID if not set
-      if (!user.googleId) {
+      // Update user's Google ID and profile image if not set
+      if (!user.googleId || !user.profileImage) {
         user.googleId = googleId;
+        user.profileImage = picture;
         await user.save();
       }
 
@@ -149,7 +150,8 @@ router.post('/google-login', async (req, res) => {
       const userResponse = {
         id: user._id,
         email: user.email,
-        name: user.name
+        name: user.name,
+        profileImage: user.profileImage
       };
 
       res.json({
@@ -162,6 +164,7 @@ router.post('/google-login', async (req, res) => {
         email,
         name,
         googleId,
+        profileImage: picture
       });
 
       await user.save();
@@ -176,7 +179,8 @@ router.post('/google-login', async (req, res) => {
       const userResponse = {
         id: user._id,
         email: user.email,
-        name: user.name
+        name: user.name,
+        profileImage: user.profileImage
       };
 
       res.status(201).json({
