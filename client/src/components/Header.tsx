@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, RefObject } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -11,26 +11,42 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Menu, X, User, LogOut, Settings } from 'lucide-react';
 
-const Header = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
+// Define props interface for Header
+interface HeaderProps {
+  // showShadow?: boolean; // Removed this prop
+  scrollContainerRef?: RefObject<HTMLElement>; // Added optional ref prop
+}
+
+// Accept showShadow prop
+const Header = ({ scrollContainerRef }: HeaderProps) => { // Destructure scrollContainerRef
+  const [isScrolled, setIsScrolled] = useState(false); // Keep internal scroll state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
 
-  // Change header style on scroll
+  // Change header style on scroll based on the provided ref or window
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 10) {
+    const handleScroll = (target: HTMLElement | Window) => {
+      const scrollTop = target === window ? window.scrollY : (target as HTMLElement).scrollTop; // Get scroll position
+      if (scrollTop > 10) { // Check if scrolled more than 10px
         setIsScrolled(true);
       } else {
         setIsScrolled(false);
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
+    const scrollElement = scrollContainerRef?.current || window; // Use provided ref or window
+
+    // Add event listener
+    scrollElement.addEventListener('scroll', () => handleScroll(scrollElement));
+
+    // Initial check in case the page is already scrolled on load
+    handleScroll(scrollElement);
+
+    // Clean up event listener
     return () => {
-      window.removeEventListener('scroll', handleScroll);
+      scrollElement.removeEventListener('scroll', () => handleScroll(scrollElement));
     };
-  }, []);
+  }, [scrollContainerRef]); // Re-run effect if scrollContainerRef changes
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -49,6 +65,7 @@ const Header = () => {
   );
 
   return (
+    // Apply shadow based on internal isScrolled state
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
       isScrolled ? 'bg-white/95 dark:bg-gray-900/95 shadow-md backdrop-blur-sm' : 'bg-transparent'
     }`}>

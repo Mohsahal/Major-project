@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Sidebar from "@/components/Dashboard/Sidebar"
 import StatsOverview from "@/components/Dashboard/StatsOverview";
 import JobRecommendations from "@/components/Dashboard/JobRecommendations";
@@ -7,16 +7,18 @@ import SkillGapAnalysis from "@/components/Dashboard/SkillGapAnalysis";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Index from "./Mockinterview";
+import Header from "@/components/Header";
 
 
 export default function Dashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const mainRef = useRef<HTMLElement>(null);
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50">
       <Sidebar />
       
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto" ref={mainRef}>
+        <Header scrollContainerRef={mainRef} />
         <div className="px-6 py-20">
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-8">
@@ -27,6 +29,7 @@ export default function Dashboard() {
             </div>
             
             <StatsOverview />
+
             
             <Tabs defaultValue="all" className="mb-8 animate-fade-in" style={{ animationDelay: "200ms" }}>
               <div className="border-b border-gray-200">
@@ -48,6 +51,7 @@ export default function Dashboard() {
                   </TabsTrigger>
                 </TabsList>
               </div>
+
 
               <TabsContent value="all" className="mt-6 animate-fade-in">
                 <div className="space-y-8">

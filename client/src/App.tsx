@@ -26,7 +26,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import MainLayout from "@/components/layout/MainLayout";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import Interview from "./pages/Interview";
-import Header from "@/components/Header";
+// import Header from "@/components/Header";
 
 const queryClient = new QueryClient();
 
@@ -58,7 +58,7 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                       {/* Assuming Header is part of the protected layout */}
-                      <Header />
+                      {/* <Header /> */}
                       <DashboardLayout>
                         <Dashboard />
                       </DashboardLayout>
@@ -70,7 +70,7 @@ const App = () => (
                   element={
                     <ProtectedRoute>
                        {/* Assuming Header is part of the protected layout */}
-                       <Header />
+                       {/* <Header /> */}
                        <DashboardLayout>
                          <Dashboard />
                        </DashboardLayout>
@@ -79,13 +79,13 @@ const App = () => (
                  />
 
                 {/* Other protected routes */}
-                <Route path="/resume-builder" element={<ProtectedRoute><Header /><ResumeBuilder /></ProtectedRoute>} />
-                <Route path="/resume-builder/:id" element={<ProtectedRoute><Header /><ResumeBuilder /></ProtectedRoute>} />
-                <Route path="/my-resumes" element={<ProtectedRoute><Header /><MyResumes /></ProtectedRoute>} />
+                <Route path="/resume-builder" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
+                <Route path="/resume-builder/:id" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
+                <Route path="/my-resumes" element={<ProtectedRoute><MyResumes /></ProtectedRoute>} />
                 <Route path="/interview" element={<ProtectedRoute><Interview /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><Header /><Profile /></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute><Header /><Settings /></ProtectedRoute>} />
-                <Route path="/resume-preview/:id" element={<ProtectedRoute><Header /><ResumePreview /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                <Route path="/resume-preview/:id" element={<ProtectedRoute><ResumePreview /></ProtectedRoute>} />
 
                 {/* 404 Page */}
                 <Route path="*" element={<NotFoundPage />} />

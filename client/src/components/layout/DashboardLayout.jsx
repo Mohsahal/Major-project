@@ -1,9 +1,9 @@
-import Header from "@/components/Header";
+// import Header from "@/components/Header";
 
 const DashboardLayout = ({ children }) => {
   return (
     <div className="flex flex-col min-h-screen">
-      <Header />
+      {/* <Header /> */}
       <main className="flex-grow">
         {children}
       </main>
