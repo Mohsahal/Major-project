@@ -90,4 +90,19 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// Get shared resume (no auth required)
+router.get('/shared/:id', async (req, res) => {
+  try {
+    const resume = await Resume.findById(req.params.id);
+    
+    if (!resume) {
+      return res.status(404).json({ message: 'Resume not found' });
+    }
+    
+    res.json(resume);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router; 

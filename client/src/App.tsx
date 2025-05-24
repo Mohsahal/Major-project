@@ -86,6 +86,7 @@ const App = () => (
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                 <Route path="/resume-preview/:id" element={<ProtectedRoute><ResumePreview /></ProtectedRoute>} />
+                <Route path="/shared-resume/:id" element={<SharedResume />} />
 
                 {/* 404 Page */}
                 <Route path="*" element={<NotFoundPage />} />

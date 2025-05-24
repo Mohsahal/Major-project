@@ -14,9 +14,7 @@ import ExecutiveTemplate from '@/components/Resume/templates/ExecutiveTemplate';
 import TemplateSelector from '@/components/Resume/TemplateSelector';
 import ResumeForm from '@/components/Resume/ResumeForm';
 import ResumeDownload from '@/components/Resume/ResumeDownload';
-import ResumeShare from '@/components/Resume/ResumeShare';
 import { 
-  Share2, 
   Save, 
   Facebook, 
   Linkedin, 
@@ -258,7 +256,6 @@ const ResumeBuilder = () => {
                 </>
               )}
             </Button>
-            <ResumeShare resumeData={resumeData} selectedTemplate={selectedTemplate} />
             <ResumeDownload resumeData={resumeData} selectedTemplate={selectedTemplate} />
           </div>
         </div>

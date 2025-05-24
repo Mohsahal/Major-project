@@ -1,92 +1,57 @@
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
+import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { Link } from "react-router-dom";
 
-const NotFoundPage = () => {
+const NotFound = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    console.error("404 Error: User attempted to access:", location.pathname);
+  }, [location.pathname]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 flex flex-col items-center justify-center p-4">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-center max-w-2xl mx-auto"
-        
-      >
-        <motion.div 
-          className="relative mb-8"
-          animate={{ 
-            rotate: [0, -10, 10, -10, 0],
-            scale: [1, 1.1, 1]
-          }}
-          transition={{ 
-            duration: 2,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-        >
-          <div className="w-32 h-32 mx-auto">
-            <div className="w-full h-full rounded-full bg-gradient-to-r from-brand-100 via-purple-100 to-pink-100 dark:from-brand-900/30 dark:via-purple-900/30 dark:to-pink-900/30 flex items-center justify-center shadow-lg">
-              <span className="text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-600 via-purple-600 to-pink-600">
-                404
-              </span>
-            </div>
-          </div>
-        </motion.div>
-        
-        <motion.h1 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-7xl font-extrabold hero-text-gradient mb-6 tracking-tight"
-        >
-          Oops!
-        </motion.h1>
-        
-        <motion.h2 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4"
-        >
-          Page Not Found
-        </motion.h2>
-        
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="text-gray-600 dark:text-gray-400 mb-8 text-lg"
-        >
-          The page you're looking for seems to have vanished into thin air. 
-          Let's get you back on track!
-        </motion.p>
-        
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="flex flex-col sm:flex-row gap-4 justify-center"
-        >
-          <Link to="/">
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-brand-600 to-purple-600 hover:from-brand-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              Back to Home
-            </Button>
-          </Link>
-          <Button 
-            size="lg" 
-            variant="outline"
-            onClick={() => window.history.back()}
-            className="border-2 border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300"
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
+      <div className="text-center max-w-md w-full">
+        {/* Icon */}
+        <div className="mb-6">
+          <svg
+            className="mx-auto h-20 w-20 text-blue-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={1.5}
           >
-            Go Back
-          </Button>
-        </motion.div>
-      </motion.div>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.054 0 1.658-1.14 1.105-2.05L13.105 4.05c-.553-.91-1.658-.91-2.211 0L2.977 16.95c-.553.91.051 2.05 1.105 2.05z"
+            />
+          </svg>
+        </div>
+
+        {/* Heading */}
+        <h1 className="text-5xl font-bold text-gray-800">404</h1>
+
+        {/* Message */}
+        <p className="mt-3 text-lg text-gray-600">
+          Oops! The page you’re looking for doesn’t exist.
+        </p>
+        <p className="text-sm text-gray-500">
+          It might have been moved or deleted.
+        </p>
+
+        {/* Button */}
+        <div className="mt-6">
+          <Link
+            to="/"
+            className="inline-block bg-blue-600 text-white font-semibold px-6 py-2 rounded-full hover:bg-blue-700 transition duration-300"
+          >
+            Go Back Home
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };
 
-export default NotFoundPage;
+export default NotFound;

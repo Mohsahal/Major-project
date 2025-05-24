@@ -19,16 +19,46 @@ const SharedResume = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    try {
-      // Decode the base64 data
-      const decodedData = JSON.parse(atob(encodedData));
-      setResumeData(decodedData.resume);
-      setSelectedTemplate(decodedData.template);
-    } catch (error) {
-      console.error('Error decoding resume data:', error);
+    if (!encodedData) {
       toast({
         title: "Error",
-        description: "Invalid or expired resume link",
+        description: "Resume data not found in link.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Decode the base64 data
+      const decodedString = atob(encodedData);
+      console.log("Decoded string:", decodedString); // Log decoded string
+
+      // Parse the JSON data
+      const decodedData = JSON.parse(decodedString);
+      console.log("Parsed data:", decodedData); // Log parsed data
+
+      // Validate the structure of decoded data
+      if (decodedData && decodedData.resume && decodedData.template) {
+        setResumeData(decodedData.resume);
+        setSelectedTemplate(decodedData.template);
+        toast({
+          title: "Success",
+          description: "Resume data loaded successfully.",
+        });
+      } else {
+        console.error('Error: Decoded data is missing resume or template properties.', decodedData); // Log invalid structure
+        toast({
+          title: "Error",
+          description: "Invalid resume data structure.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error decoding or parsing resume data:', error); // Log specific error
+      toast({
+        title: "Error",
+        description: "Failed to decode or parse resume data.",
         variant: "destructive",
       });
     } finally {
@@ -58,10 +88,11 @@ const SharedResume = () => {
   };
 
   const handleDownload = () => {
-    // Implement download functionality
+    // Implement download functionality - This would require converting the rendered template to a downloadable format (e.g., PDF)
+    // This is a placeholder.
     toast({
-      title: "Download started",
-      description: "Your resume is being downloaded",
+      title: "Download function not fully implemented",
+      description: "Please note that the download functionality is not yet complete.",
     });
   };
 
@@ -82,8 +113,8 @@ const SharedResume = () => {
       <PlainLayout>
         <div className="container mx-auto mt-14 py-8">
           <div className="flex flex-col items-center justify-center min-h-[60vh]">
-            <h1 className="text-2xl font-bold mb-4">Resume Not Found</h1>
-            <p className="text-gray-600 mb-4">The resume you're looking for doesn't exist or has expired.</p>
+            <h1 className="text-2xl font-bold mb-4">Resume Not Found or Invalid Data</h1>
+            <p className="text-gray-600 mb-4">Could not load the resume. The link might be incorrect or expired, or the data is invalid.</p>
             <Button onClick={() => window.history.back()}>Go Back</Button>
           </div>
         </div>
@@ -96,7 +127,7 @@ const SharedResume = () => {
       <div className="container mx-auto mt-14 py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">
-            {resumeData.personalInfo.firstName} {resumeData.personalInfo.lastName}'s Resume
+            {resumeData.personalInfo?.firstName} {resumeData.personalInfo?.lastName}'s Resume
           </h1>
           <Button onClick={handleDownload} className="flex items-center gap-2">
             <Download className="h-4 w-4" />
@@ -104,13 +135,17 @@ const SharedResume = () => {
           </Button>
         </div>
 
-        <Card className="shadow-sm">
-          <CardContent className="p-6">
-            <div className="resume-preview">
-              {renderTemplate()}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex justify-center">
+          <div className="w-full lg:w-7/12">
+            <Card className="shadow-sm">
+              <CardContent className="p-6">
+                <div className="resume-preview">
+                  {renderTemplate()}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </PlainLayout>
   );

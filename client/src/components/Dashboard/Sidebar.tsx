@@ -64,7 +64,7 @@ export default function Sidebar() {
   return (
     <div
       className={cn(
-        "flex flex-col  bg-sidebar border-muted-foreground border-gray-200 transition-all duration-300 mt-20 ",
+        "flex flex-col  bg-sidebar border-muted-foreground border-gray-200 transition-all duration-300  pt-16 ",
         collapsed ? "w-20" : "w-64"
       )}
     >
