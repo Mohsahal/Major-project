@@ -29,6 +29,7 @@ import Interview from "./pages/Interview";
 // import Header from "@/components/Header";
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import NotFound from '@/components/NotFound';
 
 const queryClient = new QueryClient();
 
@@ -93,7 +94,7 @@ const App = () => (
                   {/* Keep the shared-resume route with id parameter */} <Route path="/shared-resume/:id" element={<SharedResume />} />
 
                   {/* 404 Page */}
-                  <Route path="*" element={<NotFoundPage />} />
+                  <Route path="*" element={<NotFound />} />
                   
                   {/* Redirect root to dashboard if authenticated, otherwise ProtectedRoute handles redirect to /auth */}
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
