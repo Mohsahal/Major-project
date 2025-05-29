@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/futurefind', {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://mohammedsahal1243:sahal124867@cluster0.1eaz3.mongodb.net/future_find', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
