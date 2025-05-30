@@ -429,7 +429,7 @@ const AboutPage = () => {
               <GraduationCap className="mr-2 h-5 w-5" />
               Sign Up Free
             </Button>
-            <Button variant="outline" className="border-white text-white hover:bg-white/20" size="lg">
+            <Button variant="outline" className="bg-white text-brand-600 hover:bg-gray-100" size="lg">
               Learn More
             </Button>
           </div>

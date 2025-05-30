@@ -18,8 +18,13 @@
     "express": "^5.1.0",
     "google-auth-library": "^9.15.1",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.15.0",
+    "mongoose": "^8.15.1",
+    "multer": "^2.0.0",
+    "natural": "^8.1.0",
+    "node-wordnet": "^0.1.12",
     "nodemon": "^3.1.10",
-    "openai": "^4.100.0"
+    "openai": "^4.100.0",
+    "pdf-lib": "^1.17.1",
+    "uuid": "^11.1.0"
   }
 }

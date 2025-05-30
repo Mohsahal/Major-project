@@ -43,4 +43,3 @@ app.listen(PORT, () => {
   console.log('Environment:', process.env.NODE_ENV || 'development');
   console.log('API Key configured:', process.env.GOOGLE_AI_KEY ? 'Yes' : 'No (using fallback)');
 });
-
