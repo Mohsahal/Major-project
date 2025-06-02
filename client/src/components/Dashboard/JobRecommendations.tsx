@@ -14,6 +14,7 @@ type JobType = {
   matchPercentage: number;
   skills: string[];
   posted: string;
+  description?: string;
   isNew?: boolean;
 };
 
@@ -21,52 +22,23 @@ export default function JobRecommendations() {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedResume, setUploadedResume] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const [jobs, setJobs] = useState<JobType[]>([
-    {
-      title: "Senior Frontend Developer",
-      company: "TechGlobal Inc.",
-      location: "Remote",
-      salary: "$120K - $150K",
-      matchPercentage: 94,
-      skills: ["React", "TypeScript", "Tailwind CSS"],
-      posted: "2 days ago"
-    },
-    {
-      title: "Full Stack Engineer",
-      company: "InnovateTech",
-      location: "San Francisco, CA",
-      salary: "$130K - $160K",
-      matchPercentage: 87,
-      skills: ["React", "Node.js", "GraphQL"],
-      posted: "1 day ago"
-    },
-    {
-      title: "UX/UI Developer",
-      company: "DesignSphere",
-      location: "New York, NY",
-      salary: "$110K - $140K",
-      matchPercentage: 82,
-      skills: ["Figma", "React", "CSS"],
-      posted: "3 days ago"
-    }
-  ]);
+  const [jobs, setJobs] = useState<JobType[]>([]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  const validateFile = (file: File): boolean => {
     // Check file type
-    if (!file.type.includes('pdf') && !file.type.includes('doc') && !file.type.includes('docx')) {
+    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!validTypes.includes(file.type)) {
       toast({
         title: "Invalid file type",
         description: "Please upload a PDF or Word document",
         variant: "destructive"
       });
-      return;
+      return false;
     }
 
     // Check file size (max 5MB)
@@ -76,41 +48,78 @@ export default function JobRecommendations() {
         description: "Please upload a file smaller than 5MB",
         variant: "destructive"
       });
-      return;
+      return false;
     }
+
+    return true;
+  };
+
+  const handleFileUpload = async (file: File) => {
+    if (!validateFile(file)) return;
 
     setUploadedResume(file);
     setIsUploading(true);
+    setUploadProgress(0);
 
     try {
       // Create FormData
       const formData = new FormData();
       formData.append('resume', file);
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // TODO: Replace with actual API call
-      // const response = await fetch('http://localhost:5000/api/resume/upload', {
-      //   method: 'POST',
-      //   body: formData,
-      // });
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + 10;
+        });
+      }, 200);
 
-      toast({
-        title: "Resume uploaded successfully",
-        description: "We'll use this to find better job matches for you",
+      const response = await fetch('http://localhost:5000/api/job-recommendations/upload-resume', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+        },
       });
 
-      // Trigger new recommendations after upload
-      handleGetRecommendations();
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to upload resume');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Add isNew flag to new recommendations
+        const newJobs = data.jobs.map((job: JobType) => ({
+          ...job,
+          isNew: true
+        }));
+        
+        setJobs(prev => [...newJobs, ...prev]);
+        
+        toast({
+          title: "Resume uploaded successfully",
+          description: "We've found some great job matches for you",
+        });
+      }
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Upload failed",
-        description: "There was an error uploading your resume. Please try again.",
+        description: error instanceof Error ? error.message : "There was an error uploading your resume. Please try again.",
         variant: "destructive"
       });
     } finally {
       setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -122,36 +131,49 @@ export default function JobRecommendations() {
   };
 
   const handleGetRecommendations = async () => {
+    if (!uploadedResume) {
+      toast({
+        title: "No resume uploaded",
+        description: "Please upload your resume first to get recommendations",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Add new recommendations with animation
-    const newJobs = [
-      {
-        title: "AI/ML Engineer",
-        company: "FutureTech",
-        location: "Boston, MA",
-        salary: "$140K - $180K",
-        matchPercentage: 91,
-        skills: ["Python", "TensorFlow", "Machine Learning"],
-        posted: "Just now",
-        isNew: true
-      },
-      {
-        title: "Cloud Architect",
-        company: "CloudScale",
-        location: "Remote",
-        salary: "$150K - $190K",
-        matchPercentage: 88,
-        skills: ["AWS", "Docker", "Kubernetes"],
-        posted: "Just now",
-        isNew: true
+    try {
+      const formData = new FormData();
+      formData.append('resume', uploadedResume);
+
+      const response = await fetch('http://localhost:5000/api/job-recommendations/upload-resume', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to get recommendations');
       }
-    ];
-    
-    setJobs(prev => [...newJobs, ...prev.slice(0, 3)]);
-    setIsLoading(false);
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Add isNew flag to new recommendations
+        const newJobs = data.jobs.map((job: JobType) => ({
+          ...job,
+          isNew: true
+        }));
+        
+        setJobs(prev => [...newJobs, ...prev.slice(0, 3)]);
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to get recommendations",
+        description: "Please try again later",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -169,7 +191,12 @@ export default function JobRecommendations() {
           <input
             type="file"
             ref={fileInputRef}
-            onChange={handleFileUpload}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                handleFileUpload(file);
+              }
+            }}
             accept=".pdf,.doc,.docx"
             className="hidden"
           />
@@ -266,6 +293,9 @@ export default function JobRecommendations() {
               </div>
               <span className="text-xs text-gray-500">{job.posted}</span>
             </div>
+            {job.description && (
+              <p className="mt-3 text-sm text-gray-600">{job.description}</p>
+            )}
           </motion.div>
         ))}
       </div>
