@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { FileText, Edit, Trash2, Eye, MoreVertical, Plus, Calendar, Clock, ArrowLeft } from 'lucide-react'
 import { toast } from '@/components/ui/use-toast'
 import { useAuth } from '@/contexts/AuthContext'
+import { useResume } from '@/contexts/ResumeContext'
 import { Loader2 } from 'lucide-react'
 import {
   AlertDialog,
@@ -37,52 +38,10 @@ interface Resume {
 const MyResumes = () => {
   const { getToken } = useAuth()
   const navigate = useNavigate()
-  const [resumes, setResumes] = useState<Resume[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const { resumes, isLoading, fetchResumes, deleteResume: contextDeleteResume } = useResume()
   const [isDeleting, setIsDeleting] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [resumeToDelete, setResumeToDelete] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchResumes()
-  }, [])
-
-  const fetchResumes = async () => {
-    try {
-      const token = getToken()
-      
-      if (!token) {
-        toast({
-          title: "Authentication Error",
-          description: "Please log in to view your resumes",
-          variant: "destructive"
-        })
-        return
-      }
-
-      const response = await fetch('http://localhost:5000/api/resumes', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch resumes')
-      }
-
-      const data = await response.json()
-      setResumes(data)
-    } catch (error) {
-      console.error('Fetch error:', error)
-      toast({
-        title: "Error",
-        description: "Failed to fetch resumes. Please try again.",
-        variant: "destructive"
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const handleDeleteClick = (id: string) => {
     setResumeToDelete(id)
@@ -112,15 +71,15 @@ const MyResumes = () => {
         }
       })
 
-      if (!response.ok) {
+      if (response.ok) {
+        contextDeleteResume(resumeToDelete)
+        toast({
+          title: "Success",
+          description: "Resume deleted successfully",
+        })
+      } else {
         throw new Error('Failed to delete resume')
       }
-
-      setResumes(resumes.filter(resume => resume._id !== resumeToDelete))
-      toast({
-        title: "Success",
-        description: "Resume deleted successfully"
-      })
     } catch (error) {
       console.error('Delete error:', error)
       toast({
