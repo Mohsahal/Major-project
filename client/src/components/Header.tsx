@@ -102,25 +102,55 @@ const Header = ({ scrollContainerRef }: HeaderProps) => { // Destructure scrollC
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar className="h-10 w-10">
                       <AvatarImage 
-                        src={user?.profileImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name}`} 
+                        src={user?.profileImage || `https://ui-avatars.com/api/?name=${user?.name?.charAt(0) || 'U'}&background=7c3aed&color=fff&size=128&font-size=0.5&bold=true`} 
                         alt={user?.name || ""} 
                       />
                       <AvatarFallback>{user?.name?.charAt(0).toUpperCase()}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    <Link to="/profile">Profile</Link>
+                <DropdownMenuContent align="end" className="w-56 p-2 bg-white/95 backdrop-blur-sm border border-gray-200/50 shadow-xl rounded-xl">
+                  <div className="px-3 py-2 border-b border-gray-100 mb-2">
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage 
+                          src={user?.profileImage || `https://ui-avatars.com/api/?name=${user?.name?.charAt(0) || 'U'}&background=7c3aed&color=fff&size=128&font-size=0.5&bold=true`} 
+                          alt={user?.name || ""} 
+                        />
+                        <AvatarFallback>{user?.name?.charAt(0).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{user?.name || 'User'}</p>
+                        <p className="text-xs text-gray-500 truncate">{user?.email || 'user@example.com'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <DropdownMenuItem className="flex items-center px-3 py-2.5 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 hover:text-purple-700 rounded-lg transition-all duration-200 cursor-pointer group">
+                    <Link to="/profile" className="flex items-center w-full">
+                      <div className="p-2 bg-purple-100 rounded-lg mr-3 group-hover:bg-purple-200 transition-colors duration-200">
+                        <User className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <span className="font-medium">Profile</span>
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <Link to="/settings">Settings</Link>
+                  
+                  <DropdownMenuItem className="flex items-center px-3 py-2.5 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 hover:text-blue-700 rounded-lg transition-all duration-200 cursor-pointer group">
+                    <Link to="/settings" className="flex items-center w-full">
+                      <div className="p-2 bg-blue-100 rounded-lg mr-3 group-hover:bg-blue-200 transition-colors duration-200">
+                        <Settings className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <span className="font-medium">Settings</span>
+                    </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={logout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
+                  
+                  <div className="border-t border-gray-100 my-2"></div>
+                  
+                  <DropdownMenuItem onClick={logout} className="flex items-center px-3 py-2.5 text-sm text-red-600 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 hover:text-red-700 rounded-lg transition-all duration-200 cursor-pointer group">
+                    <div className="p-2 bg-red-100 rounded-lg mr-3 group-hover:bg-red-200 transition-colors duration-200">
+                      <LogOut className="h-4 w-4 text-red-600" />
+                    </div>
+                    <span className="font-medium">Logout</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

@@ -255,7 +255,7 @@ export default function JobRecommendations() {
       className="space-y-6"
     >
       {/* Header Section */}
-      <Card className="border-0 shadow-lg bg-gradient-to-r from-blue-50 to-indigo-50">
+      <Card className="border-0 shadow-sm bg-gradient-to-r from-white to-indigo-50">
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex items-center gap-3">

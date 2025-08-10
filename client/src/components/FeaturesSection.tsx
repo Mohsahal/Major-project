@@ -44,7 +44,7 @@ const FeaturesSection = () => {
       title: 'Voice Interview Assistant',
       description: 'Practice interviews with our AI-powered voice assistant that provides real-time feedback on your responses and body language.',
       color: 'from-green-500 to-emerald-600',
-      image: 'https://images.unsplash.com/photo-1573497161161-c3e73707e25c?ixlib=rb-4.0.3&q=80&w=600&h=400&auto=format&fit=crop'
+      image: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?ixlib=rb-4.0.3&q=80&w=600&h=400&auto=format&fit=crop'
     }
   ];
 

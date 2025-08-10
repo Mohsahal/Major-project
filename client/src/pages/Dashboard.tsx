@@ -19,29 +19,17 @@ export default function Dashboard() {
     const mainElement = mainRef.current;
     if (!mainElement) return;
 
-    let scrollTimeout: NodeJS.Timeout;
-
     const handleScroll = () => {
-      // Clear previous timeout
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout);
+      // Close sidebar immediately when scrolling starts
+      if (sidebarOpen) {
+        setSidebarOpen(false);
       }
-
-      // Set a new timeout to close sidebar after scrolling stops
-      scrollTimeout = setTimeout(() => {
-        if (sidebarOpen) {
-          setSidebarOpen(false);
-        }
-      }, 150); // 150ms delay after scrolling stops
     };
 
     mainElement.addEventListener('scroll', handleScroll, { passive: true });
 
     return () => {
       mainElement.removeEventListener('scroll', handleScroll);
-      if (scrollTimeout) {
-        clearTimeout(scrollTimeout);
-      }
     };
   }, [sidebarOpen]);
 

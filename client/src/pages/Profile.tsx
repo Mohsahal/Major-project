@@ -37,7 +37,7 @@ export default function Profile() {
             <CardContent className="pt-6">
               <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
                 <Avatar className="h-32 w-32">
-                  <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name}`} />
+                  <AvatarImage src={`https://ui-avatars.com/api/?name=${user?.name?.charAt(0) || 'U'}&background=7c3aed&color=fff&size=512&font-size=0.4&bold=true`} />
                   <AvatarFallback className="text-4xl">{user?.name?.charAt(0).toUpperCase()}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 text-center md:text-left">

@@ -65,7 +65,7 @@ const FeaturesPage = () => {
         'Body language and vocal tone analysis',
         'Interview performance improvement tips'
       ],
-      image: 'https://images.unsplash.com/photo-1573497161161-c3e73707e25c?ixlib=rb-4.0.3&q=80&w=800&h=600&auto=format&fit=crop',
+      image: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?ixlib=rb-4.0.3&q=80&w=800&h=600&auto=format&fit=crop',
       color: 'bg-gradient-to-r from-green-500 to-emerald-600'
     }
   ];
