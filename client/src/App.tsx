@@ -9,16 +9,14 @@ import SharedResume from "./pages/SharedResume";
 import Auth from "./pages/Auth/Auth";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 import MyResumes from "./pages/MyResumes";
+import ViewAllJobs from "./pages/ViewAllJobs";
 
 import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
 import FeaturesPage from "./pages/FeaturesPage";
 
-
 import Dashboard from "./pages/Dashboard";
 
-
-import NotFoundPage from "./pages/NotFoundPage";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import ResumePreview from '@/pages/ResumePreview';
@@ -29,7 +27,7 @@ import Interview from "./pages/Interview";
 // import Header from "@/components/Header";
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import NotFound from '@/components/NotFound';
+import NotFound from '@/pages/NotFound';
 
 const queryClient = new QueryClient();
 
@@ -88,6 +86,7 @@ const App = () => (
                   <Route path="/resume-builder/:id" element={<ProtectedRoute><ResumeBuilder /></ProtectedRoute>} />
                   <Route path="/my-resumes" element={<ProtectedRoute><MyResumes /></ProtectedRoute>} />
                   <Route path="/interview" element={<ProtectedRoute><Interview /></ProtectedRoute>} />
+                  <Route path="/view-all-jobs" element={<ProtectedRoute><ViewAllJobs /></ProtectedRoute>} />
                   <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                   <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                   <Route path="/resume-preview/:id" element={<ProtectedRoute><ResumePreview /></ProtectedRoute>} />

@@ -1,10 +1,10 @@
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from "@/components/ui/progress";
 import {
   Users,
   Award,
@@ -17,11 +17,16 @@ import {
   ThumbsUp,
   Twitter,
   Linkedin,
-  Github
+  Github,
+  Play,
+  Pause,
+  SkipForward
 } from 'lucide-react';
 
 const AboutPage = () => {
-  const [activeTab, setActiveTab] = useState('mission');
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [progress, setProgress] = useState(0);
   
   // Animation variants for staggered animations
   const containerVariants = {
@@ -43,6 +48,166 @@ const AboutPage = () => {
     }
   };
 
+  // Slider slides for the tabs content
+  const slides = [
+    {
+      id: 'mission',
+      title: 'Our Mission',
+      subtitle: 'Democratizing career advancement opportunities',
+      icon: <BookOpen className="h-20 w-20 text-brand-600" />,
+      color: 'from-brand-500 to-purple-500',
+      bgColor: 'bg-white',
+      content: (
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white border-2 border-gray-200 shadow-sm mb-8">
+              <BookOpen className="h-20 w-20 text-brand-600" />
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-purple-500 mb-6">
+              Our Mission
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed max-w-3xl mx-auto">
+              At FutureFind, we're on a mission to democratize career advancement opportunities through AI-powered tools that level the playing field for all job seekers.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[
+              'Help 1 million job seekers secure their dream jobs by 2026',
+              'Reduce preparation time for interviews by 75%',
+              'Bridge skill gaps through AI-driven personalized learning',
+              'Make professional career coaching accessible to everyone'
+            ].map((goal, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.2 }}
+                className="flex items-start bg-white p-6 rounded-xl shadow-sm border border-brand-200"
+              >
+                <div className="mr-4 mt-1">
+                  <CheckCircle className="h-6 w-6 text-green-500" />
+                </div>
+                <p className="text-gray-700 leading-relaxed">{goal}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'story',
+      title: 'Our Story',
+      subtitle: 'From vision to reality - the journey of FutureFind',
+      icon: <Calendar className="h-20 w-20 text-purple-600" />,
+      color: 'from-purple-500 to-pink-500',
+      bgColor: 'bg-white',
+      content: (
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white border-2 border-gray-200 shadow-sm mb-8">
+              <Calendar className="h-20 w-20 text-purple-600" />
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-pink-500 mb-6">
+              Our Story
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed max-w-3xl mx-auto">
+              FutureFind was founded in 2023 by a team of AI engineers, HR professionals, and career coaches who recognized a fundamental problem in the job market.
+            </p>
+          </div>
+          
+          <div className="space-y-8">
+            {[
+              { year: '2023', milestone: 'Founded in San Francisco with a vision to transform career advancement through AI' },
+              { year: '2024', milestone: 'Launched our core platform with Resume Builder and Mock Interview features' },
+              { year: '2025', milestone: 'Expanding globally with new skill analysis and job matching algorithms' }
+            ].map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.2 }}
+                className="relative pl-12 border-l-4 border-purple-300"
+              >
+                <div className="absolute left-[-8px] top-0 w-6 h-6 rounded-full bg-purple-500 border-4 border-white shadow-lg"></div>
+                <h4 className="text-2xl font-bold text-purple-600 mb-2">{item.year}</h4>
+                <p className="text-lg text-gray-700">{item.milestone}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 'values',
+      title: 'Our Values',
+      subtitle: 'The principles that guide everything we do',
+      icon: <Lightbulb className="h-20 w-20 text-blue-600" />,
+      color: 'from-blue-500 to-cyan-500',
+      bgColor: 'bg-white',
+      content: (
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white border-2 border-gray-200 shadow-sm mb-8">
+              <Lightbulb className="h-20 w-20 text-blue-600" />
+            </div>
+            <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-cyan-500 mb-6">
+              Our Values
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-600 mb-10 leading-relaxed max-w-3xl mx-auto">
+              Our core values guide everything we do at FutureFind, from product development to customer support.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[
+              { icon: <ThumbsUp className="h-8 w-8 text-brand-600" />, title: 'Accessibility', description: 'Making career advancement tools accessible to everyone, regardless of background or experience level.' },
+              { icon: <Award className="h-8 w-8 text-brand-600" />, title: 'Excellence', description: 'Committed to delivering the highest quality tools and resources that truly make a difference.' },
+              { icon: <Users className="h-8 w-8 text-brand-600" />, title: 'Community', description: 'Building a supportive community where job seekers can learn, grow, and succeed together.' },
+              { icon: <Briefcase className="h-8 w-8 text-brand-600" />, title: 'Innovation', description: 'Constantly pushing the boundaries of what\'s possible with AI to solve real career challenges.' }
+            ].map((value, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white p-6 rounded-xl border border-blue-200 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center mb-4">
+                  <div className="mr-4 p-2 rounded-lg bg-blue-50">
+                    {value.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-800">{value.title}</h3>
+                </div>
+                <p className="text-gray-600 leading-relaxed">{value.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )
+    }
+  ];
+
+  // Auto-advance slides with improved timing
+  useEffect(() => {
+    // Start auto-play automatically
+    setIsPlaying(true);
+    
+    const interval = setInterval(() => {
+      setProgress(prev => {
+        if (prev >= 100) {
+          setCurrentSlide(prev => (prev + 1) % slides.length);
+          return 0;
+        }
+        return prev + 1.5; // Slower progress for better user experience
+      });
+    }, 80); // Faster updates for smoother progress bar
+    
+    return () => clearInterval(interval);
+  }, []); // Remove isPlaying dependency to make it always auto-play
+
+
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 pt-20">
       {/* Hero Section */}
@@ -61,188 +226,80 @@ const AboutPage = () => {
           </p>
         </motion.div>
         
-        {/* Mission & Values Tabs */}
-        <Tabs 
-          defaultValue="mission" 
-          className="w-full max-w-4xl mx-auto"
-          onValueChange={(value) => setActiveTab(value)}
-        >
-          <div className="flex justify-center mb-8">
-            <TabsList className="grid grid-cols-3 w-full max-w-md">
-              <TabsTrigger value="mission">Our Mission</TabsTrigger>
-              <TabsTrigger value="story">Our Story</TabsTrigger>
-              <TabsTrigger value="values">Our Values</TabsTrigger>
-            </TabsList>
+        {/* Mission & Values Slider */}
+        <div className="relative overflow-hidden">
+          {/* Slider Controls */}
+          <div className="flex justify-center items-center gap-4 mb-8">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsPlaying(!isPlaying)}
+              className="rounded-full w-12 h-12 p-0"
+            >
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setCurrentSlide((prev) => (prev + 1) % slides.length);
+                setProgress(0);
+              }}
+              className="rounded-full w-12 h-12 p-0"
+            >
+              <SkipForward className="h-4 w-4" />
+            </Button>
           </div>
           
-          <TabsContent value="mission" className="mt-2">
-            <motion.div
-              initial="hidden"
-              animate={activeTab === 'mission' ? 'visible' : 'hidden'}
-              variants={containerVariants}
-              className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
-            >
-              <motion.div variants={itemVariants} className="flex items-center mb-6">
-                <div className="mr-4 p-3 rounded-full bg-brand-50 dark:bg-brand-900/20">
-                  <BookOpen className="h-6 w-6 text-brand-600 dark:text-brand-400" />
-                </div>
-                <h2 className="text-2xl font-semibold">Our Mission</h2>
-              </motion.div>
-              
-              <motion.p variants={itemVariants} className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                At FutureFind, we're on a mission to democratize career advancement opportunities through AI-powered tools that level the playing field for all job seekers.
-              </motion.p>
-              
-              <motion.div variants={itemVariants} className="mb-8">
-                <h3 className="text-xl font-medium mb-4">What We Aim To Achieve</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-start">
-                    <div className="mr-3 mt-1">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Help 1 million job seekers secure their dream jobs by 2026
-                    </p>
-                  </div>
-                  <div className="flex items-start">
-                    <div className="mr-3 mt-1">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Reduce preparation time for interviews by 75%
-                    </p>
-                  </div>
-                  <div className="flex items-start">
-                    <div className="mr-3 mt-1">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Bridge skill gaps through AI-driven personalized learning
-                    </p>
-                  </div>
-                  <div className="flex items-start">
-                    <div className="mr-3 mt-1">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Make professional career coaching accessible to everyone
-                    </p>
+          {/* Progress Bar */}
+          <div className="max-w-md mx-auto mb-8">
+            <Progress value={progress} className="h-2" />
+            <div className="flex justify-between text-sm text-gray-500 mt-2">
+              <span>Slide {currentSlide + 1} of {slides.length}</span>
+              <span>{Math.round(progress)}%</span>
                   </div>
                 </div>
-              </motion.div>
-            </motion.div>
-          </TabsContent>
           
-          <TabsContent value="story" className="mt-2">
-            <motion.div
-              initial="hidden"
-              animate={activeTab === 'story' ? 'visible' : 'hidden'}
-              variants={containerVariants}
-              className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
-            >
-              <motion.div variants={itemVariants} className="flex items-center mb-6">
-                <div className="mr-4 p-3 rounded-full bg-purple-50 dark:bg-purple-900/20">
-                  <Calendar className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                </div>
-                <h2 className="text-2xl font-semibold">Our Story</h2>
+          {/* Main Slider */}
+          <div className="relative max-w-4xl mx-auto">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide}
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+                className="text-center"
+              >
+                {slides[currentSlide].content}
               </motion.div>
-              
-              <motion.p variants={itemVariants} className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                FutureFind was founded in 2023 by a team of AI engineers, HR professionals, and career coaches who recognized a fundamental problem in the job market: talented individuals were struggling to showcase their abilities effectively.
-              </motion.p>
-              
-              <motion.div variants={itemVariants} className="mb-8 space-y-8">
-                <div className="relative pl-8 border-l-2 border-gray-200 dark:border-gray-700">
-                  <div className="absolute left-[-8px] top-0 w-4 h-4 rounded-full bg-brand-500"></div>
-                  <h4 className="font-semibold text-brand-600 dark:text-brand-400">2023</h4>
-                  <p className="text-gray-600 dark:text-gray-300 mt-1">Founded in San Francisco with a vision to transform career advancement through AI</p>
+            </AnimatePresence>
+          </div>
+                
+          {/* Slide Indicators */}
+          <div className="flex justify-center gap-2 mb-8">
+            {slides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setCurrentSlide(index);
+                  setProgress(0);
+                }}
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                  index === currentSlide ? 'bg-brand-600 w-8' : 'bg-gray-300 hover:bg-gray-400'
+                }`}
+              />
+            ))}
                 </div>
                 
-                <div className="relative pl-8 border-l-2 border-gray-200 dark:border-gray-700">
-                  <div className="absolute left-[-8px] top-0 w-4 h-4 rounded-full bg-brand-500"></div>
-                  <h4 className="font-semibold text-brand-600 dark:text-brand-400">2024</h4>
-                  <p className="text-gray-600 dark:text-gray-300 mt-1">Launched our core platform with Resume Builder and Mock Interview features</p>
-                </div>
-                
-                <div className="relative pl-8 border-l-2 border-gray-200 dark:border-gray-700">
-                  <div className="absolute left-[-8px] top-0 w-4 h-4 rounded-full bg-brand-500"></div>
-                  <h4 className="font-semibold text-brand-600 dark:text-brand-400">2025</h4>
-                  <p className="text-gray-600 dark:text-gray-300 mt-1">Expanding globally with new skill analysis and job matching algorithms</p>
-                </div>
-              </motion.div>
-            </motion.div>
-          </TabsContent>
-          
-          <TabsContent value="values" className="mt-2">
-            <motion.div
-              initial="hidden"
-              animate={activeTab === 'values' ? 'visible' : 'hidden'}
-              variants={containerVariants}
-              className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
-            >
-              <motion.div variants={itemVariants} className="flex items-center mb-6">
-                <div className="mr-4 p-3 rounded-full bg-blue-50 dark:bg-blue-900/20">
-                  <Lightbulb className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <h2 className="text-2xl font-semibold">Our Values</h2>
-              </motion.div>
-              
-              <motion.p variants={itemVariants} className="text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                Our core values guide everything we do at FutureFind, from product development to customer support.
-              </motion.p>
-              
-              <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center mb-4">
-                      <ThumbsUp className="h-5 w-5 text-brand-600 mr-3" />
-                      <h3 className="text-lg font-medium">Accessibility</h3>
+          {/* Auto-play Status */}
+          <div className="text-center mb-4">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white text-green-700 rounded-full text-sm font-medium border border-green-200">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              Auto-playing slides
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm">
-                      Making career advancement tools accessible to everyone, regardless of background or experience level.
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center mb-4">
-                      <Award className="h-5 w-5 text-brand-600 mr-3" />
-                      <h3 className="text-lg font-medium">Excellence</h3>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm">
-                      Committed to delivering the highest quality tools and resources that truly make a difference.
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center mb-4">
-                      <Users className="h-5 w-5 text-brand-600 mr-3" />
-                      <h3 className="text-lg font-medium">Community</h3>
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm">
-                      Building a supportive community where job seekers can learn, grow, and succeed together.
-                    </p>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-center mb-4">
-                      <Briefcase className="h-5 w-5 text-brand-600 mr-3" />
-                      <h3 className="text-lg font-medium">Innovation</h3>
-                    </div>
-                    <p className="text-gray-600 dark:text-gray-300 text-sm">
-                      Constantly pushing the boundaries of what's possible with AI to solve real career challenges.
-                    </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-          </TabsContent>
-        </Tabs>
       </section>
       
       {/* Team Section */}
