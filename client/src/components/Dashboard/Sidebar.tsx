@@ -20,8 +20,12 @@ type SidebarItem = {
   active?: boolean;
 };
 
-export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+interface SidebarProps {
+  isOpen: boolean;
+  onToggle: (open: boolean) => void;
+}
+
+export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const [activeItem, setActiveItem] = useState("dashboard");
 
   const sidebarItems: SidebarItem[] = [
@@ -65,11 +69,13 @@ export default function Sidebar() {
     <div
       className={cn(
         "flex flex-col  bg-sidebar border-muted-foreground border-gray-200 transition-all duration-300  pt-16 ",
-        collapsed ? "w-20" : "w-64"
+        isOpen ? "w-64" : "w-20"
       )}
+      onMouseEnter={() => !isOpen && onToggle(true)}
+      onMouseLeave={() => isOpen && onToggle(false)}
     >
       <div className="flex items-center justify-between p-7 border-b border-gray-200">
-        <div className={cn("flex items-center", collapsed && "justify-center w-full")}>
+        <div className={cn("flex items-center", !isOpen && "justify-center w-full")}>
        
           
         
@@ -78,9 +84,9 @@ export default function Sidebar() {
           variant="ghost"
           size="sm"
           className="h-8 w-8"
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={() => onToggle(!isOpen)}
         >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {!isOpen ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
         </Button>
       </div>
 
@@ -92,13 +98,13 @@ export default function Sidebar() {
             className={cn(
               "flex items-center gap-2 px-4 py-3 text-sidebar-foreground hover:bg-sidebar-accent rounded-md mx-2 transition-all",
               item.active && "bg-primary text-primary-foreground hover:bg-primary/90",
-              !collapsed ? "justify-start" : "justify-center",
+              isOpen ? "justify-start" : "justify-center",
               `animate-fade-in [animation-delay:${index * 100 + 100}ms]`
             )}
             onClick={() => handleItemClick(item.label.toLowerCase().split(" ")[0])}
           >
             {item.icon}
-            {!collapsed && <span>{item.label}</span>}
+            {isOpen && <span>{item.label}</span>}
           </a>
         ))}
       </div>
@@ -108,21 +114,21 @@ export default function Sidebar() {
           href="/profile"
           className={cn(
             "flex items-center gap-2 px-4 py-3 text-sidebar-foreground hover:bg-sidebar-accent rounded-md transition-all",
-            !collapsed ? "justify-start" : "justify-center"
+            isOpen ? "justify-start" : "justify-center"
           )}
         >
           <User className="h-5 w-5" />
-          {!collapsed && <span>Profile</span>}
+          {isOpen && <span>Profile</span>}
         </a>
         <a
           href="/settings"
           className={cn(
             "flex items-center gap-2 px-4 py-3 text-sidebar-foreground hover:bg-sidebar-accent rounded-md transition-all",
-            !collapsed ? "justify-start" : "justify-center"
+            isOpen ? "justify-start" : "justify-center"
           )}
         >
           <Cog className="h-5 w-5" />
-          {!collapsed && <span>Settings</span>}
+          {isOpen && <span>Settings</span>}
         </a>
       </div>
     </div>

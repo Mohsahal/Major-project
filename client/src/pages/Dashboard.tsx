@@ -12,10 +12,42 @@ import Header from "@/components/Header";
 
 export default function Dashboard() {
   const mainRef = useRef<HTMLElement>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Handle scroll events to auto-close sidebar
+  useEffect(() => {
+    const mainElement = mainRef.current;
+    if (!mainElement) return;
+
+    let scrollTimeout: NodeJS.Timeout;
+
+    const handleScroll = () => {
+      // Clear previous timeout
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+
+      // Set a new timeout to close sidebar after scrolling stops
+      scrollTimeout = setTimeout(() => {
+        if (sidebarOpen) {
+          setSidebarOpen(false);
+        }
+      }, 150); // 150ms delay after scrolling stops
+    };
+
+    mainElement.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      mainElement.removeEventListener('scroll', handleScroll);
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+    };
+  }, [sidebarOpen]);
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50">
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} onToggle={setSidebarOpen} />
       
       <main className="flex-1 overflow-y-auto" ref={mainRef}>
         <Header scrollContainerRef={mainRef} />
