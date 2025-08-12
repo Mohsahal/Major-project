@@ -128,7 +128,7 @@ export const FormMockInterview = ({ initialData }: FormMockInterviewProps) => {
         }
       }
 
-      navigate("/generate", { replace: true });
+      navigate("/generate");
     } catch (error) {
       console.log(error);
       toast.error("Error..", {
@@ -174,7 +174,7 @@ export const FormMockInterview = ({ initialData }: FormMockInterviewProps) => {
               const resp = await ApiClient.deleteInterview(initialData.id, token);
               if (!resp.success) throw new Error(resp.error || 'Delete failed');
               toast("Deleted..!", { description: "Interview deleted successfully" });
-              navigate("/generate", { replace: true });
+              navigate("/generate");
             } catch (e) {
               toast.error("Error..", { description: "Failed to delete interview" });
             }

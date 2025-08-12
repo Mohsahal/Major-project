@@ -73,7 +73,7 @@ export const MockLoadPage = () => {
           }
         } catch (error) {
           console.error("Error fetching interview:", error);
-          navigate("/generate", { replace: true });
+          navigate("/generate");
         } finally {
           setIsLoading(false);
         }

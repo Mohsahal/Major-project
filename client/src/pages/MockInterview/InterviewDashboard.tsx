@@ -7,111 +7,149 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Interview } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import Header from "@/components/MockInterview/Header";
-import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Plus, RefreshCw, ArrowLeft, LayoutDashboard } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useDataRefresh } from "@/hooks/useDataRefresh";
 
 export const InterviewDashboard = () => {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(false);
   const { user, getToken, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchInterviews = async () => {
+  const fetchInterviews = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = getToken();
+      console.log("User ID:", user?.id);
+      console.log("Token exists:", !!token);
+      
+      // First check if server is accessible
       try {
-        setLoading(true);
-        const token = getToken();
-        console.log("User ID:", user?.id);
-        console.log("Token exists:", !!token);
-        
-        // First check if server is accessible
-        try {
-          const healthCheck = await fetch('http://localhost:5000/health');
-          console.log("Server health check:", healthCheck.ok);
-          if (!healthCheck.ok) {
-            throw new Error(`Server health check failed: ${healthCheck.status}`);
-          }
-        } catch (error) {
-          console.error("Server not accessible:", error);
-          toast.error("Server Error", {
-            description: "Cannot connect to server. Please check if server is running.",
-          });
-          setLoading(false);
-          return;
+        const healthCheck = await fetch('http://localhost:5000/health');
+        console.log("Server health check:", healthCheck.ok);
+        if (!healthCheck.ok) {
+          throw new Error(`Server health check failed: ${healthCheck.status}`);
         }
-        
-        const params = user?.id ? `?userId=${encodeURIComponent(user.id)}` : "";
-        const res = await fetch(`http://localhost:5000/api/interviews${params}`, {
-          headers: {
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        });
-        if (!res.ok) {
-          console.error("HTTP Error:", res.status, res.statusText);
-          throw new Error(`Failed to fetch interviews: ${res.status} ${res.statusText}`);
-        }
-        const data = await res.json();
-        console.log("API Response:", data);
-        const list: Interview[] = (Array.isArray(data) ? data : data.data || []).map(
-          (item: {
-            _id?: string;
-            id?: string;
-            position: string;
-            description: string;
-            experience: number;
-            userId: string;
-            techStack: string;
-            questions?: { question: string; answer: string }[];
-            createdAt: string | Date;
-            updatedAt?: string | Date;
-            updateAt?: string | Date;
-          }) => ({
-            id: item._id ?? item.id,
-            position: item.position,
-            description: item.description,
-            experience: item.experience,
-            userId: item.userId,
-            techStack: item.techStack,
-            questions: item.questions || [],
-            createdAt: item.createdAt,
-            updatedAt: item.updatedAt ?? item.updateAt,
-          })
-        );
-        console.log("Processed interviews list:", list);
-        console.log("List length:", list.length);
-        setInterviews(list);
       } catch (error) {
-        console.error("Error on fetching : ", error);
-        toast.error("Error..", {
-          description: "Something went wrong. Try again later.",
+        console.error("Server not accessible:", error);
+        toast.error("Server Error", {
+          description: "Cannot connect to server. Please check if server is running.",
         });
-      } finally {
         setLoading(false);
+        return;
       }
-    };
+      
+      const params = user?.id ? `?userId=${encodeURIComponent(user.id)}` : "";
+      const res = await fetch(`http://localhost:5000/api/interviews${params}`, {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+      if (!res.ok) {
+        console.error("HTTP Error:", res.status, res.statusText);
+        throw new Error(`Failed to fetch interviews: ${res.status} ${res.statusText}`);
+      }
+      const data = await res.json();
+      console.log("API Response:", data);
+      const list: Interview[] = (Array.isArray(data) ? data : data.data || []).map(
+        (item: {
+          _id?: string;
+          id?: string;
+          position: string;
+          description: string;
+          experience: number;
+          userId: string;
+          techStack: string;
+          questions?: { question: string; answer: string }[];
+          createdAt: string | Date;
+          updatedAt?: string | Date;
+          updateAt?: string | Date;
+        }) => ({
+          id: item._id ?? item.id,
+          position: item.position,
+          description: item.description,
+          experience: item.experience,
+          userId: item.userId,
+          techStack: item.techStack,
+          questions: item.questions || [],
+          createdAt: item.createdAt,
+          updatedAt: item.updatedAt ?? item.updateAt,
+        })
+      );
+      console.log("Processed interviews list:", list);
+      console.log("List length:", list.length);
+      setInterviews(list);
+    } catch (error) {
+      console.error("Error on fetching : ", error);
+      toast.error("Error..", {
+        description: "Something went wrong. Try again later.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id, getToken]);
 
+  // Fetch interviews when component mounts or when user/auth changes
+  useEffect(() => {
     if (user?.id && isAuthenticated) {
       fetchInterviews();
     } else if (!isAuthenticated) {
       console.log("User not authenticated, skipping fetch");
     }
-  }, [user?.id, isAuthenticated]);
+  }, [user?.id, isAuthenticated, fetchInterviews]);
+
+  // Use the custom hook to refresh data when navigating back
+  useDataRefresh('/generate', fetchInterviews, [user?.id, isAuthenticated]);
+
+  const handleRefresh = () => {
+    if (user?.id && isAuthenticated) {
+      fetchInterviews();
+    }
+  };
+
+  const handleGoBack = () => {
+    navigate(-1);
+  };
 
   return (
     <>
     <Header/>
-      <div className="flex w-full items-center justify-between mt-6 p-3">
+      <div className="flex w-full items-center justify-between mt-24 p-3">
         {/* headings */}
         <Headings
           title="Dashboard"
           description="Create and start you AI Mock interview"
         />
-        <Link to={"/generate/create"}>
-          <Button variant={"outline"} size={"sm"} className="ml-3 mr-3">
-            <Plus /> Add New
+        <div className="flex items-center gap-2">
+        
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => navigate("/dashboard")}
+            className="flex items-center gap-2"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            Go Back
           </Button>
-        </Link>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh}
+            disabled={loading}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Link to={"/generate/create"}>
+            <Button variant={"outline"} size={"sm"}>
+              <Plus /> Add New
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Separator className="my-8" />

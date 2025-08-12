@@ -130,20 +130,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error(data.message || 'Signup failed');
       }
 
-      const userData = {
-        id: data.user.id,
-        email: data.user.email,
-        name: data.user.name,
-        profileImage: data.user.profileImage
-      };
-
-      setUser(userData);
-      localStorage.setItem('futurefind_user', JSON.stringify(userData));
-      localStorage.setItem('futurefind_token', data.token);
+      // Don't set user data or token after signup - user needs to login separately
+      // setUser(userData);
+      // localStorage.setItem('futurefind_user', JSON.stringify(userData));
+      // localStorage.setItem('futurefind_token', data.token);
 
       toast({
-        title: "Account created",
-        description: `Welcome to FutureFind, ${name}!`,
+        title: "Account created successfully",
+        description: `Welcome to FutureFind, ${name}! Please sign in with your new account.`,
       });
     } catch (error) {
       console.error('Signup failed:', error);
@@ -167,6 +161,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       title: "Logged out",
       description: "You have been successfully logged out.",
     });
+    
+    // Use window.location.href to completely reset browser state and prevent back button issues
+    window.location.href = '/auth';
   };
 
   return (

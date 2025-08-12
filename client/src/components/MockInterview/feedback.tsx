@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { LoaderPage } from "./loader-page";
+import { LoaderPage } from "../MockInterview/loader-page";
 import { CustomBreadCrumb } from "./Custom-bread-crumb";
 import { Headings } from "./Headings";
 import { InterviewPin } from "./pin";
@@ -28,7 +28,7 @@ export const Feedback = () => {
   const navigate = useNavigate();
 
   if (!interviewId) {
-    navigate("/generate", { replace: true });
+    navigate("/generate");
   }
   
   useEffect(() => {

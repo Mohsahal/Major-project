@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 // Define props interface for Header
 interface HeaderProps {
@@ -22,6 +23,7 @@ const Header = ({ scrollContainerRef }: HeaderProps) => { // Destructure scrollC
   const [isScrolled, setIsScrolled] = useState(false); // Keep internal scroll state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
+  const { toast } = useToast();
 
   // Change header style on scroll based on the provided ref or window
   useEffect(() => {
@@ -129,7 +131,7 @@ const Header = ({ scrollContainerRef }: HeaderProps) => { // Destructure scrollC
                   <DropdownMenuItem className="flex items-center px-3 py-2.5 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 hover:text-purple-700 rounded-lg transition-all duration-200 cursor-pointer group">
                     <Link to="/profile" className="flex items-center w-full">
                       <div className="p-2 bg-purple-100 rounded-lg mr-3 group-hover:bg-purple-200 transition-colors duration-200">
-                        <User className="h-4 w-4 text-purple-600" />
+                        <User className="h-4 w-4 text-indigo-600" />
                       </div>
                       <span className="font-medium">Profile</span>
                     </Link>
@@ -143,6 +145,9 @@ const Header = ({ scrollContainerRef }: HeaderProps) => { // Destructure scrollC
                       <span className="font-medium">Settings</span>
                     </Link>
                   </DropdownMenuItem>
+                  
+                  
+                     
                   
                   <div className="border-t border-gray-100 my-2"></div>
                   

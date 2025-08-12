@@ -14,9 +14,17 @@ import { useGoogleLogin } from '@react-oauth/google';
 const Auth = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
-  const { login, signup, isLoading, loginWithGoogle } = useAuth();
+  const { login, signup, isLoading, loginWithGoogle, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Redirect authenticated users to dashboard immediately
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Replace the current history entry to prevent back button issues
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   // Determine initial tab from location state
   useEffect(() => {
@@ -64,7 +72,8 @@ const Auth = () => {
     try {
       await login(loginData.email, loginData.password);
      
-      navigate("/dashboard"); // Navigate to auth page with signup tab active
+      // Navigate to dashboard and replace history to prevent back button issues
+      navigate("/dashboard", { replace: true });
     } catch (error) {
       // Error handling is already done in the AuthContext
       console.error("Login error:", error);
@@ -107,8 +116,28 @@ const Auth = () => {
 
     try {
       await signup(signupData.email, signupData.password, signupData.name);
-      setActiveTab("login"); // Switch to login tab after successful signup
-      navigate("/auth", { state: { activeTab: "login" } }); // Navigate to auth page with login tab active
+      
+      // Pre-fill login email with the email used during signup
+      setLoginData(prev => ({
+        ...prev,
+        email: signupData.email
+      }));
+      
+      // Clear signup form data
+      setSignupData({
+        name: "",
+        email: "",
+        password: "",
+      });
+      
+      // Switch to login tab after successful signup
+      setActiveTab("login");
+      
+      // Show success message
+      toast({
+        title: "Success",
+        description: "Account created successfully! Please sign in with your new credentials.",
+      });
     } catch (error) {
       // Error handling is already done in the AuthContext
       console.error("Signup error:", error);
@@ -148,17 +177,17 @@ const Auth = () => {
       // Use the new loginWithGoogle function from AuthContext
       await loginWithGoogle(data.token, data.user);
       
-      // If we're on the signup tab, show account created message and redirect to login
+      // If we're on the signup tab, show account created message and switch to login tab
       if (activeTab === "signup") {
         toast({
           title: "Account Created",
           description: "Your account has been created successfully. Please sign in.",
         });
         setActiveTab("login");
-        navigate("/auth", { state: { activeTab: "login" } });
+        // Don't navigate away - stay on auth page
       } else {
         // If we're on the login tab, redirect to dashboard
-        navigate("/dashboard");
+        navigate("/dashboard", { replace: true });
       }
     } catch (error) {
       console.error('Backend authentication error:', error);

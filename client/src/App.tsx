@@ -31,7 +31,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import MainLayout from "@/components/layout/MainLayout";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import MockInterviewPage from "./pages/MockInterview/mock-interview-page";
-import { Feedback } from "./components/MockInterview/feedback";
+import { Feedback } from "@/components/MockInterview/feedback";
 import QuestionsPage from "./pages/MockInterview/QuestionsPage";
 
 import ResourcesPage from "./pages/MockInterview/ResourcesPage";
@@ -83,12 +83,9 @@ const App = () => (
                         </MainLayout>
                       }
                     />
-                    {/* Authentication routes */}
+                    {/* Authentication routes - accessible to everyone */}
                     <Route path="/auth" element={<Auth />} />
-                    <Route
-                      path="/forgot-password"
-                      element={<ForgotPassword />}
-                    />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
                     {/* Note: Removed duplicate shared-resume route with encodedData */}{" "}
                     {/* <Route path="/shared-resume/:encodedData" element={<SharedResume />} /> */}
                     {/* Protected Routes - require authentication */}
@@ -194,11 +191,6 @@ const App = () => (
 
                     {/* 404 Page */}
                     <Route path="*" element={<NotFound />} />
-                    {/* Redirect root to dashboard if authenticated, otherwise ProtectedRoute handles redirect to /auth */}
-                    <Route
-                      path="/"
-                      element={<Navigate to="/dashboard" replace />}
-                    />
                   </Routes>
                 </main>
               </div>
