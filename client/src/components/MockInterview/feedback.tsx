@@ -116,7 +116,7 @@ export const Feedback = () => {
   }
 
   return (
-    <div className="flex flex-col w-full gap-8 py-5">
+    <div className="flex flex-col w-full max-w-5xl mx-auto gap-8 py-8 px-4 ml-3">
       <div className="flex items-center justify-between w-full gap-2">
         <CustomBreadCrumb
           breadCrumbPage={"Feedback"}
@@ -146,22 +146,21 @@ export const Feedback = () => {
 
       <Headings title="Interview Feedback" isSubHeading />
 
-             {feedbacks && feedbacks.length > 0 ? (
-         <div>
-           <p className="text-sm text-gray-500 mb-4">Debug: Found {feedbacks.length} feedback items</p>
-          <Accordion type="single" collapsible className="space-y-6">
+      {feedbacks && feedbacks.length > 0 ? (
+        <div>
+          <Accordion type="single" collapsible className="space-y-4">
             {feedbacks.map((feed) => {
               console.log('Rendering feedback item:', feed);
               return (
                 <AccordionItem
                   key={feed.id}
                   value={feed.id}
-                  className="border rounded-lg shadow-md"
+                  className="border rounded-md bg-white shadow-sm"
                 >
                   <AccordionTrigger
                     onClick={() => setActiveFeed(feed.id)}
                     className={cn(
-                      "px-5 py-3 flex items-center justify-between text-base rounded-t-lg transition-colors hover:no-underline",
+                      "px-5 py-3 text-left text-base rounded-t-md transition-colors hover:no-underline",
                       activeFeed === feed.id
                         ? "bg-gradient-to-r from-purple-50 to-blue-50"
                         : "hover:bg-gray-50"
@@ -170,13 +169,13 @@ export const Feedback = () => {
                     <span>{feed.question}</span>
                   </AccordionTrigger>
 
-                  <AccordionContent className="px-5 py-6 bg-white rounded-b-lg space-y-5 shadow-inner">
-                    <div className="text-lg font-semibold to-gray-700">
+                  <AccordionContent className="px-5 py-6 bg-white rounded-b-md space-y-5">
+                    <div className="text-lg font-semibold text-gray-700">
                       <Star className="inline mr-2 text-yellow-400" />
-                      Rating : {feed.rating || 'N/A'}
+                      Rating: {feed.rating || 'N/A'}
                     </div>
 
-                    <Card className="border-none space-y-3 p-4 bg-green-50 rounded-lg shadow-md">
+                    <Card className="border-none space-y-3 p-4 bg-green-50 rounded-md shadow-sm">
                       <CardTitle className="flex items-center text-lg">
                         <CircleCheck className="mr-2 text-green-600" />
                         Expected Answer
@@ -187,7 +186,7 @@ export const Feedback = () => {
                       </CardDescription>
                     </Card>
 
-                    <Card className="border-none space-y-3 p-4 bg-yellow-50 rounded-lg shadow-md">
+                    <Card className="border-none space-y-3 p-4 bg-yellow-50 rounded-md shadow-sm">
                       <CardTitle className="flex items-center text-lg">
                         <CircleCheck className="mr-2 text-yellow-600" />
                         Your Answer
@@ -198,7 +197,7 @@ export const Feedback = () => {
                       </CardDescription>
                     </Card>
 
-                    <Card className="border-none space-y-3 p-4 bg-red-50 rounded-lg shadow-md">
+                    <Card className="border-none space-y-3 p-4 bg-red-50 rounded-md shadow-sm">
                       <CardTitle className="flex items-center text-lg">
                         <CircleCheck className="mr-2 text-red-600" />
                         Feedback
@@ -212,14 +211,14 @@ export const Feedback = () => {
                 </AccordionItem>
               );
             })}
-                     </Accordion>
-         </div>
-       ) : (
-         <div className="text-center py-8">
-           <p className="text-gray-500 text-lg">No feedback available yet.</p>
-           <p className="text-gray-400 text-sm mt-2">Complete the interview to see your feedback.</p>
-         </div>
-       )}
+          </Accordion>
+        </div>
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-gray-500 text-lg">No feedback available yet.</p>
+          <p className="text-gray-400 text-sm mt-2">Complete the interview to see your feedback.</p>
+        </div>
+      )}
     </div>
   );
 };

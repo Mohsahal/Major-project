@@ -3,6 +3,8 @@ import { Interview } from "@/types";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { ApiClient } from "@/config/api";
+import { toast } from "sonner";
 
 const CreateEditPage = () => {
   const { interviewId } = useParams<{ interviewId: string }>();
@@ -14,26 +16,31 @@ const CreateEditPage = () => {
       if (interviewId && interviewId !== 'create') {
         try {
           const token = getToken();
-          const res = await fetch(`http://localhost:5000/api/interviews/${interviewId}`, {
-            headers: {
-              Authorization: token ? `Bearer ${token}` : "",
-            },
-          });
-          if (!res.ok) return;
-          const data = await res.json();
+          if (!token) {
+            toast.error("Authentication token not found");
+            return;
+          }
+
+          const resp = await ApiClient.getInterviewById(interviewId, token);
+          if (!resp.success || !resp.data) {
+            throw new Error(resp.error || 'Failed to fetch interview');
+          }
+
+          const item = resp.data as unknown as any;
           setInterview({
-            id: data._id,
-            position: data.position,
-            description: data.description,
-            experience: data.experience,
-            userId: data.userId,
-            techStack: data.techStack,
-            questions: data.questions || [],
-            createdAt: data.createdAt,
-            updateAt: data.updatedAt,
-          } as unknown as Interview);
+            id: item._id ?? item.id,
+            position: item.position,
+            description: item.description,
+            experience: item.experience,
+            userId: item.userId,
+            techStack: item.techStack,
+            questions: item.questions || [],
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt,
+          } as Interview);
         } catch (error) {
           console.log(error);
+          toast.error("Failed to load interview");
         }
       }
     };

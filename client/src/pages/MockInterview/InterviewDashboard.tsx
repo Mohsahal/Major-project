@@ -117,7 +117,7 @@ export const InterviewDashboard = () => {
       <Separator className="my-8" />
       {/* content section */}
 
-      <div className="md:grid md:grid-cols-3 gap-3 py-2 my-2 mx-2">
+      <div className="md:grid md:grid-cols-4 gap-3 py-2 my-2 mx-2">
         {loading ? (
           Array.from({ length: 6 }).map((_, index) => (
             <Skeleton key={index} className="h-24 md:h-32 rounded-md" />

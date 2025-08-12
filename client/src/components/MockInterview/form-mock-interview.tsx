@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ApiClient } from "@/config/api";
 
 interface FormMockInterviewProps {
   initialData: Interview | null;
@@ -110,14 +111,9 @@ export const FormMockInterview = ({ initialData }: FormMockInterviewProps) => {
         if (isValid) {
           const aiResult = await generateAiResponse(data);
           const token = getToken();
-          await fetch(`http://localhost:5000/api/interviews/${initialData.id}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: token ? `Bearer ${token}` : "",
-            },
-            body: JSON.stringify({ ...data, questions: aiResult }),
-          });
+          if (!token) throw new Error('No auth token');
+          const resp = await ApiClient.updateInterview(initialData.id, { ...data, questions: aiResult }, token);
+          if (!resp.success) throw new Error(resp.error || 'Update failed');
           toast(toastMessage.title, { description: toastMessage.description });
         }
       } else {
@@ -125,15 +121,9 @@ export const FormMockInterview = ({ initialData }: FormMockInterviewProps) => {
         if (isValid) {
           const aiResult = await generateAiResponse(data);
           const token = getToken();
-          await fetch("http://localhost:5000/api/interviews", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: token ? `Bearer ${token}` : "",
-            },
-            body: JSON.stringify({ ...data, questions: aiResult }),
-          });
-
+          if (!token) throw new Error('No auth token');
+          const resp = await ApiClient.createInterview({ ...data, questions: aiResult }, token);
+          if (!resp.success) throw new Error(resp.error || 'Create failed');
           toast(toastMessage.title, { description: toastMessage.description });
         }
       }
@@ -180,10 +170,9 @@ export const FormMockInterview = ({ initialData }: FormMockInterviewProps) => {
           <Button size={"icon"} variant={"ghost"} onClick={async () => {
             try {
               const token = getToken();
-              await fetch(`http://localhost:5000/api/interviews/${initialData.id}`, {
-                method: "DELETE",
-                headers: { Authorization: token ? `Bearer ${token}` : "" },
-              });
+              if (!token) throw new Error('No auth token');
+              const resp = await ApiClient.deleteInterview(initialData.id, token);
+              if (!resp.success) throw new Error(resp.error || 'Delete failed');
               toast("Deleted..!", { description: "Interview deleted successfully" });
               navigate("/generate", { replace: true });
             } catch (e) {
