@@ -1,7 +1,15 @@
-
-interface SpeechRecognitionErrorEvent extends Event {
-  error: string;
-  message: string;
+// Speech Recognition API types
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
+  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
+  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
+  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
 }
 
 interface SpeechRecognitionEvent extends Event {
@@ -27,43 +35,37 @@ interface SpeechRecognitionAlternative {
   confidence: number;
 }
 
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  grammars: SpeechGrammarList;
-  interimResults: boolean;
-  lang: string;
-  maxAlternatives: number;
-  onaudioend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onaudiostart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onerror: ((this: SpeechRecognition, ev: SpeechRecognitionErrorEvent) => any) | null;
-  onnomatch: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
-  onresult: ((this: SpeechRecognition, ev: SpeechRecognitionEvent) => any) | null;
-  onsoundend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onsoundstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onspeechend: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onspeechstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  onstart: ((this: SpeechRecognition, ev: Event) => any) | null;
-  start(): void;
-  stop(): void;
-  abort(): void;
+interface SpeechRecognitionErrorEvent extends Event {
+  error: string;
+  message: string;
 }
 
-interface SpeechGrammarList {
-  length: number;
-  item(index: number): SpeechGrammar;
-  [index: number]: SpeechGrammar;
-  addFromURI(src: string, weight: number): void;
-  addFromString(string: string, weight: number): void;
-}
+declare var SpeechRecognition: {
+  prototype: SpeechRecognition;
+  new(): SpeechRecognition;
+};
 
-interface SpeechGrammar {
-  src: string;
-  weight: number;
-}
+declare var webkitSpeechRecognition: {
+  prototype: SpeechRecognition;
+  new(): SpeechRecognition;
+};
 
-// Add to window global
 interface Window {
-  SpeechRecognition: new () => SpeechRecognition;
-  webkitSpeechRecognition: new () => SpeechRecognition;
+  SpeechRecognition: typeof SpeechRecognition;
+  webkitSpeechRecognition: typeof webkitSpeechRecognition;
+  speechSynthesis: SpeechSynthesis;
+}
+
+interface SpeechSynthesis {
+  speak(utterance: SpeechSynthesisUtterance): void;
+  cancel(): void;
+}
+
+interface SpeechSynthesisUtterance extends EventTarget {
+  text: string;
+  lang: string;
+  pitch: number;
+  rate: number;
+  volume: number;
+  onend: ((this: SpeechSynthesisUtterance, ev: Event) => any) | null;
 }

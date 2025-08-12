@@ -5,9 +5,10 @@ import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import { useResume } from '@/contexts/ResumeContext'
 import { formatDistanceToNow } from 'date-fns'
-
+import { useNavigate } from "react-router-dom";
 function ResumeBuilder() {
   const { recentResume, isLoading, fetchResumes } = useResume();
+  const navigate = useNavigate();
 
   const formatLastModified = (dateString: string) => {
     try {
@@ -16,6 +17,21 @@ function ResumeBuilder() {
       return 'Recently';
     }
   };
+
+  const newResume=()=>{
+    
+    navigate("/resume-builder");
+
+
+    
+
+  }
+
+  const handlePreview=(id)=>{
+
+    navigate(`/resume-preview/${id}`);
+  }
+  
 
   return (
     <div className="space-y-6">
@@ -73,15 +89,15 @@ function ResumeBuilder() {
         <CardContent className="space-y-6">
           {/* Quick Actions Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition-all">
+            <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition-all" onClick={newResume}>
               <Plus className="h-6 w-6 text-blue-600" />
               <span className="font-medium">New Resume</span>
             </Button>
-            <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition-all">
+            <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition-all" >
               <Upload className="h-6 w-6 text-blue-600" />
               <span className="font-medium">Import PDF</span>
             </Button>
-            <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition-all">
+            <Button variant="outline" className="h-24 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition-all" >
               <FileText className="h-6 w-6 text-blue-600" />
               <span className="font-medium">Templates</span>
             </Button>
@@ -92,7 +108,7 @@ function ResumeBuilder() {
             <div className="flex items-center justify-between mb-4">
               <h4 className="font-semibold text-gray-900">Recent Resume</h4>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" className="h-8 px-3">
+                <Button variant="ghost" size="sm" className="h-8 px-3" onClick={()=>{handlePreview(recentResume._id)}}>
                   <Eye className="h-4 w-4 mr-1" />
                   Preview
                 </Button>
@@ -118,6 +134,7 @@ function ResumeBuilder() {
                 </div>
                 <div className="flex-1">
                   <h5 className="font-medium text-gray-900">{recentResume.title}</h5>
+               
                   <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
                     <Clock className="h-3 w-3" />
                     <span>Last updated: {formatLastModified(recentResume.lastModified)}</span>

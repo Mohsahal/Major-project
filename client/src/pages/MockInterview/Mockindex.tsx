@@ -195,7 +195,7 @@ const Index = () => {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="text-center"
           >
-            <Link to="/interview">
+            <Link to="/generate">
               <Button 
                 size="lg"
                 className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-8 py-6 text-xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
