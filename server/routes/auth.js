@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { OAuth2Client } = require('google-auth-library');
+const authMiddleware = require('../middleware/auth');
 
 // Use the Google Client ID from environment variables
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -198,3 +199,24 @@ router.post('/google-login', async (req, res) => {
 });
 
 module.exports = router; 
+ 
+// Profile routes
+router.get('/me', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.json({ success: true, data: user });
+  } catch (e) {
+    res.status(500).json({ success: false, message: 'Failed to load profile' });
+  }
+});
+
+router.put('/me', authMiddleware, async (req, res) => {
+  try {
+    const updates = (({ name, profileImage }) => ({ name, profileImage }))(req.body);
+    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select('-password');
+    res.json({ success: true, data: user, message: 'Profile updated' });
+  } catch (e) {
+    res.status(400).json({ success: false, message: 'Failed to update profile' });
+  }
+});

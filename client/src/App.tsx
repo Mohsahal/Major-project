@@ -32,6 +32,10 @@ import MainLayout from "@/components/layout/MainLayout";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import MockInterviewPage from "./pages/MockInterview/mock-interview-page";
 import { Feedback } from "./components/MockInterview/feedback";
+import QuestionsPage from "./pages/MockInterview/QuestionsPage";
+
+import ResourcesPage from "./pages/MockInterview/ResourcesPage";
+import AboutMockPage from "./pages/MockInterview/AboutMockPage";
 // import Header from "@/components/Header";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
@@ -181,6 +185,11 @@ const App = () => (
                       <Route path="interview/:interviewId" element={<MockLoadPage/>}/>
                       <Route path="interview/:interviewId/start" element={<MockInterviewPage/>}/>
                       <Route path="feedback/:interviewId" element={<Feedback/>}/>
+                      {/* MockInterview top-level nav pages */}
+                      <Route path="questions" element={<QuestionsPage/>} />
+                    
+                      <Route path="resources" element={<ResourcesPage/>} />
+                      <Route path="about" element={<AboutMockPage/>} />
                     </Route>
 
                     {/* 404 Page */}

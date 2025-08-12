@@ -18,6 +18,7 @@ export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/auth/login`,
   REGISTER: `${API_BASE_URL}/auth/register`,
   VERIFY_TOKEN: `${API_BASE_URL}/auth/verify`,
+  PROFILE_ME: `${API_BASE_URL}/auth/me`,
 };
 
 // API Response types
@@ -180,6 +181,21 @@ export class ApiClient {
     return this.request(API_ENDPOINTS.INTERVIEW_BY_ID(id), {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
+  // Profile methods
+  static async getProfile(token: string): Promise<ApiResponse<any>> {
+    return this.request(API_ENDPOINTS.PROFILE_ME, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
+  static async updateProfile(data: { name?: string; profileImage?: string }, token: string): Promise<ApiResponse<any>> {
+    return this.request(API_ENDPOINTS.PROFILE_ME, {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
     });
   }
 

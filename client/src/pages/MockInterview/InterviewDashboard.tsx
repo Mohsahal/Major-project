@@ -108,7 +108,7 @@ export const InterviewDashboard = () => {
           description="Create and start you AI Mock interview"
         />
         <Link to={"/generate/create"}>
-          <Button size={"sm"}>
+          <Button variant={"outline"} size={"sm"} className="ml-3 mr-3">
             <Plus /> Add New
           </Button>
         </Link>

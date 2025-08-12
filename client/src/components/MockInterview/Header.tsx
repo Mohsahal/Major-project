@@ -8,7 +8,7 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
+          <Link to="/generate" className="flex items-center space-x-2">
             <img
               src="/images/interview.jpg"
               alt="MockInterview"
@@ -21,16 +21,14 @@ export default function Header() {
 
           {/* Navigation */}
           <nav className="hidden md:flex space-x-8">
-            <Link to="/questions" className="text-gray-700 hover:text-indigo-600">
+            <Link to="/generate/questions" className="text-gray-700 hover:text-indigo-600">
               Questions
             </Link>
-            <Link to="/practice" className="text-gray-700 hover:text-indigo-600">
-              Practice
-            </Link>
-            <Link to="/resources" className="text-gray-700 hover:text-indigo-600">
+           
+            <Link to="/generate/resources" className="text-gray-700 hover:text-indigo-600">
               Resources
             </Link>
-            <Link to="/about" className="text-gray-700 hover:text-indigo-600">
+            <Link to="/generate/about" className="text-gray-700 hover:text-indigo-600">
               About
             </Link>
           </nav>
