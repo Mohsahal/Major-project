@@ -120,8 +120,8 @@ export const InterviewDashboard = () => {
       <div className="flex w-full items-center justify-between mt-24 p-3">
         {/* headings */}
         <Headings
-          title="Dashboard"
-          description="Create and start you AI Mock interview"
+        title="Dashboard"
+        description="Create and start you AI Mock interview"
         />
         <div className="flex items-center gap-2">
         

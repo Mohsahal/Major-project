@@ -4,13 +4,16 @@ import {
   CircleStop,
   Loader,
   Mic,
+  MicOff,
   RefreshCw,
   Save,
   Video,
   VideoOff,
   WebcamIcon,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import useSpeechToText, { ResultType } from "@/hooks/useSpeechToText";
 import { useParams } from "react-router-dom";
 import WebCam from "react-webcam";
@@ -25,6 +28,9 @@ interface RecordAnswerProps {
   isWebCam: boolean;
   setIsWebCam: (value: boolean) => void;
   interviewId: string;
+  onQuestionComplete?: () => void; // Callback to move to next question
+  currentQuestionIndex?: number;
+  totalQuestions?: number;
 }
 
 interface AIResponse {
@@ -37,6 +43,9 @@ export const RecordAnswer = ({
   isWebCam,
   setIsWebCam,
   interviewId,
+  onQuestionComplete,
+  currentQuestionIndex = 0,
+  totalQuestions = 1,
 }: RecordAnswerProps) => {
   const {
     interimResult,
@@ -54,8 +63,51 @@ export const RecordAnswer = ({
   const [aiResult, setAiResult] = useState<AIResponse | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isSpeakerOn, setIsSpeakerOn] = useState(true); // Track speaker state
+  const [isCameraOn, setIsCameraOn] = useState(true); // Track camera state
+  const webcamRef = useRef<WebCam>(null);
 
   const { user, getToken } = useAuth();
+
+  // Auto-start camera when component mounts
+  useEffect(() => {
+    setIsCameraOn(true);
+    setIsWebCam(true);
+  }, []);
+
+  // Auto-read question when component mounts or question changes
+  useEffect(() => {
+    if (question.question && isSpeakerOn) {
+      speakQuestion(question.question);
+    }
+  }, [question.question, isSpeakerOn]);
+
+  // Function to speak the question
+  const speakQuestion = (text: string) => {
+    if ('speechSynthesis' in window && isSpeakerOn) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.9; // Slightly slower for better comprehension
+      utterance.pitch = 1;
+      utterance.volume = 0.8;
+      speechSynthesis.speak(utterance);
+    }
+  };
+
+  // Toggle speaker on/off
+  const toggleSpeaker = () => {
+    setIsSpeakerOn(!isSpeakerOn);
+    if (isSpeakerOn) {
+      speechSynthesis.cancel(); // Stop current speech
+    } else {
+      speakQuestion(question.question); // Start speaking when turned on
+    }
+  };
+
+  // Toggle camera on/off
+  const toggleCamera = () => {
+    setIsCameraOn(!isCameraOn);
+    setIsWebCam(!isCameraOn);
+  };
 
   const recordUserAnswer = async () => {
     if (isRecording) {
@@ -65,11 +117,10 @@ export const RecordAnswer = ({
         toast.error("Error", {
           description: "Your answer should be more than 30 characters",
         });
-
         return;
       }
 
-      //   ai result
+      // Generate AI result
       const aiResult = await generateResult(
         question.question,
         question.answer,
@@ -148,6 +199,7 @@ export const RecordAnswer = ({
 
   const recordNewAnswer = () => {
     setUserAnswer("");
+    setAiResult(null);
     stopSpeechToText();
     startSpeechToText();
   };
@@ -180,23 +232,34 @@ export const RecordAnswer = ({
         return;
       }
 
-             // Save the user answer
-       const saveData = {
-         mockIdRef: interviewId,
-         question: question.question,
-         correct_ans: question.answer,
-         user_ans: userAnswer,
-         feedback: aiResult.feedback,
-         rating: aiResult.ratings,
-         userId: user.id,
-       };
-       console.log('Saving user answer data:', saveData);
-       const result = await ApiClient.saveUserAnswer(saveData, token);
+      // Save the user answer
+      const saveData = {
+        mockIdRef: interviewId,
+        question: question.question,
+        correct_ans: question.answer,
+        user_ans: userAnswer,
+        feedback: aiResult.feedback,
+        rating: aiResult.ratings,
+        userId: user.id,
+      };
+      
+      console.log('Saving user answer data:', saveData);
+      const result = await ApiClient.saveUserAnswer(saveData, token);
 
       if (result.success) {
-        toast("Saved", { description: "Your answer has been saved.." });
+        toast("Saved", { description: "Your answer has been saved successfully!" });
+        
+        // Reset state
         setUserAnswer("");
+        setAiResult(null);
         stopSpeechToText();
+        
+        // Auto-advance to next question if callback exists
+        if (onQuestionComplete) {
+          setTimeout(() => {
+            onQuestionComplete();
+          }, 1500); // Wait 1.5 seconds before moving to next question
+        }
       } else {
         throw new Error(result.message || "Failed to save answer");
       }
@@ -207,7 +270,7 @@ export const RecordAnswer = ({
       console.log(error);
     } finally {
       setLoading(false);
-      setOpen(!open);
+      setOpen(false);
     }
   };
 
@@ -230,29 +293,76 @@ export const RecordAnswer = ({
         loading={loading}
       />
 
-      <div className="w-full h-[400px] md:w-96 flex flex-col items-center justify-center border p-4 bg-gray-50 rounded-md">
-        {isWebCam ? (
+      {/* Question Progress */}
+      <div className="w-full max-w-2xl text-center">
+        <div className="text-sm text-gray-600 mb-2">
+          Question {currentQuestionIndex + 1} of {totalQuestions}
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div 
+            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
+          ></div>
+        </div>
+      </div>
+
+      {/* Camera Section */}
+      <div className="w-1/2 h-[200px] md:w-96 flex flex-col items-center justify-center border p-4 bg-gray-50 rounded-md">
+        {isWebCam && isCameraOn ? (
           <WebCam
+            ref={webcamRef}
             onUserMedia={() => setIsWebCam(true)}
-            onUserMediaError={() => setIsWebCam(false)}
+            onUserMediaError={() => {
+              setIsWebCam(false);
+              setIsCameraOn(false);
+              toast.error("Camera Error", {
+                description: "Unable to access camera. Please check permissions.",
+              });
+            }}
             className="w-full h-full object-cover rounded-md"
+            screenshotFormat="image/jpeg"
+            videoConstraints={{
+              width: 400,
+              height: 300,
+              facingMode: "user"
+            }}
           />
         ) : (
-          <WebcamIcon className="min-w-24 min-h-24 text-muted-foreground" />
+          <div className="flex flex-col items-center justify-center text-center">
+            <WebcamIcon className="min-w-24 min-h-24 text-muted-foreground mb-2" />
+            <p className="text-sm text-gray-500">
+              {isCameraOn ? "Camera is starting..." : "Camera is off"}
+            </p>
+          </div>
         )}
       </div>
 
-      <div className="flex itece justify-center gap-3">
+      {/* Control Buttons */}
+      <div className="flex items-center justify-center gap-3">
         <TooltipButton
-          content={isWebCam ? "Turn Off" : "Turn On"}
+          content={isCameraOn ? "Turn Camera Off" : "Turn Camera On"}
           icon={
-            isWebCam ? (
-              <VideoOff className="min-w-5 min-h-5" />
-            ) : (
+            isCameraOn ? (
               <Video className="min-w-5 min-h-5" />
+            ) : (
+              <VideoOff className="min-w-5 min-h-5" />
             )
           }
-          onClick={() => setIsWebCam(!isWebCam)}
+          onClick={toggleCamera}
+          buttonClassName={isCameraOn ? "bg-green-100 hover:bg-green-200 text-green-700" : "bg-red-100 hover:bg-red-200 text-red-700"}
+        />
+
+        <TooltipButton
+          content={isSpeakerOn ? "Turn Speaker Off" : "Turn Speaker On"}
+          icon={
+            isSpeakerOn ? (
+              <Volume2 className="min-w-5 min-h-5" />
+            ) : (
+              <VolumeX className="min-w-5 min-h-5" />
+            )
+          }
+          onClick={toggleSpeaker}
+          buttonClassName={isSpeakerOn ? "bg-blue-100 hover:bg-blue-200 text-blue-700" : "bg-gray-100 hover:bg-gray-200 text-gray-700"}
         />
 
         <TooltipButton
@@ -265,12 +375,14 @@ export const RecordAnswer = ({
             )
           }
           onClick={recordUserAnswer}
+          buttonClassName={isRecording ? "bg-red-100 hover:bg-red-200 text-red-700" : "bg-blue-100 hover:bg-blue-200 text-blue-700"}
         />
 
         <TooltipButton
           content="Record Again"
           icon={<RefreshCw className="min-w-5 min-h-5" />}
           onClick={recordNewAnswer}
+          buttonClassName="bg-gray-100 hover:bg-gray-200 text-gray-700"
         />
 
         <TooltipButton
@@ -282,23 +394,44 @@ export const RecordAnswer = ({
               <Save className="min-w-5 min-h-5" />
             )
           }
-          onClick={() => setOpen(!open)}
-          disabled={!aiResult}
+          onClick={() => setOpen(true)}
+          disabled={!aiResult || isAiGenerating}
+          buttonClassName="bg-green-100 hover:bg-green-200 text-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
-      <div className="w-full mt-4 p-4 border rounded-md bg-gray-50">
-        <h2 className="text-lg font-semibold">Your Answer:</h2>
-
-        <p className="text-sm mt-2 text-gray-700 whitespace-normal">
-          {userAnswer || "Start recording to see your answer here"}
-        </p>
+      {/* Answer Display */}
+      <div className="w-full max-w-4xl mt-4 p-6 border rounded-lg bg-gray-50">
+        <h2 className="text-lg font-semibold mb-3">Your Answer:</h2>
+        
+        <div className="bg-white p-4 rounded-md border">
+          <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+            {userAnswer || "Start recording to see your answer here..."}
+          </p>
+        </div>
 
         {interimResult && (
-          <p className="text-sm text-gray-500 mt-2">
-            <strong>Current Speech:</strong>
-            {interimResult}
-          </p>
+          <div className="mt-3 p-3 bg-blue-50 rounded-md border-l-4 border-blue-400">
+            <p className="text-sm text-blue-700">
+              <strong>Currently speaking:</strong> {interimResult}
+            </p>
+          </div>
+        )}
+
+        {/* AI Feedback Display */}
+        {aiResult && (
+          <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-md font-semibold text-gray-800">AI Feedback</h3>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Rating:</span>
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                  {aiResult.ratings}/10
+                </span>
+              </div>
+            </div>
+            <p className="text-sm text-gray-700 leading-relaxed">{aiResult.feedback}</p>
+          </div>
         )}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { TooltipButton } from "./tooltip-button";
@@ -13,9 +13,24 @@ interface QuestionSectionProps {
 export const QuestionSection = ({ questions, interviewId }: QuestionSectionProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isWebCam, setIsWebCam] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentSpeech, setCurrentSpeech] = useState<SpeechSynthesisUtterance | null>(null);
 
-  const [currentSpeech, setCurrentSpeech] =
-    useState<SpeechSynthesisUtterance | null>(null);
+  // Auto-advance to next question
+  const handleQuestionComplete = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      const nextIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(nextIndex);
+      
+      // Auto-read the next question
+      setTimeout(() => {
+        handlePlayQuestion(questions[nextIndex].question);
+      }, 500);
+    } else {
+      // All questions completed
+      console.log("Interview completed!");
+    }
+  };
 
   const handlePlayQuestion = (qst: string) => {
     if (isPlaying && currentSpeech) {
@@ -26,6 +41,10 @@ export const QuestionSection = ({ questions, interviewId }: QuestionSectionProps
     } else {
       if ("speechSynthesis" in window) {
         const speech = new SpeechSynthesisUtterance(qst);
+        speech.rate = 0.9; // Slightly slower for better comprehension
+        speech.pitch = 1;
+        speech.volume = 0.8;
+        
         window.speechSynthesis.speak(speech);
         setIsPlaying(true);
         setCurrentSpeech(speech);
@@ -39,10 +58,46 @@ export const QuestionSection = ({ questions, interviewId }: QuestionSectionProps
     }
   };
 
+  // Auto-read first question when component mounts
+  useEffect(() => {
+    if (questions.length > 0) {
+      setTimeout(() => {
+        handlePlayQuestion(questions[0].question);
+      }, 1000); // Wait 1 second for component to fully load
+    }
+  }, []);
+
+  // Update current question index when tab changes
+  const handleTabChange = (value: string) => {
+    const index = questions.findIndex(q => q.question === value);
+    if (index !== -1) {
+      setCurrentQuestionIndex(index);
+    }
+  };
+
   return (
     <div className="w-full min-h-96 border rounded-md p-4">
+      {/* Interview Progress Header */}
+      <div className="mb-6 text-center">
+        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+          Interview Progress
+        </h3>
+        <div className="w-full max-w-2xl mx-auto">
+          <div className="text-sm text-gray-600 mb-2">
+            Question {currentQuestionIndex + 1} of {questions.length}
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3">
+            <div 
+              className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-500 ease-out"
+              style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
+            ></div>
+          </div>
+        </div>
+      </div>
+
       <Tabs
-        defaultValue={questions[0]?.question}
+        value={questions[currentQuestionIndex]?.question}
+        onValueChange={handleTabChange}
         className="w-full space-y-12"
         orientation="vertical"
       >
@@ -50,34 +105,45 @@ export const QuestionSection = ({ questions, interviewId }: QuestionSectionProps
           {questions?.map((tab, i) => (
             <TabsTrigger
               className={cn(
-                "data-[state=active]:bg-emerald-200 data-[state=active]:shadow-md text-xs px-2"
+                "data-[state=active]:bg-emerald-200 data-[state=active]:shadow-md text-xs px-3 py-2 transition-all duration-200",
+                i === currentQuestionIndex ? "ring-2 ring-emerald-300" : ""
               )}
               key={tab.question}
               value={tab.question}
+              disabled={i > currentQuestionIndex} // Disable future questions
             >
               {`Question #${i + 1}`}
+              {i < currentQuestionIndex && (
+                <span className="ml-2 text-emerald-600">✓</span>
+              )}
             </TabsTrigger>
           ))}
         </TabsList>
 
         {questions?.map((tab, i) => (
           <TabsContent key={i} value={tab.question}>
-            <p className="text-base text-left tracking-wide text-neutral-500">
-              {tab.question}
-            </p>
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg border border-blue-200 mb-6">
+              <h4 className="text-lg font-semibold text-gray-800 mb-3">
+                Question {i + 1}
+              </h4>
+              <p className="text-base text-left tracking-wide text-gray-700 leading-relaxed">
+                {tab.question}
+              </p>
 
-            <div className="w-full flex items-center justify-end">
-              <TooltipButton
-                content={isPlaying ? "Stop" : "Start"}
-                icon={
-                  isPlaying ? (
-                    <VolumeX className="min-w-5 min-h-5 text-muted-foreground" />
-                  ) : (
-                    <Volume2 className="min-w-5 min-h-5 text-muted-foreground" />
-                  )
-                }
-                onClick={() => handlePlayQuestion(tab.question)}
-              />
+              <div className="w-full flex items-center justify-end mt-4">
+                <TooltipButton
+                  content={isPlaying ? "Stop Reading" : "Read Question"}
+                  icon={
+                    isPlaying ? (
+                      <VolumeX className="min-w-5 min-h-5 text-red-600" />
+                    ) : (
+                      <Volume2 className="min-w-5 min-h-5 text-blue-600" />
+                    )
+                  }
+                  onClick={() => handlePlayQuestion(tab.question)}
+                  buttonClassName={isPlaying ? "bg-red-100 hover:bg-red-200 text-red-700" : "bg-blue-100 hover:bg-blue-200 text-blue-700"}
+                />
+              </div>
             </div>
 
             <RecordAnswer
@@ -85,6 +151,9 @@ export const QuestionSection = ({ questions, interviewId }: QuestionSectionProps
               isWebCam={isWebCam}
               setIsWebCam={setIsWebCam}
               interviewId={interviewId}
+              onQuestionComplete={handleQuestionComplete}
+              currentQuestionIndex={i}
+              totalQuestions={questions.length}
             />
           </TabsContent>
         ))}
