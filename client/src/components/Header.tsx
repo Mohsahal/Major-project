@@ -75,7 +75,7 @@ const Header = ({ scrollContainerRef }: HeaderProps) => { // Destructure scrollC
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#A044F5] to-[#7c3aed] flex items-center justify-center animate-pulse ">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#A044F5] to-[#7c3aed] flex items-center justify-center  ">
               <span className="text-white font-bold text-lg">FF</span>
             </div>
             <span className="font-bold text-lg sm:text-xl bg-clip-text text-transparent bg-gradient-to-r from-[#A044F5] to-[#7c3aed]">
@@ -104,7 +104,7 @@ const Header = ({ scrollContainerRef }: HeaderProps) => { // Destructure scrollC
                   <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                     <Avatar className="h-10 w-10">
                       <AvatarImage 
-                        src={user?.profileImage || `https://ui-avatars.com/api/?name=${user?.name?.charAt(0) || 'U'}&background=7c3aed&color=fff&size=128&font-size=0.5&bold=true`} 
+                        src={user?.profileImage || `https://ui-avatars.com/api/?name=${user?.name?.charAt(0) || 'U'}&size=128&font-size=0.5&bold=true`} 
                         alt={user?.name || ""} 
                       />
                       <AvatarFallback>{user?.name?.charAt(0).toUpperCase()}</AvatarFallback>
@@ -116,7 +116,7 @@ const Header = ({ scrollContainerRef }: HeaderProps) => { // Destructure scrollC
                     <div className="flex items-center space-x-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage 
-                          src={user?.profileImage || `https://ui-avatars.com/api/?name=${user?.name?.charAt(0) || 'U'}&background=7c3aed&color=fff&size=128&font-size=0.5&bold=true`} 
+                          src={user?.profileImage || `https://ui-avatars.com/api/?name=${user?.name?.charAt(0) || 'U'}&color=black&size=128&font-size=0.5&bold=true`} 
                           alt={user?.name || ""} 
                         />
                         <AvatarFallback>{user?.name?.charAt(0).toUpperCase()}</AvatarFallback>
@@ -137,14 +137,14 @@ const Header = ({ scrollContainerRef }: HeaderProps) => { // Destructure scrollC
                     </Link>
                   </DropdownMenuItem>
                   
-                  <DropdownMenuItem className="flex items-center px-3 py-2.5 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 hover:text-blue-700 rounded-lg transition-all duration-200 cursor-pointer group">
+                  {/* <DropdownMenuItem className="flex items-center px-3 py-2.5 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-cyan-50 hover:text-blue-700 rounded-lg transition-all duration-200 cursor-pointer group">
                     <Link to="/settings" className="flex items-center w-full">
                       <div className="p-2 bg-blue-100 rounded-lg mr-3 group-hover:bg-blue-200 transition-colors duration-200">
                         <Settings className="h-4 w-4 text-blue-600" />
                       </div>
                       <span className="font-medium">Settings</span>
                     </Link>
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                   
                   
                      

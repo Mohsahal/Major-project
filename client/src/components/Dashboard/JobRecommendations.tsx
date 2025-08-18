@@ -263,11 +263,11 @@ export default function JobRecommendations() {
         setJobs(mapped);
         setCsvDownload(data.csv_download || null);
         setAutoQuery(data.query || null);
-        setShowRecommendations(true);
-        toast({
-          title: "Recommendations Generated! 🎯",
+      setShowRecommendations(true);
+      toast({
+        title: "Recommendations Generated! 🎯",
           description: `Found ${mapped.length} jobs${data.query ? ` for "${data.query}"` : ''}`,
-        });
+      });
       } else {
         throw new Error('Unexpected response format from recommender');
       }

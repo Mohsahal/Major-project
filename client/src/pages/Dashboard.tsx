@@ -6,7 +6,7 @@ import ResumeBuilder from "@/components/Dashboard/ResumeBuilder";
 import SkillGapAnalysis from "@/components/Dashboard/SkillGapAnalysis";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Index from "./MockInterview/Mockindex";
+import Index from "../components/MockInterview/Mockindex";
 import Header from "@/components/Header";
 
 

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from "@/components/ui/progress";
+// removed progress loader for auto-sliding
 import {
   Users,
   Award,
@@ -18,15 +18,13 @@ import {
   Twitter,
   Linkedin,
   Github,
-  Play,
-  Pause,
-  SkipForward
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 const AboutPage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [progress, setProgress] = useState(0);
+  // no play/pause/progress state
   
   // Animation variants for staggered animations
   const containerVariants = {
@@ -188,31 +186,21 @@ const AboutPage = () => {
     }
   ];
 
-  // Auto-advance slides with improved timing
+  // Auto-advance slides every 4 seconds without loader/controls
   useEffect(() => {
-    // Start auto-play automatically
-    setIsPlaying(true);
-    
     const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
           setCurrentSlide(prev => (prev + 1) % slides.length);
-          return 0;
-        }
-        return prev + 1.5; // Slower progress for better user experience
-      });
-    }, 80); // Faster updates for smoother progress bar
-    
+    }, 4000);
     return () => clearInterval(interval);
-  }, []); // Remove isPlaying dependency to make it always auto-play
+  }, [slides.length]);
 
 
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 pt-20">
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24">
-        <motion.div 
+      <section className="mx-auto px-4 py-16 md:py-24 max-w-6xl ">
+        {/* <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -224,44 +212,12 @@ const AboutPage = () => {
           <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             Transforming the way job seekers prepare, apply, and succeed in their career journeys with intelligent AI-powered tools.
           </p>
-        </motion.div>
+        </motion.div> */}
         
         {/* Mission & Values Slider */}
-        <div className="relative overflow-hidden">
-          {/* Slider Controls */}
-          <div className="flex justify-center items-center gap-4 mb-8">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsPlaying(!isPlaying)}
-              className="rounded-full w-12 h-12 p-0"
-            >
-              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setCurrentSlide((prev) => (prev + 1) % slides.length);
-                setProgress(0);
-              }}
-              className="rounded-full w-12 h-12 p-0"
-            >
-              <SkipForward className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          {/* Progress Bar */}
-          <div className="max-w-md mx-auto mb-8">
-            <Progress value={progress} className="h-2" />
-            <div className="flex justify-between text-sm text-gray-500 mt-2">
-              <span>Slide {currentSlide + 1} of {slides.length}</span>
-              <span>{Math.round(progress)}%</span>
-                  </div>
-                </div>
-          
+        <div className="relative overflow-hidden max-w-6xl mx-auto">
           {/* Main Slider */}
-          <div className="relative max-w-4xl mx-auto">
+          <div className="relative max-w-4xl md:max-w-5xl mx-auto">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentSlide}
@@ -274,36 +230,14 @@ const AboutPage = () => {
                 {slides[currentSlide].content}
               </motion.div>
             </AnimatePresence>
+            {/* Slider controls removed per request */}
           </div>
-                
-          {/* Slide Indicators */}
-          <div className="flex justify-center gap-2 mb-8">
-            {slides.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  setCurrentSlide(index);
-                  setProgress(0);
-                }}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  index === currentSlide ? 'bg-brand-600 w-8' : 'bg-gray-300 hover:bg-gray-400'
-                }`}
-              />
-            ))}
-                </div>
-                
-          {/* Auto-play Status */}
-          <div className="text-center mb-4">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white text-green-700 rounded-full text-sm font-medium border border-green-200">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              Auto-playing slides
-                    </div>
-                    </div>
+          {/* Slide Indicators removed per request */}
                     </div>
       </section>
       
       {/* Team Section */}
-      <section className="container mx-auto px-4 py-16 bg-gray-50 dark:bg-gray-900/50 rounded-3xl mb-16">
+      <section className="mx-auto px-4 py-16 bg-gray-50 dark:bg-gray-900/50 rounded-3xl mb-16 max-w-6xl">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Meet Our Team</h2>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
@@ -387,7 +321,7 @@ const AboutPage = () => {
       </section>
       
       {/* Stats Section */}
-      <section className="container mx-auto px-4 py-16">
+      <section className="mx-auto px-4 py-16 max-w-6xl">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Our Impact</h2>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
@@ -432,7 +366,7 @@ const AboutPage = () => {
       </section>
       
       {/* Partners & Recognitions */}
-      <section className="container mx-auto px-4 py-16 bg-gray-50 dark:bg-gray-900/50 rounded-3xl mb-16">
+      <section className="mx-auto px-4 py-16 bg-gray-50 dark:bg-gray-900/50 rounded-3xl mb-16 max-w-6xl">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Partners & Recognitions</h2>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
