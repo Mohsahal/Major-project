@@ -1,5 +1,6 @@
 // API Configuration and endpoints
 export const API_BASE_URL = 'http://localhost:5000/api';
+export const FLASK_BASE_URL = (import.meta as any)?.env?.VITE_FLASK_BASE_URL || 'http://localhost:5001';
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -19,6 +20,11 @@ export const API_ENDPOINTS = {
   REGISTER: `${API_BASE_URL}/auth/register`,
   VERIFY_TOKEN: `${API_BASE_URL}/auth/verify`,
   PROFILE_ME: `${API_BASE_URL}/auth/me`,
+};
+
+export const FLASK_ENDPOINTS = {
+  UPLOAD_RESUME: `${FLASK_BASE_URL}/upload`,
+  DOWNLOAD_CSV: (filename: string) => `${FLASK_BASE_URL}/download/${filename}`,
 };
 
 // API Response types

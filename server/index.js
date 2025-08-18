@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 const authRoutes = require('./routes/auth');
 const resumeRoutes = require('./routes/resume');
 const aiRoutes = require('./routes/ai');
-const jobRecommendationsRouter = require('./routes/jobRecommendations');
+
 const resumeParserRouter = require('./routes/resumeParser');
 const interviewsRouter = require('./routes/interviews');
 const userAnswersRouter = require('./routes/user-answers');
@@ -15,7 +15,7 @@ const app = express();
 
 // CORS configuration - must come before body parsing for preflight requests
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:8080'],
+  origin: ['http://localhost:5173', 'http://localhost:8081','http://localhost:8080'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -72,7 +72,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://mohammedsahal1243:sah
 app.use('/api/auth', authRoutes);
 app.use('/api/resumes', resumeRoutes);
 app.use('/api/ai', aiRoutes);
-app.use('/api/job-recommendations', jobRecommendationsRouter);
+
 app.use('/api/resume-parser', resumeParserRouter);
 app.use('/api/interviews', interviewsRouter);
 app.use('/api/user-answers', userAnswersRouter);

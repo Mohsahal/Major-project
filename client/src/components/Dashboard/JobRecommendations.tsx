@@ -1,4 +1,4 @@
-import { ArrowRight, RefreshCw, Star, Upload, FileText, X, MapPin, Building2, DollarSign, Clock, TrendingUp, Filter, Search, Bookmark, Share2, Eye, Sparkles, Zap, Target, Users, Briefcase } from "lucide-react";
+import { ArrowRight, RefreshCw, Star, Upload, FileText, X, MapPin, Building2, DollarSign, Clock, TrendingUp, Filter, Search, Bookmark, Share2, Eye, Sparkles, Zap, Target, Users, Briefcase, ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +6,9 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import { FLASK_ENDPOINTS } from "@/config/api";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 
 type JobType = {
   id: string;
@@ -23,6 +26,7 @@ type JobType = {
   logo?: string;
   benefits: string[];
   urgency: 'High' | 'Medium' | 'Low';
+  applyLink?: string;
 };
 
 export default function JobRecommendations() {
@@ -37,6 +41,23 @@ export default function JobRecommendations() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [csvDownload, setCsvDownload] = useState<string | null>(null);
+  const [autoQuery, setAutoQuery] = useState<string | null>(null);
+  const [jobLocation, setJobLocation] = useState<string>('Bangalore');
+  const [isLocationOpen, setIsLocationOpen] = useState<boolean>(false);
+  const [locationQuery, setLocationQuery] = useState<string>('');
+  const suggestedLocations: string[] = [
+    'Bangalore',
+    'Remote',
+    'San Francisco',
+    'New York',
+    'London',
+    'Toronto',
+    'Sydney',
+    'Berlin',
+    'Singapore',
+    'Dubai'
+  ];
 
   // Demo data with realistic job information
   const [jobs, setJobs] = useState<JobType[]>([
@@ -117,11 +138,11 @@ export default function JobRecommendations() {
   });
 
   const validateFile = (file: File): boolean => {
-    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
     if (!validTypes.includes(file.type)) {
       toast({
         title: "Invalid file type",
-        description: "Please upload a PDF or Word document",
+        description: "Please upload a PDF, DOCX or TXT file",
         variant: "destructive"
       });
       return false;
@@ -204,14 +225,52 @@ export default function JobRecommendations() {
     setIsGeneratingRecommendations(true);
     
     try {
-      // Simulate AI analysis and recommendation generation
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      setShowRecommendations(true);
-      toast({
-        title: "Recommendations Generated! 🎯",
-        description: "We've analyzed your resume and found the perfect job matches for you",
+      const formData = new FormData();
+      formData.append('resume', uploadedResume);
+      if (jobLocation) {
+        formData.append('location', jobLocation);
+      }
+
+      const response = await fetch(FLASK_ENDPOINTS.UPLOAD_RESUME, {
+        method: 'POST',
+        body: formData,
       });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Failed to fetch recommendations');
+      }
+
+      if (data && data.success && Array.isArray(data.top_jobs)) {
+        const mapped: JobType[] = data.top_jobs.map((j: any, idx: number) => ({
+          id: `${idx + 1}`,
+          title: j.title || 'Untitled Role',
+          company: j.company || 'Unknown Company',
+          location: j.location || '—',
+          salary: '$0',
+          matchPercentage: typeof j.similarity === 'number' ? Math.round(j.similarity) : 0,
+          skills: [],
+          posted: 'Recently',
+          description: j.description || '',
+          isNew: true,
+          type: 'Full-time',
+          experience: '—',
+          benefits: [],
+          urgency: (j.similarity || 0) >= 85 ? 'High' : (j.similarity || 0) >= 70 ? 'Medium' : 'Low',
+          applyLink: j.apply_link || ''
+        }));
+
+        setJobs(mapped);
+        setCsvDownload(data.csv_download || null);
+        setAutoQuery(data.query || null);
+        setShowRecommendations(true);
+        toast({
+          title: "Recommendations Generated! 🎯",
+          description: `Found ${mapped.length} jobs${data.query ? ` for "${data.query}"` : ''}`,
+        });
+      } else {
+        throw new Error('Unexpected response format from recommender');
+      }
       
       // Scroll to recommendations
       setTimeout(() => {
@@ -224,7 +283,7 @@ export default function JobRecommendations() {
     } catch (error) {
       toast({
         title: "Generation failed",
-        description: "There was an error generating recommendations. Please try again.",
+        description: error instanceof Error ? error.message : "There was an error generating recommendations. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -267,7 +326,46 @@ export default function JobRecommendations() {
                 <p className="text-gray-600 text-sm">AI-powered job matches based on your resume</p>
               </div>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700">Location</span>
+            <Popover open={isLocationOpen} onOpenChange={(open)=>{ setIsLocationOpen(open); if (!open) setLocationQuery(''); }}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="flex items-center gap-2 min-w-[180px] justify-between">
+                  <span className="flex items-center gap-2 truncate">
+                    <MapPin className="h-4 w-4" />
+                    <span className="truncate max-w-[120px]">{jobLocation || 'Select location'}</span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 opacity-60" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-0">
+                <Command>
+                  <CommandInput placeholder="Search city or type Remote..." value={locationQuery} onValueChange={setLocationQuery} />
+                  <CommandEmpty>No results found.</CommandEmpty>
+                  <CommandGroup>
+                    {locationQuery && !suggestedLocations.some(l=>l.toLowerCase()===locationQuery.toLowerCase()) && (
+                      <CommandItem key="__custom_loc__" onSelect={() => { setJobLocation(locationQuery); setIsLocationOpen(false); setLocationQuery(''); }}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Use "{locationQuery}"
+                      </CommandItem>
+                    )}
+                    {suggestedLocations.filter(loc=> loc.toLowerCase().includes(locationQuery.toLowerCase())).map((loc) => (
+                      <CommandItem key={loc} onSelect={() => { setJobLocation(loc); setIsLocationOpen(false); setLocationQuery(''); }}>
+                        <MapPin className="mr-2 h-4 w-4" />
+                        {loc}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {jobLocation && (
+              <Button variant="ghost" size="sm" onClick={() => setJobLocation('')} className="px-2">
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           <input
             type="file"
             ref={fileInputRef}
@@ -275,7 +373,7 @@ export default function JobRecommendations() {
               const file = e.target.files?.[0];
                   if (file) handleFileUpload(file);
             }}
-            accept=".pdf,.doc,.docx"
+            accept=".pdf,.docx,.txt"
             className="hidden"
           />
           <Button 
@@ -290,7 +388,7 @@ export default function JobRecommendations() {
           </Button>
           <Button 
             size="sm" 
-                onClick={() => navigate('/view-all-jobs')}
+                onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 View All Jobs
@@ -540,7 +638,7 @@ export default function JobRecommendations() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/view-all-jobs')}
+              onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
               className="text-blue-600 hover:text-blue-700 border-blue-200"
             >
               View All {totalJobsCount} Jobs
@@ -619,7 +717,10 @@ export default function JobRecommendations() {
 
                     {/* Action Buttons */}
                     <div className="flex gap-2 pt-4 border-t border-gray-100">
-                      <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                      <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => {
+                        const link = job.applyLink || '#';
+                        if (link && link !== '#') window.open(link, '_blank');
+                      }}>
                         <Eye className="h-4 w-4 mr-2" />
                         View Details
                       </Button>
@@ -672,7 +773,7 @@ export default function JobRecommendations() {
 
             <Button
               size="lg"
-              onClick={() => navigate('/view-all-jobs')}
+              onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
               className="bg-indigo-600 hover:bg-indigo-700 px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             >
               <Eye className="h-5 w-5 mr-2" />
@@ -696,7 +797,7 @@ export default function JobRecommendations() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/view-all-jobs')}
+              onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
               className="text-blue-600 hover:text-blue-700 border-blue-200"
             >
               View All {totalJobsCount} Jobs
@@ -759,7 +860,7 @@ export default function JobRecommendations() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/view-all-jobs')}
+              onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
               className="text-blue-600 hover:text-blue-700 border-blue-200"
             >
               View All Results
@@ -844,7 +945,10 @@ export default function JobRecommendations() {
 
                       {/* Action Buttons */}
                       <div className="flex gap-2 pt-4 border-t border-gray-100">
-                        <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                        <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => {
+                          const link = job.applyLink || '#';
+                          if (link && link !== '#') window.open(link, '_blank');
+                        }}>
                           <Eye className="h-4 w-4 mr-2" />
                           View Details
                         </Button>
@@ -889,7 +993,7 @@ export default function JobRecommendations() {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => navigate('/view-all-jobs')}
+                  onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
                   className="text-blue-600 hover:text-blue-700 border-blue-200"
                 >
                   View All {filteredJobs.length} Results

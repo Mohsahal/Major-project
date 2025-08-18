@@ -18,12 +18,17 @@ import {
   Target,
   Zap,
   SlidersHorizontal,
-  X
+  X,
+  FileText,
+  ChevronDown
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { FLASK_ENDPOINTS } from "@/config/api";
 
 type JobType = {
   id: string;
@@ -41,20 +46,26 @@ type JobType = {
   logo?: string;
   benefits: string[];
   urgency: 'High' | 'Medium' | 'Low';
+  applyLink?: string;
 };
 
 export default function ViewAllJobs() {
   const navigate = useNavigate();
+  const location = useLocation() as any;
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [selectedExperience, setSelectedExperience] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedUrgency, setSelectedUrgency] = useState('all');
   const [sortBy, setSortBy] = useState('match');
+  const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const suggestedLocations: string[] = [
+    'Bangalore','Remote','San Francisco','New York','London','Toronto','Sydney','Berlin','Singapore','Dubai'
+  ];
 
   // Extended demo data with more jobs
-  const [jobs] = useState<JobType[]>([
+  const defaultJobs: JobType[] = [
     {
       id: '1',
       title: 'Senior Frontend Developer',
@@ -215,7 +226,11 @@ export default function ViewAllJobs() {
       benefits: ['Health Insurance', '401k', 'Remote Work', 'Research Budget'],
       urgency: 'High'
     }
-  ]);
+  ];
+
+  const [jobs] = useState<JobType[]>(Array.isArray(location?.state?.jobs) && location.state.jobs.length > 0 ? location.state.jobs : defaultJobs);
+  const csvDownload: string | null = null; // CSV removed in favor of location-based query
+  const query: string | null = location?.state?.query || null;
 
   const filters = [
     { id: 'all', label: 'All Jobs', count: jobs.length },
@@ -338,6 +353,29 @@ export default function ViewAllJobs() {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <Popover open={isLocationOpen} onOpenChange={setIsLocationOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Location Filters
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-0">
+                  <Command>
+                    <CommandInput placeholder="Search location..." />
+                    <CommandEmpty>No results found.</CommandEmpty>
+                    <CommandGroup>
+                      {suggestedLocations.map((loc) => (
+                        <CommandItem key={loc} onSelect={() => setSearchQuery(loc)}>
+                          <MapPin className="mr-2 h-4 w-4" />
+                          {loc}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
               <Button
                 variant="outline"
                 size="sm"
@@ -347,6 +385,7 @@ export default function ViewAllJobs() {
                 <SlidersHorizontal className="h-4 w-4" />
                 {showFilters ? 'Hide' : 'Show'} Filters
               </Button>
+              {/* CSV download removed per requirements */}
               <Button
                 size="sm"
                 onClick={() => navigate('/dashboard')}
@@ -491,7 +530,7 @@ export default function ViewAllJobs() {
               </p>
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Target className="h-4 w-4" />
-                Sorted by {sortOptions.find(opt => opt.id === sortBy)?.label}
+                {query ? `Query: ${query}` : `Sorted by ${sortOptions.find(opt => opt.id === sortBy)?.label}`}
               </div>
             </div>
 
@@ -603,7 +642,10 @@ export default function ViewAllJobs() {
 
                         {/* Action Buttons */}
                         <div className="flex gap-3 pt-4 border-t border-gray-100">
-                          <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                          <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => {
+                            const link = job.applyLink || '#';
+                            if (link && link !== '#') window.open(link, '_blank');
+                          }}>
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
                           </Button>
