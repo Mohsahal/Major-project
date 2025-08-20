@@ -12,6 +12,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useDataRefresh } from "@/hooks/useDataRefresh";
+import { API_ENDPOINTS } from "@/config/api";
 
 export const InterviewDashboard = () => {
   const [interviews, setInterviews] = useState<Interview[]>([]);
@@ -28,7 +29,8 @@ export const InterviewDashboard = () => {
       
       // First check if server is accessible
       try {
-        const healthCheck = await fetch('http://localhost:5000/health');
+        const base = (API_ENDPOINTS.INTERVIEWS as string).replace(/\/api\/interviews.*/, '');
+        const healthCheck = await fetch(`${base}/health`);
         console.log("Server health check:", healthCheck.ok);
         if (!healthCheck.ok) {
           throw new Error(`Server health check failed: ${healthCheck.status}`);
@@ -43,7 +45,7 @@ export const InterviewDashboard = () => {
       }
       
       const params = user?.id ? `?userId=${encodeURIComponent(user.id)}` : "";
-      const res = await fetch(`http://localhost:5000/api/interviews${params}`, {
+      const res = await fetch(`${API_ENDPOINTS.INTERVIEWS}${params}`, {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
         },

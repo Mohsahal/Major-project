@@ -11,6 +11,7 @@ import ProfessionalTemplate from '@/components/Resume/templates/ProfessionalTemp
 import CreativeTemplate from '@/components/Resume/templates/CreativeTemplate';
 import ExecutiveTemplate from '@/components/Resume/templates/ExecutiveTemplate';
 import html2pdf from 'html2pdf.js';
+import { API_ENDPOINTS } from '@/config/api';
 
 interface ResumeData {
   personalInfo: {
@@ -79,7 +80,7 @@ const ResumePreview = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/resumes/${id}`, {
+      const response = await fetch(API_ENDPOINTS.RESUME_BY_ID(id as string), {
         headers: {
           'Authorization': `Bearer ${token}`
         }

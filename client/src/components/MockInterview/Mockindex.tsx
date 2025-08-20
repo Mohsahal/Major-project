@@ -314,7 +314,7 @@ const Index = () => {
                 Join thousands of professionals who have improved their interview skills with our AI-powered platform.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-stretch sm:items-center">
-                <Link to="/interview">
+                <Link to="/generate">
                   <Button 
                     size="lg"
                     variant="secondary"

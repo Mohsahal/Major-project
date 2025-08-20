@@ -10,6 +10,7 @@ import SocialButton from "@/components/auth/SocialButton";
 import AnimatedTransition from "@/components/auth/AnimatedTransition";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGoogleLogin } from '@react-oauth/google';
+import { API_ENDPOINTS } from '@/config/api';
 
 const Auth = () => {
   const location = useLocation();
@@ -156,7 +157,8 @@ const Auth = () => {
       }
 
       // Send the access token to your backend for verification and authentication
-      const backendResponse = await fetch('http://localhost:5000/api/auth/google-login', {
+      const endpoint = activeTab === 'signup' ? API_ENDPOINTS.GOOGLE_SIGNUP : API_ENDPOINTS.GOOGLE_LOGIN;
+      const backendResponse = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,28 +169,46 @@ const Auth = () => {
       });
 
       if (!backendResponse.ok) {
-        const errorData = await backendResponse.json();
+        const errorData = await backendResponse.json().catch(() => ({}));
+        if (backendResponse.status === 404 && endpoint === API_ENDPOINTS.GOOGLE_LOGIN) {
+          // Account does not exist → guide user to signup tab
+          toast({
+            title: "Account Not Found",
+            description: "No account linked to this Google email. Please sign up first.",
+            variant: 'destructive'
+          });
+          setActiveTab('signup');
+          return;
+        }
+        if (backendResponse.status === 409 && endpoint === API_ENDPOINTS.GOOGLE_SIGNUP) {
+          // Account already exists → guide user to login tab
+          toast({
+            title: "Account Already Exists",
+            description: "Please sign in with your Google account.",
+          });
+          setActiveTab('login');
+          return;
+        }
         throw new Error(errorData.message || 'Backend authentication failed');
       }
 
       const data = await backendResponse.json();
       console.log('Backend Authentication Success:', data);
 
-      // Use the new loginWithGoogle function from AuthContext
-      await loginWithGoogle(data.token, data.user);
-      
-      // If we're on the signup tab, show account created message and switch to login tab
-      if (activeTab === "signup") {
+      // If this resulted in a new account creation (status 201) or user is on signup tab,
+      // do NOT auto-login. Ask the user to sign in explicitly.
+      if (backendResponse.status === 201 || activeTab === "signup") {
         toast({
           title: "Account Created",
-          description: "Your account has been created successfully. Please sign in.",
+          description: "Your Google account was linked. Please sign in to continue.",
         });
         setActiveTab("login");
-        // Don't navigate away - stay on auth page
-      } else {
-        // If we're on the login tab, redirect to dashboard
-        navigate("/dashboard", { replace: true });
+        return;
       }
+
+      // Existing user logging in with Google → proceed to app
+      await loginWithGoogle(data.token, data.user);
+      navigate("/dashboard", { replace: true });
     } catch (error) {
       console.error('Backend authentication error:', error);
       toast({

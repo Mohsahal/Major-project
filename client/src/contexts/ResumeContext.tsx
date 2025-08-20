@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
+import { API_ENDPOINTS } from '@/config/api';
 
 interface Resume {
   _id: string;
@@ -59,7 +60,7 @@ export const ResumeProvider: React.FC<ResumeProviderProps> = ({ children }) => {
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/resumes', {
+      const response = await fetch(API_ENDPOINTS.RESUMES, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

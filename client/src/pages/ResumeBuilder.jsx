@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { defaultResumeData } from '@/data/defaultResumeData';
+import { API_ENDPOINTS } from '@/config/api';
 
 const templateThumbnails = {
   simple: 'https://placehold.co/200x250/e2e8f0/1e293b?text=Simple',
@@ -108,7 +109,7 @@ const ResumeBuilder = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/resumes/${resumeId}`, {
+      const response = await fetch(API_ENDPOINTS.RESUME_BY_ID(resumeId), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -154,7 +155,7 @@ const ResumeBuilder = () => {
         lastModified: new Date().toISOString()
       };
 
-      const response = await fetch(`http://localhost:5000/api/resumes${id ? `/${id}` : ''}`, {
+      const response = await fetch(id ? API_ENDPOINTS.RESUME_BY_ID(id) : API_ENDPOINTS.RESUMES, {
         method: id ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',

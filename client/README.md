@@ -60,6 +60,16 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Environment
+
+Create a `.env` file in `client/` with:
+
+```
+VITE_API_BASE_URL=http://localhost:5000/api
+VITE_FLASK_BASE_URL=http://localhost:5001
+VITE_GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
+```
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/4ca2e13d-932a-487c-a311-f10063ea763b) and click on Share -> Publish.

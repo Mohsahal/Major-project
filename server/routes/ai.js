@@ -2,8 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// Use environment variable with fallback for development
-const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyCb4NZGfgyKPWsd4eG4kYuZ2RLKNbHY6Yw';
+// Use environment variable; never hardcode keys
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  console.warn('GEMINI_API_KEY is not set. AI routes will not work until configured.');
+}
 const ai = new GoogleGenerativeAI(apiKey);
 
 // Generate professional summary

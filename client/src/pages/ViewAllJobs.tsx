@@ -355,11 +355,7 @@ export default function ViewAllJobs() {
             <div className="flex items-center gap-3">
               <Popover open={isLocationOpen} onOpenChange={setIsLocationOpen}>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Location Filters
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
+                 
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-0">
                   <Command>
@@ -644,7 +640,10 @@ export default function ViewAllJobs() {
                         <div className="flex gap-3 pt-4 border-t border-gray-100">
                           <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => {
                             const link = job.applyLink || '#';
-                            if (link && link !== '#') window.open(link, '_blank');
+                            if (link && link !== '#') {
+                              const w = window.open(link, '_blank', 'noopener,noreferrer');
+                              if (w) { w.opener = null; }
+                            }
                           }}>
                             <Eye className="h-4 w-4 mr-2" />
                             View Details

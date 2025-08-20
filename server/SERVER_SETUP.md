@@ -413,9 +413,12 @@ module.exports = router;
 ## 🔧 **Environment Variables (.env)**
 ```env
 PORT=5000
+NODE_ENV=development
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8081,http://localhost:8080
 MONGODB_URI=mongodb://localhost:27017/mock-interview-system
 JWT_SECRET=your-super-secret-jwt-key-here
-NODE_ENV=development
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GEMINI_API_KEY=your-gemini-api-key
 ```
 
 ## 📁 **Project Structure**

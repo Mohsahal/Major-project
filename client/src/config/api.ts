@@ -1,5 +1,5 @@
 // API Configuration and endpoints
-export const API_BASE_URL = 'http://localhost:5000/api';
+export const API_BASE_URL = (import.meta as any)?.env?.VITE_API_BASE_URL || 'http://localhost:5000/api';
 export const FLASK_BASE_URL = (import.meta as any)?.env?.VITE_FLASK_BASE_URL || 'http://localhost:5001';
 
 // API Endpoints
@@ -8,18 +8,27 @@ export const API_ENDPOINTS = {
   INTERVIEWS: `${API_BASE_URL}/interviews`,
   INTERVIEW_BY_ID: (id: string) => `${API_BASE_URL}/interviews/${id}`,
   
+  // Resumes
+  RESUMES: `${API_BASE_URL}/resumes`,
+  RESUME_BY_ID: (id: string) => `${API_BASE_URL}/resumes/${id}`,
+  
   // User Answers
   USER_ANSWERS: `${API_BASE_URL}/user-answers`,
   USER_ANSWERS_BY_INTERVIEW: (interviewId: string) => `${API_BASE_URL}/user-answers/interview/${interviewId}`,
   
   // AI Generation
   AI_GENERATE_QUESTIONS: `${API_BASE_URL}/ai/generate-questions`,
+  AI_GENERATE_SUMMARY: `${API_BASE_URL}/ai/generate-summary`,
+  AI_GENERATE_EXPERIENCE: `${API_BASE_URL}/ai/generate-experience`,
+  AI_GENERATE_PROJECT: `${API_BASE_URL}/ai/generate-project`,
   
   // Authentication
   LOGIN: `${API_BASE_URL}/auth/login`,
-  REGISTER: `${API_BASE_URL}/auth/register`,
+  REGISTER: `${API_BASE_URL}/auth/signup`,
   VERIFY_TOKEN: `${API_BASE_URL}/auth/verify`,
   PROFILE_ME: `${API_BASE_URL}/auth/me`,
+  GOOGLE_LOGIN: `${API_BASE_URL}/auth/google-login`,
+  GOOGLE_SIGNUP: `${API_BASE_URL}/auth/google-signup`,
 };
 
 export const FLASK_ENDPOINTS = {

@@ -80,7 +80,6 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-gray-50 ">
-      {/* Fixed top-left Go Dashboard button */}
       
       <div className="w-full px-3 sm:px-6 lg:px-10 py-6 sm:py-8">
         <div className="w-full">
@@ -124,11 +123,6 @@ export default function Profile() {
                     </div>
                   </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" asChild>
-                    <Link to="/dashboard">
-                      <LayoutDashboard className="h-4 w-4 mr-2" /> Go Dashboard
-                    </Link>
-                  </Button>
                   <Button variant="outline" asChild>
                     <Link to="/resume">
                       <Upload className="h-4 w-4 mr-2" /> Manage Resume

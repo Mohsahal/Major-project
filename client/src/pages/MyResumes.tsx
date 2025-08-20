@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from '@/config/api'
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -64,7 +65,7 @@ const MyResumes = () => {
         return
       }
 
-      const response = await fetch(`http://localhost:5000/api/resumes/${resumeToDelete}`, {
+      const response = await fetch(API_ENDPOINTS.RESUME_BY_ID(resumeToDelete), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

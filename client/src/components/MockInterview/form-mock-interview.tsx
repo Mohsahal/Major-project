@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ApiClient } from "@/config/api";
+import { ApiClient, API_ENDPOINTS } from "@/config/api";
 
 interface FormMockInterviewProps {
   initialData: Interview | null;
@@ -87,7 +87,7 @@ export const FormMockInterview = ({ initialData }: FormMockInterviewProps) => {
   };
 
   const generateAiResponse = async (data: FormData) => {
-    const res = await fetch("http://localhost:5000/api/ai/generate-questions", {
+    const res = await fetch(API_ENDPOINTS.AI_GENERATE_QUESTIONS, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

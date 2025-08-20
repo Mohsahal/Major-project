@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 import PyPDF2
 import docx2txt
 import traceback
+from urllib.parse import urlparse
 
 # Import job recommender functions
 from job_recommender import (
@@ -84,8 +85,10 @@ def upload_resume():
         if not allowed_file(file.filename):
             return jsonify({'error': 'Invalid file type. Please upload PDF, DOCX, or TXT files only.'}), 400
         
-        # Get location preference
+        # Get preferences
         location = request.form.get('location', DEFAULT_LOCATION)
+        preferred_provider = request.form.get('provider', '').lower()  # e.g., 'linkedin'
+        only_provider = request.form.get('only_provider', 'false').lower() == 'true'
         
         # Check API key
         if not SERPAPI_API_KEY:
@@ -136,6 +139,13 @@ def upload_resume():
                     job["primary_domain"] = resume_analysis["primary_domain"]
                     job["subdomain"] = resume_analysis.get("subdomain", "")
             
+            # Optionally filter by provider (e.g., linkedin)
+            if preferred_provider and only_provider:
+                def best_provider(j):
+                    _, provider = best_apply_link(j, preferred_provider)
+                    return provider == preferred_provider
+                ranked_jobs = list(filter(best_provider, ranked_jobs))
+
             # Get top results
             top_jobs = ranked_jobs[:DEFAULT_TOP_RESULTS]
             
@@ -153,7 +163,7 @@ def upload_resume():
                 'location': location,
                 'jobs_count': len(top_jobs),
                 'extracted_text': resume_text[:1000] + '...' if len(resume_text) > 1000 else resume_text,
-                'top_jobs': format_jobs_for_response(top_jobs),
+                'top_jobs': format_jobs_for_response(top_jobs, preferred_provider=preferred_provider),
                 'csv_download': csv_filename
             }
             
@@ -191,10 +201,50 @@ def format_resume_analysis(resume_analysis):
         }
     }
 
-def format_jobs_for_response(top_jobs):
+def extract_apply_options(job):
+    opts = []
+    # SerpApi provides apply_options with 'link' and 'source'
+    for opt in (job.get('apply_options') or []):
+        link = opt.get('link') or ''
+        source = (opt.get('source') or '').lower()
+        if link:
+            opts.append({'link': link, 'source': source})
+    # Fallbacks
+    for key in ['share_link', 'link']:
+        if job.get(key):
+            try:
+                host = urlparse(job.get(key)).netloc.lower()
+            except Exception:
+                host = ''
+            opts.append({'link': job.get(key), 'source': host})
+    return opts
+
+
+def best_apply_link(job, preferred_provider=None):
+    options = extract_apply_options(job)
+    preferred = (preferred_provider or '').lower()
+    if preferred:
+        for o in options:
+            if preferred in o.get('source', '') or preferred in o.get('link', ''):
+                return o.get('link'), preferred
+    # Prefer linkedin if present by default
+    for o in options:
+        if 'linkedin' in (o.get('source', '') or o.get('link', '')):
+            return o.get('link'), 'linkedin'
+    # Otherwise first option
+    if options:
+        src = options[0]
+        src_name = src.get('source') or ''
+        return src.get('link'), src_name
+    return '', ''
+
+
+def format_jobs_for_response(top_jobs, preferred_provider=None):
     """Format jobs for response."""
-    return [
-        {
+    formatted = []
+    for job in top_jobs:
+        link, provider = best_apply_link(job, preferred_provider)
+        formatted.append({
             'title': job.get('title', ''),
             'company': job.get('company_name', ''),
             'location': job.get('location', ''),
@@ -202,10 +252,11 @@ def format_jobs_for_response(top_jobs):
             'similarity': round(job.get('similarity', 0.0) * 100, 2),
             'base_similarity': round(job.get('base_similarity', 0.0) * 100, 2),
             'domain_boost': round(job.get('domain_boost', 0.0) * 100, 2),
-            'apply_link': job.get('share_link') or job.get('link') or '',
+            'apply_link': link,
+            'apply_provider': provider,
             'description': job.get('description', '')[:200] + '...' if job.get('description') else ''
-        } for job in top_jobs
-    ]
+        })
+    return formatted
 
 @app.route('/download/<filename>')
 def download_csv(filename):

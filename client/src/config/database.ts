@@ -1,10 +1,11 @@
-// Mock Firebase config that redirects to REST API
-// This maintains compatibility with existing code while using the REST API
+
+
+const API_BASE_URL = (import.meta as any)?.env?.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 export const db = {
   collection: (collectionName: string) => ({
     add: async (data: any) => {
-      const response = await fetch(`http://localhost:5000/api/${collectionName}`, {
+      const response = await fetch(`${API_BASE_URL}/${collectionName}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -16,7 +17,7 @@ export const db = {
       return { id: result.id || result._id };
     },
     get: async () => {
-      const response = await fetch(`http://localhost:5000/api/${collectionName}`, {
+      const response = await fetch(`${API_BASE_URL}/${collectionName}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('futurefind_token')}`
         }
@@ -32,7 +33,7 @@ export const db = {
   }),
   doc: (collectionName: string, docId: string) => ({
     get: async () => {
-      const response = await fetch(`http://localhost:5000/api/${collectionName}/${docId}`, {
+      const response = await fetch(`${API_BASE_URL}/${collectionName}/${docId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('futurefind_token')}`
         }
@@ -51,7 +52,7 @@ export const query = (collectionRef: any, ...constraints: any[]) => {
   // Mock query function that filters data
   return {
     get: async () => {
-      const response = await fetch(`http://localhost:5000/api/${collectionRef._path?.segments?.[0] || 'userAnswers'}`, {
+      const response = await fetch(`${API_BASE_URL}/${collectionRef._path?.segments?.[0] || 'userAnswers'}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('futurefind_token')}`
         }
@@ -102,3 +103,4 @@ export const addDoc = async (collectionRef: any, data: any) => {
 };
 
 export const serverTimestamp = () => new Date();
+export const auth = {} as any;

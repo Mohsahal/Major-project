@@ -44,6 +44,7 @@ import NotFound from "@/pages/NotFound";
 const queryClient = new QueryClient();
 
 const googleClientId =
+  (import.meta as any)?.env?.VITE_GOOGLE_CLIENT_ID ||
   "291026471342-9ecgtoolsoh9suc0vl5op1dkqvf2h0ra.apps.googleusercontent.com";
 
 const App = () => (

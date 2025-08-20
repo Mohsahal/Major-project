@@ -99,7 +99,7 @@ router.post('/signup', async (req, res) => {
   }
 });
 
-// Google Login route
+// Google Login route (does NOT create a new user)
 router.post('/google-login', async (req, res) => {
   try {
     const { accessToken } = req.body;
@@ -155,44 +155,89 @@ router.post('/google-login', async (req, res) => {
         profileImage: user.profileImage
       };
 
-      res.json({
-        token,
-        user: userResponse
-      });
-    } else {
-      // Create new user
-      user = new User({
-        email,
-        name,
-        googleId,
-        profileImage: picture
-      });
-
-      await user.save();
-
-      // Generate JWT for the new user
-      const token = jwt.sign(
-        { id: user._id },
-        process.env.JWT_SECRET || 'your-secret-key',
-        { expiresIn: '7d' }
-      );
-
-      const userResponse = {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        profileImage: user.profileImage
-      };
-
-      res.status(201).json({
+      return res.json({
         token,
         user: userResponse
       });
     }
+
+    // User not found -> do not create here
+    return res.status(404).json({
+      message: 'Account not created. Please sign up first.'
+    });
   } catch (error) {
     console.error('Google authentication error:', error);
     res.status(500).json({ 
       message: 'Google authentication failed',
+      error: error.message 
+    });
+  }
+});
+
+// Google Signup route (creates a new user if not exists)
+router.post('/google-signup', async (req, res) => {
+  try {
+    const { accessToken } = req.body;
+
+    if (!accessToken) {
+      return res.status(400).json({ message: 'Access token is missing' });
+    }
+
+    const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
+
+    if (!userInfoResponse.ok) {
+      throw new Error('Failed to get user info from Google');
+    }
+
+    const userInfo = await userInfoResponse.json();
+    const { sub: googleId, email, name, picture } = userInfo;
+
+    if (!email) {
+      return res.status(401).json({ message: 'Invalid Google user info' });
+    }
+
+    let user = await User.findOne({ email });
+
+    if (user) {
+      return res.status(409).json({ message: 'Account already exists. Please log in.' });
+    }
+
+    // Create new user
+    user = new User({
+      email,
+      name,
+      googleId,
+      profileImage: picture
+    });
+
+    await user.save();
+
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '7d' }
+    );
+
+    const userResponse = {
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      profileImage: user.profileImage
+    };
+
+    // Return 201 on successful signup. Client may choose not to auto-login.
+    return res.status(201).json({
+      token,
+      user: userResponse
+    });
+  } catch (error) {
+    console.error('Google signup error:', error);
+    res.status(500).json({ 
+      message: 'Google signup failed',
       error: error.message 
     });
   }

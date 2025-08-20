@@ -18,7 +18,7 @@ function ResumeBuilder() {
     }
   };
 
-  const newResume=()=>{
+  const newResume = () => {
     
     navigate("/resume-builder");
 
@@ -27,7 +27,7 @@ function ResumeBuilder() {
 
   }
 
-  const handlePreview=(id)=>{
+  const handlePreview = (id: string) => {
 
     navigate(`/resume-preview/${id}`);
   }
@@ -108,7 +108,7 @@ function ResumeBuilder() {
             <div className="flex items-center justify-between mb-4">
               <h4 className="font-semibold text-gray-900">Recent Resume</h4>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" className="h-8 px-3" onClick={()=>{handlePreview(recentResume._id)}}>
+                <Button variant="ghost" size="sm" className="h-8 px-3" onClick={() => { handlePreview(recentResume._id as string) }}>
                   <Eye className="h-4 w-4 mr-1" />
                   Preview
                 </Button>
@@ -168,4 +168,7 @@ function ResumeBuilder() {
   )
 }
 
+
 export default ResumeBuilder
+
+

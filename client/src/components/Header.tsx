@@ -9,7 +9,7 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
-import { Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { Menu, X, User, LogOut } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
 // Define props interface for Header
@@ -27,28 +27,22 @@ const Header = ({ scrollContainerRef }: HeaderProps) => { // Destructure scrollC
 
   // Change header style on scroll based on the provided ref or window
   useEffect(() => {
-    const handleScroll = (target: HTMLElement | Window) => {
-      const scrollTop = target === window ? window.scrollY : (target as HTMLElement).scrollTop; // Get scroll position
-      if (scrollTop > 10) { // Check if scrolled more than 10px
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+    const scrollElement: HTMLElement | Window = scrollContainerRef?.current || window;
+
+    const onScroll = () => {
+      const scrollTop = scrollElement === window
+        ? window.scrollY
+        : (scrollElement as HTMLElement).scrollTop;
+      setIsScrolled(scrollTop > 10);
     };
 
-    const scrollElement = scrollContainerRef?.current || window; // Use provided ref or window
+    scrollElement.addEventListener('scroll', onScroll);
+    onScroll();
 
-    // Add event listener
-    scrollElement.addEventListener('scroll', () => handleScroll(scrollElement));
-
-    // Initial check in case the page is already scrolled on load
-    handleScroll(scrollElement);
-
-    // Clean up event listener
     return () => {
-      scrollElement.removeEventListener('scroll', () => handleScroll(scrollElement));
+      scrollElement.removeEventListener('scroll', onScroll);
     };
-  }, [scrollContainerRef]); // Re-run effect if scrollContainerRef changes
+  }, [scrollContainerRef]);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);

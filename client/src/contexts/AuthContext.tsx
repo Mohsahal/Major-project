@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useToast } from "@/components/ui/use-toast";
+import { API_ENDPOINTS } from "@/config/api";
 
 interface User {
   id: string;
@@ -28,12 +29,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Check if user is already logged in
   useEffect(() => {
-    const storedUser = localStorage.getItem('futurefind_user');
-    const token = localStorage.getItem('futurefind_token');
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
-    }
-    setIsLoading(false);
+    const verify = async () => {
+      try {
+        const storedUser = localStorage.getItem('futurefind_user');
+        const token = localStorage.getItem('futurefind_token');
+        if (!token) {
+          setUser(null);
+          return;
+        }
+
+        // Optimistically set stored user, then verify token with backend
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+
+        const resp = await fetch(API_ENDPOINTS.PROFILE_ME, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!resp.ok) {
+          // Invalid/expired token → clear session
+          localStorage.removeItem('futurefind_user');
+          localStorage.removeItem('futurefind_token');
+          setUser(null);
+          return;
+        }
+
+        const json = await resp.json();
+        if (json?.success && json?.data) {
+          setUser({
+            id: json.data.id || json.data._id,
+            email: json.data.email,
+            name: json.data.name,
+            profileImage: json.data.profileImage ?? null,
+          });
+          localStorage.setItem('futurefind_user', JSON.stringify({
+            id: json.data.id || json.data._id,
+            email: json.data.email,
+            name: json.data.name,
+            profileImage: json.data.profileImage ?? null,
+          }));
+        } else {
+          localStorage.removeItem('futurefind_user');
+          localStorage.removeItem('futurefind_token');
+          setUser(null);
+        }
+      } catch (e) {
+        // Network or other error: treat as unauthenticated
+        localStorage.removeItem('futurefind_user');
+        localStorage.removeItem('futurefind_token');
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    verify();
   }, []);
 
   // Get the authentication token
@@ -45,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(API_ENDPOINTS.LOGIN, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -116,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signup = async (email: string, password: string, name: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/auth/signup', {
+      const response = await fetch(API_ENDPOINTS.REGISTER, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

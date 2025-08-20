@@ -20,22 +20,18 @@ A modern web application that analyzes your resume and provides personalized job
 pip install -r requirements.txt
 ```
 
-### 2. Configure API Key
+### 2. Configure Environment
 
-You need a SerpApi API key to fetch job listings. Get one for free at [serpapi.com](https://serpapi.com).
-
-**Option A: Environment Variable**
-```bash
-# Windows PowerShell
-$env:SERPAPI_API_KEY="your_api_key_here"
-
-# Windows Command Prompt
-set SERPAPI_API_KEY=your_api_key_here
+Create a `.env` file with:
 ```
-
-**Option B: Create .env file**
-```
+FLASK_PORT=5001
+ALLOW_ALL_ORIGINS=false
+ALLOWED_ORIGINS=http://localhost:5173,http://localhost:8081,http://localhost:8080
 SERPAPI_API_KEY=your_api_key_here
+DEFAULT_LOCATION=Bangalore
+DEFAULT_TOP_RESULTS=10
+DEFAULT_MODEL=all-MiniLM-L6-v2
+SECRET_KEY=change-me
 ```
 
 ### 3. Run the Application

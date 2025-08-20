@@ -230,6 +230,9 @@ export default function JobRecommendations() {
       if (jobLocation) {
         formData.append('location', jobLocation);
       }
+      // Request only LinkedIn direct links from Flask API
+      formData.append('provider', 'linkedin');
+      formData.append('only_provider', 'true');
 
       const response = await fetch(FLASK_ENDPOINTS.UPLOAD_RESUME, {
         method: 'POST',
@@ -257,7 +260,9 @@ export default function JobRecommendations() {
           experience: '—',
           benefits: [],
           urgency: (j.similarity || 0) >= 85 ? 'High' : (j.similarity || 0) >= 70 ? 'Medium' : 'Low',
-          applyLink: j.apply_link || ''
+          applyLink: (j.apply_link && typeof j.apply_link === 'string' && j.apply_link.trim().length > 0)
+            ? j.apply_link
+            : `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(`${j.title || ''} ${j.company || ''}`.trim())}`
         }));
 
         setJobs(mapped);
@@ -719,7 +724,10 @@ export default function JobRecommendations() {
                     <div className="flex gap-2 pt-4 border-t border-gray-100">
                       <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => {
                         const link = job.applyLink || '#';
-                        if (link && link !== '#') window.open(link, '_blank');
+                        if (link && link !== '#') {
+                          const w = window.open(link, '_blank', 'noopener,noreferrer');
+                          if (w) { w.opener = null; }
+                        }
                       }}>
                         <Eye className="h-4 w-4 mr-2" />
                         View Details
@@ -947,7 +955,10 @@ export default function JobRecommendations() {
                       <div className="flex gap-2 pt-4 border-t border-gray-100">
                         <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => {
                           const link = job.applyLink || '#';
-                          if (link && link !== '#') window.open(link, '_blank');
+                          if (link && link !== '#') {
+                            const w = window.open(link, '_blank', 'noopener,noreferrer');
+                            if (w) { w.opener = null; }
+                          }
                         }}>
                           <Eye className="h-4 w-4 mr-2" />
                           View Details

@@ -1,7 +1,10 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// Use environment variable with fallback for development
-const apiKey = process.env.GEMINI_API_KEY || 'AIzaSyCb4NZGfgyKPWsd4eG4kYuZ2RLKNbHY6Yw';
+// Use environment variable; do not hardcode keys
+const apiKey = process.env.GEMINI_API_KEY;
+if (!apiKey) {
+  console.warn('GEMINI_API_KEY is not set. AI endpoints will fail until configured.');
+}
 const ai = new GoogleGenerativeAI(apiKey);
 
 async function analyzeResume(resumeContent) {
