@@ -35,12 +35,31 @@ from job_recommender import (
 from config import SERPAPI_API_KEY, DEFAULT_LOCATION, DEFAULT_TOP_RESULTS, DEFAULT_MODEL, ALLOWED_ORIGINS, ALLOW_ALL_ORIGINS, FLASK_PORT
 
 app = Flask(__name__)
+# ✅ Setup CORS properly
 if ALLOW_ALL_ORIGINS:
+    print("⚠️  CORS: Allowing ALL origins (use only in dev or debugging)!")
     CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 else:
+    print(f"✅ CORS: Restricting to allowed origins: {ALLOWED_ORIGINS}")
     CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}}, supports_credentials=True)
-app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# ✅ Security & request size
+app.secret_key = os.getenv("SECRET_KEY", "your-secret-key-here")
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB max file size
+
+# ✅ Extra: Ensure CORS headers always added (sometimes Render strips them)
+@app.after_request
+def add_cors_headers(response):
+    if ALLOW_ALL_ORIGINS:
+        response.headers["Access-Control-Allow-Origin"] = "*"
+    else:
+        origin = os.getenv("REQUEST_ORIGIN", "")  # optional dynamic
+        if origin in ALLOWED_ORIGINS:
+            response.headers["Access-Control-Allow-Origin"] = origin
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
+    response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
+    return response
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
