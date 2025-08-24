@@ -10,14 +10,14 @@ from urllib.parse import urlparse
 import re
 import json
 
-# for skill gap analysis
-from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
-from langchain.prompts import PromptTemplate
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_text_splitters import CharacterTextSplitter
+# Remove global imports of LangChain components
+# from langchain_community.vectorstores import FAISS
+# from langchain.chains import RetrievalQA
+# from langchain.prompts import PromptTemplate
+# from langchain_community.document_loaders import PyPDFLoader
+# from langchain_google_genai import ChatGoogleGenerativeAI
+# from langchain_google_genai import GoogleGenerativeAIEmbeddings
+# from langchain_text_splitters import CharacterTextSplitter
 
 import dotenv
 from googleapiclient.discovery import build  # For YouTube API
@@ -50,13 +50,46 @@ dotenv.load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
 
-# Initialize YouTube client if API key is available
-youtube = None
-if YOUTUBE_API_KEY:
-    try:
-        youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
-    except Exception as e:
-        print(f"Failed to initialize YouTube API client: {e}")
+# Global variables for lazy loading
+_langchain_components = None
+_youtube_client = None
+
+def get_langchain_components():
+    """Lazy load LangChain components only when needed."""
+    global _langchain_components
+    
+    if _langchain_components is None:
+        try:
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            from langchain.prompts import PromptTemplate
+            
+            _langchain_components = {
+                'ChatGoogleGenerativeAI': ChatGoogleGenerativeAI,
+                'PromptTemplate': PromptTemplate
+            }
+            print("LangChain components loaded successfully")
+        except ImportError as e:
+            print(f"Error importing LangChain components: {e}")
+            raise ImportError("LangChain components not installed. Please install with: pip install langchain langchain-google-genai")
+        except Exception as e:
+            print(f"Error loading LangChain components: {e}")
+            raise
+    
+    return _langchain_components
+
+def get_youtube_client():
+    """Lazy load YouTube client only when needed."""
+    global _youtube_client
+    
+    if _youtube_client is None and YOUTUBE_API_KEY:
+        try:
+            _youtube_client = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
+            print("YouTube API client loaded successfully")
+        except Exception as e:
+            print(f"Failed to initialize YouTube API client: {e}")
+            _youtube_client = None
+    
+    return _youtube_client
 
 def allowed_file(filename):
     """Check if file extension is allowed."""
@@ -88,11 +121,12 @@ def extract_resume_text(file_path: str, file_extension: str) -> str:
 
 def get_youtube_videos(skill, max_results=3):
     """Get YouTube video suggestions for a skill."""
-    if not youtube:
+    youtube_client = get_youtube_client()
+    if not youtube_client:
         return []
     
     try:
-        request = youtube.search().list(
+        request = youtube_client.search().list(
             q=f"{skill} tutorial programming",
             part="snippet",
             type="video",
@@ -122,6 +156,11 @@ def analyze_skill_gap(resume_text, job_description):
     try:
         if not GEMINI_API_KEY:
             raise Exception("GEMINI_API_KEY not configured")
+        
+        # Load LangChain components only when needed
+        components = get_langchain_components()
+        ChatGoogleGenerativeAI = components['ChatGoogleGenerativeAI']
+        PromptTemplate = components['PromptTemplate']
         
         # First, extract skills from both resume and job description using a more direct approach
         llm = ChatGoogleGenerativeAI(
@@ -976,6 +1015,6 @@ def download_csv(filename):
         return jsonify({'error': f'Error downloading file: {str(e)}'}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", FLASK_PORT))
-    app.run(host="0.0.0.0", port=port, debug=False)
+     port = int(os.environ.get("PORT", FLASK_PORT))
+     app.run(host="0.0.0.0", port=port, debug=False)
     
