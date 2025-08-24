@@ -36,7 +36,31 @@ from config import SERPAPI_API_KEY, GEMINI_API_KEY, YOUTUBE_API_KEY, DEFAULT_LOC
 
 app = Flask(__name__)
 
-CORS(app, resources={r"/*": {"origins": ["https://frontend-uzcu.onrender.com"]}})
+# Enhanced CORS configuration - FIXED
+CORS(app, resources={
+    r"/*": {
+        "origins": ["https://frontend-uzcu.onrender.com", "http://localhost:3000", "http://127.0.0.1:3000"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+        "supports_credentials": True,
+        "expose_headers": ["Content-Disposition"]
+    }
+})
+
+# Handle preflight requests globally
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = jsonify()
+        response.headers.add("Access-Control-Allow-Origin", "https://frontend-uzcu.onrender.com")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Requested-With")
+        response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+        return response, 200
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    return response
 
 
 # Allowed file extensions
@@ -496,9 +520,17 @@ def health():
         'serpapi_configured': bool(SERPAPI_API_KEY)
     })
 
-@app.route('/skill-gap-analysis', methods=['POST'])
+@app.route('/skill-gap-analysis', methods=['POST', 'OPTIONS'])
 def skill_gap_analysis():
     """API endpoint for skill gap analysis."""
+    if request.method == 'OPTIONS':
+        # Handle preflight request
+        response = jsonify()
+        response.headers.add('Access-Control-Allow-Origin', 'https://frontend-uzcu.onrender.com')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+    
     try:
         # Check if file was uploaded
         if 'resume' not in request.files:
@@ -814,9 +846,17 @@ def generate_learning_recommendations(missing_skills):
     
     return recommendations
 
-@app.route('/upload', methods=['POST'])
+@app.route('/upload', methods=['POST', 'OPTIONS'])
 def upload_resume():
     """Handle resume upload and job recommendation."""
+    if request.method == 'OPTIONS':
+        # Handle preflight request
+        response = jsonify()
+        response.headers.add('Access-Control-Allow-Origin', 'https://frontend-uzcu.onrender.com')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST')
+        return response
+    
     try:
         # Check if file was uploaded
         if 'resume' not in request.files:
@@ -1001,9 +1041,17 @@ def format_jobs_for_response(top_jobs, preferred_provider=None):
         })
     return formatted
 
-@app.route('/download/<filename>')
+@app.route('/download/<filename>', methods=['GET', 'OPTIONS'])
 def download_csv(filename):
     """Download the generated CSV file."""
+    if request.method == 'OPTIONS':
+        # Handle preflight request
+        response = jsonify()
+        response.headers.add('Access-Control-Allow-Origin', 'https://frontend-uzcu.onrender.com')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'GET')
+        return response
+    
     try:
         file_path = os.path.join(os.getcwd(), filename)
         if os.path.exists(file_path):
@@ -1016,4 +1064,3 @@ def download_csv(filename):
 if __name__ == '__main__':
      port = int(os.environ.get("PORT", FLASK_PORT))
      app.run(host="0.0.0.0", port=port, debug=False)
-    
