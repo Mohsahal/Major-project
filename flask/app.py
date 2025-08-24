@@ -32,7 +32,7 @@ from job_recommender import (
 )
 
 # Import configuration
-from config import SERPAPI_API_KEY, DEFAULT_LOCATION, DEFAULT_TOP_RESULTS, DEFAULT_MODEL, ALLOWED_ORIGINS, ALLOW_ALL_ORIGINS, FLASK_PORT
+from config import SERPAPI_API_KEY, DEFAULT_LOCATION, DEFAULT_TOP_RESULTS, DEFAULT_MODEL, FLASK_PORT
 
 app = Flask(__name__)
 
