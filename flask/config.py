@@ -16,12 +16,23 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 
 # CORS / Server
-ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv(
-    "ALLOWED_ORIGINS",
-    "http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080,http://localhost:8081"
-).split(",") if origin.strip()]
+# ✅ CORS / Server Config
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv(
+        "ALLOWED_ORIGINS",
+        # Default: local dev + production frontend
+        "https://frontend-uzcu.onrender.com"  # 👈 your deployed React app
+    ).split(",")
+    if origin.strip()
+]
+
+# ✅ Allow all origins (override if you set ALLOW_ALL_ORIGINS=true in Render)
 ALLOW_ALL_ORIGINS = os.getenv("ALLOW_ALL_ORIGINS", "false").lower() == "true"
-FLASK_PORT = int(os.getenv("FLASK_PORT", "2000"))
+
+# ✅ Flask port (Render auto-assigns PORT env var, fallback to 2000)
+FLASK_PORT = int(os.getenv("PORT", os.getenv("FLASK_PORT", "2000")))
+
 
 # Default Settings
 DEFAULT_LOCATION = os.getenv("DEFAULT_LOCATION", "Bangalore")
