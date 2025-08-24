@@ -35,28 +35,7 @@ from job_recommender import (
 from config import SERPAPI_API_KEY, DEFAULT_LOCATION, DEFAULT_TOP_RESULTS, DEFAULT_MODEL, ALLOWED_ORIGINS, ALLOW_ALL_ORIGINS, FLASK_PORT
 
 app = Flask(__name__)
-# ✅ Setup CORS properly
-if ALLOW_ALL_ORIGINS:
-    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-else:
-    CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}}, supports_credentials=True)
 
-# ✅ Force CORS headers (fix for Render sometimes stripping them)
-@app.after_request
-def add_cors_headers(response):
-    origin = response.headers.get("Access-Control-Allow-Origin")
-    if not origin:  # if flask_cors didn’t add it
-        if ALLOW_ALL_ORIGINS:
-            response.headers["Access-Control-Allow-Origin"] = "*"
-        else:
-            # reflect request origin if it's in allowed list
-            req_origin = request.headers.get("Origin")
-            if req_origin and req_origin in ALLOWED_ORIGINS:
-                response.headers["Access-Control-Allow-Origin"] = req_origin
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization"
-    response.headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,DELETE,OPTIONS"
-    return response
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
