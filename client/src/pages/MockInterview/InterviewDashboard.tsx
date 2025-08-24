@@ -3,11 +3,32 @@ import { InterviewPin } from "@/components/MockInterview/pin";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 import { Interview } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
-import Header from "@/components/MockInterview/Header";
-import { Plus, RefreshCw, ArrowLeft, LayoutDashboard } from "lucide-react";
+import { 
+  Plus, 
+  RefreshCw, 
+  ArrowLeft, 
+  LayoutDashboard, 
+  Calendar,
+  Clock,
+  Target,
+  TrendingUp,
+  Users,
+  BookOpen,
+  Play,
+  CheckCircle,
+  AlertCircle,
+  Star,
+  Zap,
+  Info,
+  Briefcase,
+  Award,
+  BarChart3
+} from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -116,83 +137,233 @@ export const InterviewDashboard = () => {
     navigate(-1);
   };
 
+  // Calculate dashboard statistics
+  const totalInterviews = interviews.length;
+  const completedInterviews = interviews.filter(i => i.questions && i.questions.length > 0).length;
+  const averageExperience = interviews.length > 0 
+    ? Math.round(interviews.reduce((sum, i) => sum + i.experience, 0) / interviews.length)
+    : 0;
+  const recentInterviews = interviews.filter(i => {
+    const created = new Date(i.createdAt);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+    return diffDays <= 7;
+  }).length;
+
   return (
-    <>
-    <Header/>
-      <div className="flex w-full items-center justify-between mt-24 p-3">
-        {/* headings */}
-        <Headings
-        title="Dashboard"
-        description="Create and start you AI Mock interview"
-        />
-        <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
+        {/* Enhanced Header Section */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-6 mb-12">
           <Button 
             variant="outline" 
-            size="sm" 
+            size="lg" 
             onClick={() => navigate("/dashboard")}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 px-6 py-3 border-gray-200 hover:bg-gray-50 transition-all duration-200 text-gray-700"
           >
-            <LayoutDashboard className="h-4 w-4" />
-            Go Back
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleRefresh}
-            disabled={loading}
-            className="flex items-center gap-2"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+          
           <Link to={"/generate/create"}>
-            <Button variant={"outline"} size={"sm"}>
-              <Plus /> Add New
+            <Button 
+              size="lg" 
+              className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-career-blue to-career-purple hover:from-career-purple hover:to-career-blue text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+            >
+              <Plus className="h-5 w-5" />
+              Create New Interview
             </Button>
           </Link>
         </div>
-      </div>
+        
+        {/* Hero Section */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-career-blue to-career-purple text-white px-6 py-2 rounded-full text-sm font-medium mb-6 shadow-md">
+            <Zap className="h-4 w-4" />
+            AI-Powered Mock Interviews
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            Interview Dashboard
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            Master your interview skills with AI-powered mock interviews. Practice, improve, and land your dream job.
+          </p>
+        </div>
 
-      <Separator className="my-8" />
-      {/* content section */}
+        {/* Enhanced Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <Card className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Total Interviews</p>
+                  <p className="text-3xl font-bold text-gray-900">{totalInterviews}</p>
+                </div>
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <BookOpen className="h-6 w-6 text-career-blue" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-      <div className="md:grid md:grid-cols-4 gap-3 py-2 my-2 mx-2">
-        {loading ? (
-          Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-24 md:h-32 rounded-md" />
-          ))
-        ) : interviews.length > 0 ? (
-          interviews.map((interview) => (
-            <InterviewPin key={interview.id} interview={interview} />
-          ))
-        ) : (
-          <div className="md:col-span-3 w-full flex flex-grow items-center justify-center h-96 flex-col">
-            <img
-              src="/assets/svg/not-found.svg"
-              className="w-44 h-44 object-contain"
-              alt=""
-            />
+          <Card className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Completed</p>
+                  <p className="text-3xl font-bold text-green-600">{completedInterviews}</p>
+                </div>
+                <div className="p-3 bg-green-50 rounded-lg">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-            <h2 className="text-lg font-semibold text-muted-foreground">
-              No Data Found
-            </h2>
+          <Card className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">Avg Experience</p>
+                  <p className="text-3xl font-bold text-career-purple">{averageExperience} yrs</p>
+                </div>
+                <div className="p-3 bg-purple-50 rounded-lg">
+                  <Target className="h-6 w-6 text-career-purple" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-            <p className="w-full md:w-96 text-center text-sm text-neutral-400 mt-4">
-              There is no available data to show. Please add some new mock
-              interviews
-            </p>
+          <Card className="bg-white border-0 shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600 mb-1">This Week</p>
+                  <p className="text-3xl font-bold text-orange-600">{recentInterviews}</p>
+                </div>
+                <div className="p-3 bg-orange-50 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-orange-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-            <Link to={"/generate/create"} className="mt-4">
-              <Button size={"sm"}>
-                <Plus className="min-w-5 min-h-5 mr-1" />
-                Add New
-              </Button>
-            </Link>
+        {/* Content Section */}
+        <div className="space-y-8">
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Card key={index} className="bg-white border-0 shadow-md">
+                  <CardContent className="p-6">
+                    <Skeleton className="h-4 w-3/4 mb-4" />
+                    <Skeleton className="h-3 w-full mb-2" />
+                    <Skeleton className="h-3 w-2/3 mb-4" />
+                    <div className="flex gap-2">
+                      <Skeleton className="h-6 w-16" />
+                      <Skeleton className="h-6 w-20" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : interviews.length > 0 ? (
+            <>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Your Interviews</h2>
+                <Badge className="bg-gradient-to-r from-career-blue to-career-purple text-white border-0 px-3 py-1">
+                  {interviews.length} {interviews.length === 1 ? 'Interview' : 'Interviews'}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {interviews.map((interview) => (
+                  <InterviewPin key={interview.id} interview={interview} />
+                ))}
+              </div>
+            </>
+          ) : (
+            <Card className="bg-white border-0 shadow-xl max-w-2xl mx-auto">
+              <CardContent className="p-12 text-center">
+                <div className="w-24 h-24 bg-gradient-to-br from-career-blue/10 to-career-purple/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <BookOpen className="h-12 w-12 text-career-blue" />
+                </div>
+                
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                  Ready to Start Your Interview Journey?
+                </h3>
+                
+                <p className="text-gray-600 mb-8 leading-relaxed">
+                  Create your first AI-powered mock interview to practice and improve your skills. 
+                  Get personalized feedback and track your progress over time.
+                </p>
+                
+                <div className="space-y-4">
+                  <Link to={"/generate/create"}>
+                    <Button 
+                      size="lg" 
+                      className="w-full bg-gradient-to-r from-career-blue to-career-purple hover:from-career-purple hover:to-career-blue text-white shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                    >
+                      <Plus className="h-5 w-5 mr-2" />
+                      Create Your First Interview
+                    </Button>
+                  </Link>
+                  
+                  <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>AI-Powered Questions</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Star className="h-4 w-4 text-yellow-500" />
+                      <span>Instant Feedback</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-career-blue" />
+                      <span>Progress Tracking</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Enhanced Quick Actions Footer */}
+        {interviews.length > 0 && (
+          <div className="mt-16">
+            <div className="bg-white rounded-xl p-8 shadow-md border border-gray-100">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 text-center">
+                Need More Practice?
+              </h3>
+              <p className="text-gray-600 mb-8 text-center">
+                Explore our question bank, resources, and tips to ace your interviews
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-4">
+                <Link to="/generate/questions">
+                  <Button variant="outline" size="lg" className="flex items-center gap-2 border-gray-200 hover:bg-gray-50 transition-all duration-200">
+                    <BookOpen className="h-4 w-4" />
+                    Question Bank
+                  </Button>
+                </Link>
+                <Link to="/generate/resources">
+                  <Button variant="outline" size="lg" className="flex items-center gap-2 border-gray-200 hover:bg-gray-50 transition-all duration-200">
+                    <Users className="h-4 w-4" />
+                    Resources
+                  </Button>
+                </Link>
+                <Link to="/generate/about">
+                  <Button variant="outline" size="lg" className="flex items-center gap-2 border-gray-200 hover:bg-gray-50 transition-all duration-200">
+                    <Info className="h-4 w-4" />
+                    About
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 };
 

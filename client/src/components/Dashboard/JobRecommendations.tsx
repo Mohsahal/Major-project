@@ -1,4 +1,4 @@
-import { ArrowRight, RefreshCw, Star, Upload, FileText, X, MapPin, Building2, DollarSign, Clock, TrendingUp, Filter, Search, Bookmark, Share2, Eye, Sparkles, Zap, Target, Users, Briefcase, ChevronDown, Plus } from "lucide-react";
+import { ArrowRight, RefreshCw, Loader2, Star, Upload, FileText, X, MapPin, Building2, DollarSign, Clock, TrendingUp, Filter, Search, Bookmark, Share2, Eye, Sparkles, Zap, Target, Users, Briefcase, ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { FLASK_ENDPOINTS } from "@/config/api";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type JobType = {
   id: string;
@@ -29,7 +30,11 @@ type JobType = {
   applyLink?: string;
 };
 
-export default function JobRecommendations() {
+type JobRecommendationsProps = {
+  onJobsUpdated?: (jobs: JobType[]) => void;
+};
+
+export default function JobRecommendations({ onJobsUpdated }: JobRecommendationsProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedResume, setUploadedResume] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -148,6 +153,7 @@ export default function JobRecommendations() {
       return false;
     }
 
+
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "File too large",
@@ -207,6 +213,7 @@ export default function JobRecommendations() {
   const handleRemoveResume = () => {
     setUploadedResume(null);
     setShowRecommendations(false); // Hide recommendations when resume is removed
+    onJobsUpdated?.([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -264,11 +271,13 @@ export default function JobRecommendations() {
             ? j.apply_link
             : `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(`${j.title || ''} ${j.company || ''}`.trim())}`
         }));
+        
 
         setJobs(mapped);
         setCsvDownload(data.csv_download || null);
         setAutoQuery(data.query || null);
       setShowRecommendations(true);
+      onJobsUpdated?.(mapped);
       toast({
         title: "Recommendations Generated! 🎯",
           description: `Found ${mapped.length} jobs${data.query ? ` for "${data.query}"` : ''}`,
@@ -295,6 +304,32 @@ export default function JobRecommendations() {
       setIsGeneratingRecommendations(false);
     }
   };
+
+  const JobCardSkeleton = () => (
+    <div className="border-2 border-gray-100 rounded-lg bg-white p-6">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <Skeleton className="h-6 w-56" />
+            <Skeleton className="h-5 w-16" />
+          </div>
+          <div className="flex items-center gap-4 text-sm mb-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-4 w-24" />
+          </div>
+        </div>
+        <div className="text-right space-y-2">
+          <Skeleton className="h-6 w-24" />
+          <Skeleton className="h-5 w-20" />
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Skeleton className="h-9 w-full" />
+        <Skeleton className="h-9 w-32" />
+      </div>
+    </div>
+  );
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
@@ -385,36 +420,50 @@ export default function JobRecommendations() {
             variant="outline" 
             size="sm" 
             onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
-            className="flex items-center gap-2 hover:bg-blue-50"
+            disabled={isUploading || isGeneratingRecommendations}
+            className="flex items-center gap-2 hover:bg-blue-50 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            <Upload className={`h-4 w-4 ${isUploading ? 'animate-bounce' : ''}`} />
+            {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
             {uploadedResume ? 'Change Resume' : 'Upload Resume'}
           </Button>
           <Button 
             size="sm" 
-                onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
+            onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
+            className="bg-blue-600 hover:bg-blue-700"
+            disabled={isGeneratingRecommendations}
+          >
+            {isGeneratingRecommendations ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Loading Jobs
+              </>
+            ) : (
+              <>
                 View All Jobs
                 <ArrowRight className="ml-2 h-4 w-4" />
+              </>
+            )}
           </Button>
         </div>
       </div>
         </CardHeader>
 
-        {/* Upload Progress */}
-        {isUploading && (
+        {/* Upload / Loading Progress */}
+        {(isUploading || isGeneratingRecommendations) && (
           <CardContent className="pt-0">
             <div className="bg-white rounded-lg p-4 border border-blue-200">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-blue-700">Uploading resume...</span>
-                <span className="text-sm text-blue-600">{uploadProgress}%</span>
+                <span className="text-sm font-medium text-blue-700">
+                  {isUploading ? 'Uploading resume...' : 'Generating recommendations...'}
+                </span>
+                {isUploading && (
+                  <span className="text-sm text-blue-600">{uploadProgress}%</span>
+                )}
               </div>
               <div className="w-full bg-blue-200 rounded-full h-2">
                 <div 
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress}%` }}
+                  style={{ width: `${isUploading ? uploadProgress : 90}%` }}
                 />
               </div>
             </div>
@@ -473,13 +522,13 @@ export default function JobRecommendations() {
                   <Button
                     size="lg"
                     onClick={handleGetRecommendations}
-                    disabled={isGeneratingRecommendations}
-                    className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                    disabled={isGeneratingRecommendations || isUploading}
+                    className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed"
                   >
                     {isGeneratingRecommendations ? (
                       <>
-                        <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
-                        Analyzing Resume...
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        Finding the best matches...
                       </>
                     ) : (
                       <>
@@ -597,7 +646,7 @@ export default function JobRecommendations() {
       )}
 
       {/* Success Message */}
-      {showRecommendations && (
+      {showRecommendations && !isGeneratingRecommendations && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

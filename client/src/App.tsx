@@ -40,6 +40,8 @@ import AboutMockPage from "./pages/MockInterview/AboutMockPage";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import NotFound from "@/pages/NotFound";
+import SkillGapAnalysisPage from "@/pages/SkillGapAnalysis";
+// import SkillGap from "@/pages/SkillGap";
 
 const queryClient = new QueryClient();
 
@@ -164,6 +166,22 @@ const App = () => (
                         </ProtectedRoute>
                       }
                     />
+                    <Route
+                      path="/skill-gap-analysis"
+                      element={
+                        <ProtectedRoute>
+                          <SkillGapAnalysisPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    {/* <Route
+                      path="/skill-gap"
+                      element={
+                        <ProtectedRoute>
+                          <SkillGap />
+                        </ProtectedRoute>
+                      }
+                    /> */}
                     <Route
                       path="/resume-preview/:id"
                       element={

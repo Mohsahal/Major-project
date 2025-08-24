@@ -27,6 +27,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useResume } from '@/contexts/ResumeContext';
 import { defaultResumeData } from '@/data/defaultResumeData';
 import { API_ENDPOINTS } from '@/config/api';
 
@@ -80,6 +81,7 @@ const templates = [
 
 const ResumeBuilder = () => {
   const { getToken } = useAuth();
+  const { addResume, updateResume } = useResume();
   const { id } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("build");
@@ -94,6 +96,41 @@ const ResumeBuilder = () => {
       fetchResume(id);
     }
   }, [id]);
+
+  // Refresh the resume context when component mounts to ensure latest data
+  useEffect(() => {
+    // This will ensure the context has the latest data when user navigates back
+    const refreshContext = async () => {
+      try {
+        const token = getToken();
+        if (token) {
+          const response = await fetch(API_ENDPOINTS.RESUMES, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.length > 0) {
+              const sortedResumes = [...data].sort((a, b) => 
+                new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime()
+              );
+              // Update the context with the most recent resume
+              const mostRecent = sortedResumes[0];
+              if (mostRecent) {
+                updateResume(mostRecent._id, mostRecent);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error refreshing context:', error);
+      }
+    };
+    
+    refreshContext();
+  }, [getToken, updateResume]);
 
   const fetchResume = async (resumeId) => {
     try {
@@ -170,6 +207,21 @@ const ResumeBuilder = () => {
 
       const data = await response.json();
       
+      // Update the ResumeContext with the new/updated resume
+      const resumeForContext = {
+        _id: data._id || id,
+        title: resumeToSave.title,
+        template: selectedTemplate,
+        lastModified: resumeToSave.lastModified,
+        personalInfo: resumeData.personalInfo
+      };
+      
+      if (id) {
+        updateResume(id, resumeForContext);
+      } else {
+        addResume(resumeForContext);
+      }
+      
       toast({
         title: "Success",
         description: id ? "Resume updated successfully" : "Resume saved successfully",
@@ -191,7 +243,19 @@ const ResumeBuilder = () => {
 
   const handleUpdateResume = useCallback((data) => {
     setResumeData(data);
-  }, []);
+    
+    // If we have an ID, update the resume in context
+    if (id) {
+      const updatedResumeForContext = {
+        _id: id,
+        title: `${data.personalInfo.firstName} ${data.personalInfo.lastName}'s Resume`,
+        template: selectedTemplate,
+        lastModified: new Date().toISOString(),
+        personalInfo: data.personalInfo
+      };
+      updateResume(id, updatedResumeForContext);
+    }
+  }, [id, selectedTemplate, updateResume]);
 
   const handleTemplateChange = (templateId) => {
     setSelectedTemplate(templateId);

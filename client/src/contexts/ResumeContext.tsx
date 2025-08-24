@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { API_ENDPOINTS } from '@/config/api';
+import { toast } from '@/components/ui/use-toast';
 
 interface Resume {
   _id: string;
@@ -17,7 +18,7 @@ interface ResumeContextType {
   resumes: Resume[];
   recentResume: Resume | null;
   isLoading: boolean;
-  fetchResumes: () => Promise<void>;
+  fetchResumes: (showToast?: boolean) => Promise<void>;
   addResume: (resume: Resume) => void;
   updateResume: (id: string, resume: Resume) => void;
   deleteResume: (id: string) => void;
@@ -43,7 +44,7 @@ export const ResumeProvider: React.FC<ResumeProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { getToken, isAuthenticated } = useAuth();
 
-  const fetchResumes = async () => {
+  const fetchResumes = async (showToast = false) => {
     if (!isAuthenticated) {
       setResumes([]);
       setRecentResume(null);
@@ -78,6 +79,15 @@ export const ResumeProvider: React.FC<ResumeProviderProps> = ({ children }) => {
           setRecentResume(sortedResumes[0]);
         } else {
           setRecentResume(null);
+        }
+        
+        // Show success toast for manual refresh
+        if (showToast && resumes.length > 0) {
+          toast({
+            title: "Resumes refreshed",
+            description: `Found ${data.length} resume${data.length !== 1 ? 's' : ''}`,
+            className: "bg-green-50 border-green-200",
+          });
         }
       } else {
         // For demo purposes, add some sample resumes if API fails

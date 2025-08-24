@@ -4,6 +4,7 @@ import StatsOverview from "@/components/Dashboard/StatsOverview";
 import JobRecommendations from "@/components/Dashboard/JobRecommendations";
 import ResumeBuilder from "@/components/Dashboard/ResumeBuilder";
 import SkillGapAnalysis from "@/components/Dashboard/SkillGapAnalysis";
+import { useNavigate } from "react-router-dom";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Index from "../components/MockInterview/Mockindex";
@@ -13,6 +14,8 @@ import Header from "@/components/Header";
 export default function Dashboard() {
   const mainRef = useRef<HTMLElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [jobMatches, setJobMatches] = useState<number>(0);
+  const navigate = useNavigate();
 
   // Handle scroll events to auto-close sidebar
   useEffect(() => {
@@ -48,7 +51,7 @@ export default function Dashboard() {
               </div>
             </div>
             
-            <StatsOverview />
+            <StatsOverview jobMatches={jobMatches} />
 
             
             <Tabs defaultValue="all" className="mb-8 animate-fade-in" style={{ animationDelay: "200ms" }}>
@@ -76,13 +79,21 @@ export default function Dashboard() {
               <TabsContent value="all" className="mt-6 animate-fade-in">
                 <div className="space-y-8">
                   <div id="job-recommendations">
-                    <JobRecommendations />
+                    <JobRecommendations onJobsUpdated={(list)=> setJobMatches(list.length)} />
                   </div>
                   <div id="resume-builder">
                     <ResumeBuilder />
                   </div>
                   <div id="skill-gap">
                     <SkillGapAnalysis />
+                    {/* <div className="flex justify-end mt-4">
+                      <button
+                        className="text-indigo-600 text-sm hover:underline"
+                        onClick={()=> navigate('/skill-gap')}
+                      >
+                        Open detailed Skill Gap Analyzer →
+                      </button>
+                    </div> */}
                   </div>
                   <div id="mock-interviews">
                    <Index/>

@@ -1,4 +1,3 @@
-import Header from "@/components/MockInterview/Header";
 import { Headings } from "@/components/MockInterview/Headings";
 import { Card } from "@/components/ui/card";
 
@@ -23,7 +22,6 @@ const resources = [
 const ResourcesPage = () => {
   return (
     <div className="min-h-screen bg-white">
-      <Header />
       <div className="max-w-5xl mx-auto px-4 py-8">
         <Headings
           title="Resources"

@@ -3,7 +3,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormProvider, useForm } from "react-hook-form";
 
 import { Interview } from "@/types";
-import Header from "@/components/MockInterview/Header";
 import { CustomBreadCrumb } from "./Custom-bread-crumb";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";

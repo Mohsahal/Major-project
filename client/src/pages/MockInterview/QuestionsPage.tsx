@@ -1,4 +1,3 @@
-import Header from "@/components/MockInterview/Header";
 import { Headings } from "@/components/MockInterview/Headings";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,7 +26,6 @@ const QuestionsPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <Header />
       <div className="max-w-5xl mx-auto px-4 py-8">
         <Headings
           title="Question Bank"

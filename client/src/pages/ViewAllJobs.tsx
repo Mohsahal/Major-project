@@ -31,6 +31,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FLASK_ENDPOINTS } from "@/config/api";
 
 type JobType = {
+  
   id: string;
   title: string;
   company: string;
@@ -48,6 +49,7 @@ type JobType = {
   urgency: 'High' | 'Medium' | 'Low';
   applyLink?: string;
 };
+
 
 export default function ViewAllJobs() {
   const navigate = useNavigate();
@@ -635,6 +637,7 @@ export default function ViewAllJobs() {
                             </div>
                           </div>
                         )}
+                        
 
                         {/* Action Buttons */}
                         <div className="flex gap-3 pt-4 border-t border-gray-100">
@@ -690,3 +693,4 @@ export default function ViewAllJobs() {
     </motion.div>
   );
 }
+

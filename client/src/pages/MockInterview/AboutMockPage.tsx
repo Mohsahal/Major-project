@@ -1,4 +1,3 @@
-import Header from "@/components/MockInterview/Header";
 import { Headings } from "@/components/MockInterview/Headings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -67,8 +66,6 @@ const Step = ({
 const AboutMockPage = () => {
   return (
     <div className="min-h-screen bg-white">
-      <Header />
-
       {/* Hero */}
       <section className="bg-gradient-to-b from-indigo-50 to-white border-b">
         <div className="max-w-6xl mx-auto px-4 py-12 md:py-16">

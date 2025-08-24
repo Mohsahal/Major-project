@@ -1,11 +1,15 @@
 import { ArrowUpRight, Users, Briefcase, FileCheck } from "lucide-react";
 
-export default function StatsOverview() {
+type StatsOverviewProps = {
+  jobMatches?: number;
+};
+
+export default function StatsOverview({ jobMatches = 0 }: StatsOverviewProps) {
   
   const stats = [
     {
       title: "Job Matches",
-      value: "24",
+      value: String(jobMatches),
       change: "+4",
       icon: <Briefcase className="h-8 w-8 text-career-blue" />,
       bgClass: "bg-blue-50"

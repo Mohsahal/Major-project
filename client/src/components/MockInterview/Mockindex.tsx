@@ -151,7 +151,7 @@ const Index = () => {
             <Link to="/generate">
               <Button 
                 size="lg"
-                className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-3 mt-5 sm:px-8 py-4 sm:py-6 text-base sm:text-xl rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 Start Your Practice Interview
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -327,7 +327,7 @@ const Index = () => {
                 <Button 
                   size="lg"
                   variant="secondary"
-                  className="w-full sm:w-auto px-6 sm:px-8 py-4 text-base sm:text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/50"
+                  className="w-full sm:w-auto px-6 sm:px-8 py-4  text-base sm:text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 bg-white/20 hover:bg-white/30 text-white border border-white/30 hover:border-white/50"
                 >
                   <Settings className="mr-2 h-5 w-5" />
                   Customize Settings
