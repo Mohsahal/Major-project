@@ -47,6 +47,18 @@ CORS(app, resources={
     }
 })
 
+# Add manual CORS headers to ensure they're always set
+@app.after_request
+def after_request(response):
+    origin = request.headers.get('Origin')
+    if origin and origin in ["https://frontend-uzcu.onrender.com", "http://localhost:3000", "http://127.0.0.1:3000"]:
+        response.headers.add('Access-Control-Allow-Origin', origin)
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Credentials', 'true')
+    response.headers.add('Access-Control-Expose-Headers', 'Content-Disposition')
+    return response
+
 # Handle preflight requests globally
 @app.before_request
 def handle_preflight():
@@ -55,21 +67,14 @@ def handle_preflight():
         response.headers.add("Access-Control-Allow-Origin", "https://frontend-uzcu.onrender.com")
         response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Requested-With")
         response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
         return response, 200
-
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response
-
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
 
 # Load environment variables for skill gap analysis
 dotenv.load_dotenv()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
 
 # Global variables for lazy loading
 _langchain_components = None
@@ -399,8 +404,8 @@ def extract_skills_from_text(text):
         "graphql": r"\bgraphql\b",
         "soap": r"\bsoap\b",
         "websocket": r"\bwebsocket\b",
-        
-        # Methodologies
+
+                # Methodologies
         "agile": r"\bagile\b",
         "scrum": r"\bscrum\b",
         "kanban": r"\bkanban\b",
@@ -514,7 +519,7 @@ def health():
     return jsonify({
         'status': 'ok',
         'port': os.environ.get("PORT", FLASK_PORT),
-        'allowed_origins': "https://frontend-uzcu.onrender.com",
+        'allowed_origins': ["https://frontend-uzcu.onrender.com", "http://localhost:3000", "http://127.0.0.1:3000"],
         'gemini_configured': bool(GEMINI_API_KEY),
         'youtube_configured': bool(YOUTUBE_API_KEY),
         'serpapi_configured': bool(SERPAPI_API_KEY)
@@ -1064,3 +1069,5 @@ def download_csv(filename):
 if __name__ == '__main__':
      port = int(os.environ.get("PORT", FLASK_PORT))
      app.run(host="0.0.0.0", port=port, debug=False)
+
+    
