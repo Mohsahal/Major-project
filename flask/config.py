@@ -18,26 +18,8 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 
 # ==========================
-# CORS / Server Config
+# Server Config
 # ==========================
-
-# Default allowed origins (local dev + Render frontend)
-DEFAULT_ALLOWED_ORIGINS = [
-    "http://localhost:8081",
-    "http://127.0.0.1:8081",
-    "https://frontend-uzcu.onrender.com"
-]
-
-# Parse from ENV or fallback
-ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv("ALLOWED_ORIGINS", ",".join(DEFAULT_ALLOWED_ORIGINS)).split(",")
-    if origin.strip()
-]
-
-# Override: allow all origins if set in ENV
-ALLOW_ALL_ORIGINS = os.getenv("ALLOW_ALL_ORIGINS", "false").lower() == "true"
-
 # Flask port (Render auto-assigns PORT env var, fallback to 2000 locally)
 FLASK_PORT = int(os.getenv("PORT", os.getenv("FLASK_PORT", "2000")))
 
@@ -77,7 +59,4 @@ def check_api_keys():
 
 
 if __name__ == "__main__":
-    print("CORS Config:")
-    print(f"  ➝ ALLOW_ALL_ORIGINS = {ALLOW_ALL_ORIGINS}")
-    print(f"  ➝ ALLOWED_ORIGINS = {ALLOWED_ORIGINS}")
     check_api_keys()
