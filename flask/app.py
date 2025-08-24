@@ -32,9 +32,11 @@ from job_recommender import (
 )
 
 # Import configuration
-from config import SERPAPI_API_KEY, DEFAULT_LOCATION, DEFAULT_TOP_RESULTS, DEFAULT_MODEL, FLASK_PORT
+from config import SERPAPI_API_KEY, GEMINI_API_KEY, YOUTUBE_API_KEY, DEFAULT_LOCATION, DEFAULT_TOP_RESULTS, DEFAULT_MODEL, FLASK_PORT
 
 app = Flask(__name__)
+
+CORS(app, resources={r"/*": {"origins": ["https://frontend-uzcu.onrender.com"]}})
 
 
 # Allowed file extensions
@@ -484,12 +486,14 @@ def extract_skills_fallback(response_text, job_description):
 
 @app.route('/health', methods=['GET'])
 def health():
+    """Health check route"""
     return jsonify({
         'status': 'ok',
         'port': os.environ.get("PORT", FLASK_PORT),
-        'allowed_origins': '*' if ALLOW_ALL_ORIGINS else ALLOWED_ORIGINS,
+        'allowed_origins': "https://frontend-uzcu.onrender.com",
         'gemini_configured': bool(GEMINI_API_KEY),
-        'youtube_configured': bool(YOUTUBE_API_KEY)
+        'youtube_configured': bool(YOUTUBE_API_KEY),
+        'serpapi_configured': bool(SERPAPI_API_KEY)
     })
 
 @app.route('/skill-gap-analysis', methods=['POST'])
