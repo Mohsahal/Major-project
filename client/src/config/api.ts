@@ -36,6 +36,25 @@ export const FLASK_ENDPOINTS = {
   DOWNLOAD_CSV: (filename: string) => `${FLASK_BASE_URL}/download/${filename}`,
 };
 
+// Utility: Ensure Flask server is awake and reachable (Render cold start mitigation)
+export async function ensureFlaskAwake(maxRetries = 2, delayMs = 1200): Promise<void> {
+  const healthUrl = `${FLASK_BASE_URL}/health`;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(healthUrl, { method: 'GET' });
+      if (res.ok) {
+        return;
+      }
+    } catch (_) {
+      // swallow and retry
+    }
+    if (attempt < maxRetries) {
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+  // If still not reachable, proceed and let the main request surface the error
+}
+
 // API Response types
 export interface ApiResponse<T = unknown> {
   success: boolean;
