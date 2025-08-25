@@ -36,38 +36,51 @@ from config import SERPAPI_API_KEY, GEMINI_API_KEY, YOUTUBE_API_KEY, DEFAULT_LOC
 
 app = Flask(__name__)
 
-# Enhanced CORS configuration - FIXED
-CORS(app, resources={
-    r"/*": {
-        "origins": ["https://frontend-uzcu.onrender.com", "http://localhost:3000", "http://127.0.0.1:3000"],
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
-        "supports_credentials": True,
-        "expose_headers": ["Content-Disposition"]
-    }
-})
+# Centralized allowed origins (production + local dev)
+ALLOWED_ORIGINS = [
+    "https://frontend-uzcu.onrender.com",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:8080",
+    "http://127.0.0.1:8081"
+]
 
-# Add manual CORS headers to ensure they're always set
+# Enhanced CORS configuration - consistent and explicit
+CORS(app, resources={r"/*": {
+    "origins": ALLOWED_ORIGINS,
+    "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
+    "supports_credentials": True,
+    "expose_headers": ["Content-Disposition"],
+    "max_age": 86400
+}})
+
+# Add manual CORS headers to ensure they're always set (covers errors and non-CORS responses)
 @app.after_request
 def after_request(response):
     origin = request.headers.get('Origin')
-    if origin and origin in ["https://frontend-uzcu.onrender.com", "http://localhost:3000", "http://127.0.0.1:3000"]:
-        response.headers.add('Access-Control-Allow-Origin', origin)
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    response.headers.add('Access-Control-Expose-Headers', 'Content-Disposition')
+    if origin and origin in ALLOWED_ORIGINS:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Vary'] = 'Origin'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Expose-Headers'] = 'Content-Disposition'
+    response.headers['Access-Control-Max-Age'] = '86400'
     return response
 
-# Handle preflight requests globally
+# Handle preflight requests globally with dynamic origin echo
 @app.before_request
 def handle_preflight():
     if request.method == "OPTIONS":
         response = jsonify()
-        response.headers.add("Access-Control-Allow-Origin", "https://frontend-uzcu.onrender.com")
-        response.headers.add("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Requested-With")
-        response.headers.add("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-        response.headers.add("Access-Control-Allow-Credentials", "true")
+        origin = request.headers.get('Origin')
+        if origin and origin in ALLOWED_ORIGINS:
+            response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization,X-Requested-With'
+        response.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS'
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        response.headers['Access-Control-Max-Age'] = '86400'
         return response, 200
 
 # Allowed file extensions
@@ -519,7 +532,7 @@ def health():
     return jsonify({
         'status': 'ok',
         'port': os.environ.get("PORT", FLASK_PORT),
-        'allowed_origins': ["https://frontend-uzcu.onrender.com", "http://localhost:3000", "http://127.0.0.1:3000"],
+        'allowed_origins': ALLOWED_ORIGINS,
         'gemini_configured': bool(GEMINI_API_KEY),
         'youtube_configured': bool(YOUTUBE_API_KEY),
         'serpapi_configured': bool(SERPAPI_API_KEY)

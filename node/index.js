@@ -13,19 +13,31 @@ const userAnswersRouter = require('./routes/user-answers');
 
 const app = express();
 
-// Manual CORS headers as backup
+// Centralized allowed origins
+const ALLOWED_ORIGINS = [
+  'https://frontend-uzcu.onrender.com',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:8080',
+  'http://127.0.0.1:8081'
+];
+
+// Manual CORS headers as backup (dynamic echo, no wildcard with credentials)
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Vary', 'Origin');
+  }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Max-Age', '86400');
   
-  // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
+    return res.sendStatus(200);
   }
+  next();
 });
 
 // CORS debugging middleware
@@ -38,12 +50,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// Simple CORS configuration - allow all origins for development
+// CORS configuration - explicit origins
 app.use(cors({
-  origin: true, // Allow all origins
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    return ALLOWED_ORIGINS.includes(origin) ? callback(null, true) : callback(new Error('CORS not allowed'), false);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  maxAge: 86400
 }));
 
 // Raw body logging for debugging
