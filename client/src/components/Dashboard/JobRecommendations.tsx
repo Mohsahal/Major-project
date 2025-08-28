@@ -6,7 +6,7 @@ import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { FLASK_ENDPOINTS } from "@/config/api";
+import { FLASK_ENDPOINTS, ensureFlaskAwake } from "@/config/api";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -232,6 +232,7 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
     setIsGeneratingRecommendations(true);
     
     try {
+      await ensureFlaskAwake();
       const formData = new FormData();
       formData.append('resume', uploadedResume);
       if (jobLocation) {

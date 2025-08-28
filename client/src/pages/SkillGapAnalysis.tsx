@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FLASK_BASE_URL, ensureFlaskAwake } from "@/config/api";
 
 type SkillAnalysis = {
   present_skills: string[];
@@ -234,11 +235,12 @@ export default function SkillGapAnalysisPage() {
     
     setIsAnalyzing(true);
     try {
+      await ensureFlaskAwake();
       const formData = new FormData();
       formData.append('resume', selectedFile);
       formData.append('job_description', jobDescription);
 
-      const response = await fetch('http://localhost:5001/skill-gap-analysis', {
+      const response = await fetch(`${FLASK_BASE_URL}/skill-gap-analysis`, {
         method: 'POST',
         body: formData,
       });

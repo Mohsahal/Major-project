@@ -1,6 +1,6 @@
 // API Configuration and endpoints
-export const API_BASE_URL = (import.meta as any)?.env?.VITE_API_BASE_URL || 'http://localhost:1000/api';
-export const FLASK_BASE_URL = (import.meta as any)?.env?.VITE_FLASK_BASE_URL || 'http://localhost:2000';
+export const API_BASE_URL = (import.meta as any)?.env?.VITE_API_BASE_URL || 'https://job-reco-backend.onrender.com/api';
+export const FLASK_BASE_URL = (import.meta as any)?.env?.VITE_FLASK_BASE_URL || 'https://flask-server-0i08.onrender.com';
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -35,6 +35,25 @@ export const FLASK_ENDPOINTS = {
   UPLOAD_RESUME: `${FLASK_BASE_URL}/upload`,
   DOWNLOAD_CSV: (filename: string) => `${FLASK_BASE_URL}/download/${filename}`,
 };
+
+// Utility: Ensure Flask server is awake and reachable (Render cold start mitigation)
+export async function ensureFlaskAwake(maxRetries = 2, delayMs = 1200): Promise<void> {
+  const healthUrl = `${FLASK_BASE_URL}/health`;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const res = await fetch(healthUrl, { method: 'GET' });
+      if (res.ok) {
+        return;
+      }
+    } catch (_) {
+      // swallow and retry
+    }
+    if (attempt < maxRetries) {
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  }
+  // If still not reachable, proceed and let the main request surface the error
+}
 
 // API Response types
 export interface ApiResponse<T = unknown> {
