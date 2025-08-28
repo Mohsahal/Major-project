@@ -452,7 +452,7 @@ def extract_skills_fallback(response_text, job_description):
 def health():
     return jsonify({
         'status': 'ok',
-        'port': FLASK_PORT,
+        'port': os.environ.get("PORT", FLASK_PORT),
         'allowed_origins': '*' if ALLOW_ALL_ORIGINS else ALLOWED_ORIGINS,
         'gemini_configured': bool(GEMINI_API_KEY),
         'youtube_configured': bool(YOUTUBE_API_KEY)
@@ -976,5 +976,6 @@ def download_csv(filename):
         return jsonify({'error': f'Error downloading file: {str(e)}'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=FLASK_PORT)
+     port = int(os.environ.get("PORT", FLASK_PORT))
+     app.run(host="0.0.0.0", port=port, debug=False)
     

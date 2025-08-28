@@ -9,7 +9,7 @@ const aiRoutes = require('./routes/ai');
 
 const resumeParserRouter = require('./routes/resumeParser');
 const interviewsRouter = require('./routes/interviews');
-const userAnswersRouter = require('./routes/user-answers');
+const userAnswersRouter = require('./routes/user-answer');
 
 const app = express();
 
