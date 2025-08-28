@@ -1,6 +1,6 @@
 // API Configuration and endpoints
-export const API_BASE_URL = (import.meta as any)?.env?.VITE_API_BASE_URL || 'https://job-reco-backend.onrender.com/api';
-export const FLASK_BASE_URL = (import.meta as any)?.env?.VITE_FLASK_BASE_URL || 'https://flask-server-0i08.onrender.com';
+export const API_BASE_URL = (import.meta as ImportMeta).env.VITE_API_BASE_URL || 'http://localhost:1000/api';
+export const FLASK_BASE_URL = (import.meta as ImportMeta).env.VITE_FLASK_BASE_URL || 'http://localhost:2000';
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -97,6 +97,7 @@ export interface UserAnswer {
   createdAt: string;
   updatedAt: string;
 }
+
 
 // API Helper functions
 export class ApiClient {

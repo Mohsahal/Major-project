@@ -18,8 +18,8 @@ const ALLOWED_ORIGINS = [
   'https://frontend-uzcu.onrender.com',
   'http://localhost:5173',
   'http://127.0.0.1:5173',
-  'http://localhost:8080',
-  'http://127.0.0.1:8081'
+  'http://localhost:8081',
+  
 ];
 
 // Manual CORS headers as backup (dynamic echo, no wildcard with credentials)

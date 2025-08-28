@@ -1,10 +1,10 @@
 
 
-const API_BASE_URL = (import.meta as any)?.env?.VITE_API_BASE_URL || 'https://job-reco-backend.onrender.com/api';
+const API_BASE_URL = (import.meta as ImportMeta)?.env?.VITE_API_BASE_URL || 'https://job-reco-backend.onrender.com/api';
 
 export const db = {
   collection: (collectionName: string) => ({
-    add: async (data: any) => {
+    add: async (data: Record<string, unknown>) => {
       const response = await fetch(`${API_BASE_URL}/${collectionName}`, {
         method: 'POST',
         headers: {
@@ -24,7 +24,7 @@ export const db = {
       });
       const data = await response.json();
       return {
-        docs: data.map((item: any) => ({
+        docs: data.map((item: Record<string, unknown>) => ({
           id: item._id || item.id,
           data: () => item
         }))
@@ -48,7 +48,7 @@ export const db = {
   })
 };
 
-export const query = (collectionRef: any, ...constraints: any[]) => {
+export const query = (collectionRef: { _path?: { segments?: string[] } }, ...constraints: any[]) => {
   // Mock query function that filters data
   return {
     get: async () => {
@@ -63,14 +63,14 @@ export const query = (collectionRef: any, ...constraints: any[]) => {
       let filteredData = data;
       constraints.forEach(constraint => {
         if (constraint.type === 'where') {
-          filteredData = filteredData.filter((item: any) => 
+          filteredData = filteredData.filter((item: Record<string, unknown>) => 
             item[constraint.field] === constraint.value
           );
         }
       });
       
       return {
-        docs: filteredData.map((item: any) => ({
+        docs: filteredData.map((item: Record<string, unknown>) => ({
           id: item._id || item.id,
           data: () => item
         }))
