@@ -23,6 +23,10 @@ YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 # Flask port (Render auto-assigns PORT env var, fallback to 2000 locally)
 FLASK_PORT = int(os.getenv("PORT", os.getenv("FLASK_PORT", "2000")))
 
+# CORS Configuration
+ALLOW_ALL_ORIGINS = os.getenv("ALLOW_ALL_ORIGINS", "true").lower() == "true"
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:8080,http://localhost:8081").split(",") if not ALLOW_ALL_ORIGINS else []
+
 # ==========================
 # Default Settings
 # ==========================

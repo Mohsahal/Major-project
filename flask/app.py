@@ -19,8 +19,10 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
 
+# Import skill gap analyzer
+from skill_gap_analyzer import SkillGapAnalyzer
+
 import dotenv
-from googleapiclient.discovery import build  # For YouTube API
 
 # Import job recommender functions
 from job_recommender import (
@@ -50,13 +52,8 @@ dotenv.load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
 
-# Initialize YouTube client if API key is available
-youtube = None
-if YOUTUBE_API_KEY:
-    try:
-        youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
-    except Exception as e:
-        print(f"Failed to initialize YouTube API client: {e}")
+# Initialize skill gap analyzer
+skill_analyzer = SkillGapAnalyzer(GEMINI_API_KEY, YOUTUBE_API_KEY)
 
 def allowed_file(filename):
     """Check if file extension is allowed."""
@@ -86,36 +83,7 @@ def extract_resume_text(file_path: str, file_extension: str) -> str:
     except Exception as e:
         raise Exception(f"Error extracting text from {file_extension} file: {str(e)}")
 
-def get_youtube_videos(skill, max_results=3):
-    """Get YouTube video suggestions for a skill."""
-    if not youtube:
-        return []
-    
-    try:
-        request = youtube.search().list(
-            q=f"{skill} tutorial programming",
-            part="snippet",
-            type="video",
-            maxResults=max_results,
-            order="relevance"
-        )
-        response = request.execute()
-        videos = []
-        for item in response.get('items', []):
-            video_id = item['id'].get('videoId')
-            if video_id:
-                videos.append({
-                    'title': item['snippet']['title'],
-                    'channel': item['snippet']['channelTitle'],
-                    'videoId': video_id,
-                    'url': f"https://www.youtube.com/watch?v={video_id}",
-                    'thumbnail': item['snippet']['thumbnails']['medium']['url'],
-                    'description': item['snippet']['description'][:150] + '...' if len(item['snippet']['description']) > 150 else item['snippet']['description']
-                })
-        return videos
-    except Exception as e:
-        print(f"Error fetching YouTube videos for {skill}: {e}")
-        return []
+
 
 def analyze_skill_gap(resume_text, job_description):
     """Analyze skill gap between resume and job description."""
@@ -492,16 +460,11 @@ def skill_gap_analysis():
             if not resume_text.strip():
                 return jsonify({'error': 'Could not extract text from resume. Please ensure the file contains readable text.'}), 400
             
-            # Analyze skill gap
-            skill_analysis = analyze_skill_gap(resume_text, job_description)
+            # Analyze skill gap using the new SkillGapAnalyzer class
+            skill_analysis_result = skill_analyzer.analyze_skill_gap_with_resources(resume_text, job_description)
             
-            # Get YouTube videos for missing skills
-            missing_skills_videos = {}
-            if skill_analysis.get('missing_skills'):
-                for skill in skill_analysis['missing_skills'][:5]:  # Limit to 5 skills
-                    videos = get_youtube_videos(skill)
-                    if videos:
-                        missing_skills_videos[skill] = videos
+            skill_analysis = skill_analysis_result['analysis']
+            learning_resources = skill_analysis_result['learning_resources']
             
             # Prepare response
             response_data = {
@@ -522,10 +485,7 @@ def skill_gap_analysis():
                         )
                     }
                 },
-                'learning_resources': {
-                    'youtube_videos': missing_skills_videos,
-                    'recommendations': generate_learning_recommendations(skill_analysis.get('missing_skills', []))
-                },
+                'learning_resources': learning_resources,
                 'resume_text_preview': resume_text[:500] + '...' if len(resume_text) > 500 else resume_text
             }
             
