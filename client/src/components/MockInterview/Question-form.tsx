@@ -132,16 +132,16 @@ export const QuestionSection = ({ questions, interviewId }: QuestionSectionProps
 
               <div className="w-full flex items-center justify-end mt-4">
                 <TooltipButton
-                  content={isPlaying ? "Stop Reading" : "Read Question"}
+                  content={isPlaying ? "Speaker On - Click to Turn Off" : "Speaker Off - Click to Turn On"}
                   icon={
                     isPlaying ? (
-                      <VolumeX className="min-w-5 min-h-5 text-red-600" />
-                    ) : (
                       <Volume2 className="min-w-5 min-h-5 text-blue-600" />
+                    ) : (
+                      <VolumeX className="min-w-5 min-h-5 text-red-600" />
                     )
                   }
                   onClick={() => handlePlayQuestion(tab.question)}
-                  buttonClassName={isPlaying ? "bg-red-100 hover:bg-red-200 text-red-700" : "bg-blue-100 hover:bg-blue-200 text-blue-700"}
+                  buttonClassName={isPlaying ? "bg-blue-100 hover:bg-blue-200 text-blue-700" : "bg-red-100 hover:bg-red-200 text-red-700"}
                 />
               </div>
             </div>

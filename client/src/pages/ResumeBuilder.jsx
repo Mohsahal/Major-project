@@ -97,41 +97,6 @@ const ResumeBuilder = () => {
     }
   }, [id]);
 
-  // Refresh the resume context when component mounts to ensure latest data
-  useEffect(() => {
-    // This will ensure the context has the latest data when user navigates back
-    const refreshContext = async () => {
-      try {
-        const token = getToken();
-        if (token) {
-          const response = await fetch(API_ENDPOINTS.RESUMES, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          if (response.ok) {
-            const data = await response.json();
-            if (data.length > 0) {
-              const sortedResumes = [...data].sort((a, b) => 
-                new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime()
-              );
-              // Update the context with the most recent resume
-              const mostRecent = sortedResumes[0];
-              if (mostRecent) {
-                updateResume(mostRecent._id, mostRecent);
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error refreshing context:', error);
-      }
-    };
-    
-    refreshContext();
-  }, [getToken, updateResume]);
-
   const fetchResume = async (resumeId) => {
     try {
       setIsLoading(true);
