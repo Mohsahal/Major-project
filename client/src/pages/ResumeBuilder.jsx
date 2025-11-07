@@ -94,6 +94,11 @@ const ResumeBuilder = () => {
   useEffect(() => {
     if (id) {
       fetchResume(id);
+    } else {
+      // If no ID, reset to default data for new resume
+      setResumeData(defaultResumeData);
+      setSelectedTemplate('simple');
+      setActiveTab('build');
     }
   }, [id]);
 
@@ -122,8 +127,28 @@ const ResumeBuilder = () => {
       }
 
       const data = await response.json();
-      setResumeData(data);
-      setSelectedTemplate(data.template);
+      
+      // Ensure data structure is complete when loading existing resume
+      const completeResumeData = {
+        personalInfo: {
+          firstName: data.personalInfo?.firstName || '',
+          lastName: data.personalInfo?.lastName || '',
+          jobTitle: data.personalInfo?.jobTitle || '',
+          email: data.personalInfo?.email || '',
+          phone: data.personalInfo?.phone || '',
+          location: data.personalInfo?.location || '',
+        },
+        summary: data.summary || '',
+        skills: Array.isArray(data.skills) ? data.skills : [],
+        experience: Array.isArray(data.experience) ? data.experience : [],
+        education: Array.isArray(data.education) ? data.education : [],
+        projects: Array.isArray(data.projects) ? data.projects : [],
+        certifications: Array.isArray(data.certifications) ? data.certifications : [],
+      };
+      
+      setResumeData(completeResumeData);
+      setSelectedTemplate(data.template || 'simple');
+      setActiveTab('build');
     } catch (error) {
       console.error('Fetch error:', error);
       toast({
@@ -322,7 +347,7 @@ const ResumeBuilder = () => {
               <div className="order-1 lg:order-2">
                 <Card className="shadow-sm hover:shadow-md transition-shadow duration-300 border-gray-100 sticky top-4">
                   <CardContent className="p-4 md:p-6">
-                    <div className="resume-preview">
+                    <div className="resume-preview" key={`${selectedTemplate}-${resumeData.personalInfo?.firstName || 'new'}`}>
                       {renderTemplate()}
                     </div>
                   </CardContent>
@@ -340,6 +365,7 @@ const ResumeBuilder = () => {
           </TabsContent>
         </Tabs>
       </div>
+
     </ResumeBuilderLayout>
   );
 };

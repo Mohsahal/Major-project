@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useEffect } from 'react'
-import { ArrowRight, FileCheck, FileText, Plus, Upload, Download, Share2, Eye, Clock, RefreshCw } from 'lucide-react'
+import { ArrowRight, FileCheck, FileText, Plus, Download, Share2, Eye, Clock, RefreshCw } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
@@ -27,7 +27,7 @@ function ResumeBuilder() {
   const handlePreview = (id: string) => {
     navigate(`/resume-preview/${id}`);
   }
-  
+
   // Add a focus listener to refresh data when user returns to the tab
   useEffect(() => {
     const handleFocus = () => {
@@ -91,7 +91,7 @@ function ResumeBuilder() {
         </CardHeader>
         
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Button 
               variant="outline" 
               className="h-28 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 hover:border-career-blue transition-all duration-200 group border-gray-200" 
@@ -106,18 +106,8 @@ function ResumeBuilder() {
             
             <Button 
               variant="outline" 
-              className="h-28 flex flex-col items-center justify-center gap-2 hover:bg-green-50 hover:border-green-600 transition-all duration-200 group border-gray-200"
-            >
-              <div className="p-2 bg-green-600 rounded-full group-hover:scale-110 transition-all duration-200">
-                <Upload className="h-4 w-4 text-white" />
-              </div>
-              <span className="font-medium text-sm">Import PDF</span>
-              <span className="text-xs text-gray-500">Convert existing resume</span>
-            </Button>
-            
-            <Button 
-              variant="outline" 
               className="h-28 flex flex-col items-center justify-center gap-2 hover:bg-purple-50 hover:border-career-purple transition-all duration-200 group border-gray-200"
+              onClick={() => navigate('/resume-builder?tab=templates')}
             >
               <div className="p-2 bg-career-purple rounded-full group-hover:scale-110 transition-all duration-200">
                 <FileText className="h-4 w-4 text-white" />
@@ -231,6 +221,7 @@ function ResumeBuilder() {
           <p className="text-gray-600 text-sm">Export as PDF, Word, or share via link</p>
         </Card>
       </div>
+
     </div>
   )
 }

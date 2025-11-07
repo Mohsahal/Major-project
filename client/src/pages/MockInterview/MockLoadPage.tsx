@@ -17,6 +17,7 @@ export const MockLoadPage = () => {
   const { interviewId } = useParams<{ interviewId: string }>();
   const [interview, setInterview] = useState<Interview | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasCompleted, setHasCompleted] = useState(false);
   const [isWebCamEnabled, setIsWebCamEnabled] = useState(false);
   const [webcamError, setWebcamError] = useState<string | null>(null);
   const webcamRef = useRef<WebCam>(null);
@@ -65,11 +66,21 @@ export const MockLoadPage = () => {
             return;
           }
 
-          const result = await ApiClient.getInterviewById(interviewId, token);
-          if (result.success && result.data) {
-            setInterview(result.data);
+          const interviewPromise = ApiClient.getInterviewById(interviewId, token);
+          const answersPromise = ApiClient.getUserAnswersByInterview(interviewId, token);
+
+          const [interviewResult, answersResult] = await Promise.all([interviewPromise, answersPromise]);
+
+          if (interviewResult.success && interviewResult.data) {
+            setInterview(interviewResult.data);
           } else {
             throw new Error("Failed to fetch interview");
+          }
+
+          if (answersResult.success && Array.isArray(answersResult.data)) {
+            setHasCompleted(answersResult.data.length > 0);
+          } else {
+            setHasCompleted(false);
           }
         } catch (error) {
           console.error("Error fetching interview:", error);
@@ -116,7 +127,13 @@ export const MockLoadPage = () => {
 
         {/* Interview Card Section */}
         <div className="mb-8">
-          {interview && <InterviewPin interview={interview} onMockPage />}
+          {interview && (
+            <InterviewPin 
+              interview={interview} 
+              onMockPage 
+              isCompletedOverride={hasCompleted}
+            />
+          )}
         </div>
 
         {/* Important Information Alert */}
