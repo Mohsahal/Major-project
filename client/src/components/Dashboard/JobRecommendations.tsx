@@ -16,7 +16,6 @@ type JobType = {
   title: string;
   company: string;
   location: string;
-  salary: string;
   matchPercentage: number;
   skills: string[];
   posted: string;
@@ -71,7 +70,6 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
       title: 'Senior Frontend Developer',
       company: 'TechCorp Solutions',
       location: 'San Francisco, CA',
-      salary: '$120,000 - $150,000',
       matchPercentage: 95,
       skills: ['React', 'TypeScript', 'Next.js', 'Tailwind CSS'],
       posted: '2 hours ago',
@@ -87,7 +85,6 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
       title: 'Product Manager',
       company: 'InnovateLab',
       location: 'New York, NY',
-      salary: '$130,000 - $160,000',
       matchPercentage: 88,
       skills: ['Product Strategy', 'Agile', 'Data Analysis', 'User Research'],
       posted: '1 day ago',
@@ -106,7 +103,6 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
     title: 'Full Stack Developer',
     company: 'DemoTech Solutions',
     location: 'Remote / Anywhere',
-    salary: '$100,000 - $130,000',
     matchPercentage: 85,
     skills: ['React', 'Node.js', 'TypeScript', 'MongoDB'],
     posted: '1 week ago',
@@ -120,20 +116,15 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
 
   // Get featured jobs (top 2 by match percentage)
   const featuredJobs = jobs.slice(0, 2);
-  const totalJobsCount = 10; // Total available jobs
+  const totalJobsCount = jobs.length; // Total available jobs
 
   const filters = [
-    { id: 'all', label: 'All Jobs', count: jobs.length },
-    { id: 'new', label: 'New Matches', count: jobs.filter(job => job.isNew).length },
-    { id: 'high-match', label: 'High Match', count: jobs.filter(job => job.matchPercentage >= 90).length },
-    { id: 'remote', label: 'Remote', count: jobs.filter(job => job.type === 'Remote').length }
+    { id: 'all', label: 'All Jobs', count: jobs.length }
   ];
 
   const filteredJobs = jobs.filter(job => {
     const matchesFilter = selectedFilter === 'all' || 
-      (selectedFilter === 'new' && job.isNew) ||
-      (selectedFilter === 'high-match' && job.matchPercentage >= 90) ||
-      (selectedFilter === 'remote' && job.type === 'Remote');
+      (selectedFilter === 'new' && job.isNew);
     
     const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -258,7 +249,6 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
           title: j.title || 'Untitled Role',
           company: j.company || 'Unknown Company',
           location: j.location || '—',
-          salary: '$0',
           matchPercentage: typeof j.similarity === 'number' ? Math.round(j.similarity) : 0,
           skills: [],
           posted: 'Recently',
@@ -604,7 +594,6 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                   <Badge className={`mb-2 ${getMatchColor(demoJob.matchPercentage)}`}>
                     {demoJob.matchPercentage}% Match
                   </Badge>
-                  <div className="text-sm font-medium text-gray-900">{demoJob.salary}</div>
                   <Badge variant="outline" className="text-xs mt-1">
                     {demoJob.type}
                   </Badge>
@@ -743,7 +732,6 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                         <Badge className={`mb-2 ${getMatchColor(job.matchPercentage)}`}>
                           {job.matchPercentage}% Match
                         </Badge>
-                        <div className="text-sm font-medium text-gray-900">{job.salary}</div>
                         <Badge variant="outline" className="text-xs mt-1">
                           {job.type}
                         </Badge>
@@ -974,7 +962,6 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                           <Badge className={`mb-2 ${getMatchColor(job.matchPercentage)}`}>
                             {job.matchPercentage}% Match
                           </Badge>
-                          <div className="text-sm font-medium text-gray-900">{job.salary}</div>
                           <Badge variant="outline" className="text-xs mt-1">
                             {job.type}
                           </Badge>

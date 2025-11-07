@@ -5,12 +5,16 @@ Clean Job Recommender System - AI-powered resume analysis and job matching.
 
 import os
 import sys
+import re
+import uuid
+import json
 import argparse
 import docx2txt
 import PyPDF2
 import requests
 import pandas as pd
 from sentence_transformers import SentenceTransformer, util
+from typing import List, Dict, Any, Optional
 
 from config import SERPAPI_API_KEY, DEFAULT_LOCATION, DEFAULT_TOP_RESULTS, DEFAULT_MODEL
 
@@ -60,18 +64,196 @@ def generate_smart_query(resume_analysis: dict, location: str = "Bangalore") -> 
     else:
         return f"Software Developer {location} jobs"
 
-def fetch_jobs_from_serpapi(query: str, api_key: str):
-    """Fetch jobs from SerpApi Google Jobs."""
+def fetch_jobs_from_serpapi(query: str, api_key: str, max_jobs: int = 100):
+    """Fetch all jobs from Google Jobs with enhanced pagination.
+    
+    Args:
+        query: Search query string
+        api_key: SerpAPI key
+        max_jobs: Maximum number of jobs to fetch (default: 100)
+    """
     url = "https://serpapi.com/search"
-    params = {"engine": "google_jobs", "q": query, "api_key": api_key}
-    resp = requests.get(url, params=params)
-
-    if resp.status_code != 200:
-        print("SerpApi Error:", resp.text)
-        return []
-
-    data = resp.json()
-    return data.get("jobs_results", [])
+    all_jobs = []
+    start = 0
+    max_attempts = 10  # Reduced to avoid too many API calls
+    attempts = 0
+    seen_job_hashes = set()
+    
+    # Completely clean the query - remove all filters and special parameters
+    query = re.sub(r'\b(?:site|source|exp|experience|level|salary|pay|compensation|type|location|filter):\S+', '', query, flags=re.IGNORECASE).strip()
+    query = re.sub(r'\b(?:intitle|inurl|intext):\S+', '', query, flags=re.IGNORECASE).strip()
+    
+    # Remove all job-related filters and qualifiers
+    filter_terms = [
+        # Experience levels
+        'entry[- ]?level', 'junior', 'senior', 'lead', 'principal',
+        'experience', 'exp:', 'level:', 'years?', 'yrs?',
+        '\d+[+\-]?\d*\s*(?:years?|yrs?)(?:\s*\+?\s*\w+)?',
+        
+        # Job types
+        'full[- ]?time', 'part[- ]?time', 'contract', 'freelance', 'internship',
+        'temporary', 'temp', 'permanent', 'remote', 'work from home', 'wfh',
+        'hybrid', 'on[- ]?site', 'onsite', 'office',
+        
+        # Salary and compensation
+        'salary', 'pay', 'compensation', 'stipend', 'rate',
+        '\$\d+[kK](?:\s*[\-–]\s*\$?\d+[kK])?',
+        '\d+\s*(?:k|k\+?|K|K\+?)(?:\s*[\-–]\s*\d+\s*(?:k|k\+?|K|K\+?))?',
+        
+        # Other common filters
+        'urgent', 'hiring', 'immediate', 'priority', 'high priority',
+        'bachelor', 'master', 'phd', 'degree', 'diploma', 'certification'
+    ]
+    
+    for term in filter_terms:
+        query = re.sub(term, '', query, flags=re.IGNORECASE)
+    
+    # Clean up the query
+    query = ' '.join(query.split())  # Remove extra spaces
+    query = re.sub(r'\s*[\-\|\/]\s*', ' ', query)  # Remove separators
+    query = query.strip()
+    
+    # Ensure we have a basic job search query
+    if not any(term in query.lower() for term in ['job', 'career', 'position', 'opening', 'role']):
+        query = f"{query} jobs" if query else "jobs"
+    
+    print(f"🔎 Search query: {query}")
+    
+    while len(all_jobs) < max_jobs and attempts < max_attempts:
+        # Fetch jobs with pagination
+        # Minimal parameters for broadest possible job search
+        params = {
+            "engine": "google_jobs",
+            "q": query,
+            "api_key": api_key,
+            "start": start,
+            "hl": "en",
+            "gl": "us",
+            "num": 20,  # Maximum results per page
+            "filter": 0,  # Disable all filters
+            "chips": "",  # Clear any job type filters
+            "ibp": "htl;jobs",  # Job search mode
+            "source": "hp",  # Get jobs from all sources
+            "no_cache": "true",  # Get fresh results
+            "tbs": "qdr:y",  # Jobs from last year (wider range)
+            "sort": "date"  # Sort by most recent
+        }
+        
+        # Remove any experience-related parameters
+        if 'exp:' in query.lower():
+            query = re.sub(r'\bexp:\S+', '', query, flags=re.IGNORECASE).strip()
+        
+        try:
+            print(f"Fetching jobs page {attempts + 1}...")
+            resp = requests.get(url, params=params, timeout=30)
+            
+            if resp.status_code != 200:
+                print(f"SerpApi Error (status {resp.status_code}):", resp.text)
+                break
+                
+            data = resp.json()
+            jobs_batch = data.get("jobs_results", [])
+            
+            if not jobs_batch:
+                print("No more jobs found.")
+                break
+            
+            # Add all jobs, only filter out exact duplicates
+            new_jobs = []
+            for job in jobs_batch:
+                # Get job details
+                job_id = job.get('job_id', str(uuid.uuid4()))  # Generate ID if missing
+                title = job.get('title', '').lower().strip()
+                company = job.get('company_name', '').lower().strip()
+                
+                # Skip jobs with missing critical information
+                if not title or not company:
+                    continue
+                
+                # Create a unique hash
+                job_hash = f"{title}:{company}"
+                
+                if job_hash not in seen_job_hashes:
+                    seen_job_hashes.add(job_hash)
+                    
+                    # Ensure we have a valid apply link
+                    if not job.get('related_links') and not job.get('via'):
+                        job['via'] = 'Direct Employer'  # Default source
+                        
+                    new_jobs.append(job)
+            
+            if new_jobs:
+                all_jobs.extend(new_jobs)
+                print(f"✅ Page {attempts + 1}: Added {len(new_jobs)} new jobs (Total: {len(all_jobs)})")
+            else:
+                print(f"ℹ️  Page {attempts + 1}: No new jobs found")
+            
+            # Add a small delay to avoid rate limiting
+            import time
+            time.sleep(1.5)  # Slightly longer delay to be safe
+            
+            # Check if we've reached the desired number of jobs or no more results
+            if len(all_jobs) >= max_jobs or 'serpapi_pagination' not in data:
+                break
+                
+            # Get next page token if available
+            if 'serpapi_pagination' in data and 'next' in data['serpapi_pagination']:
+                next_page = data['serpapi_pagination'].get('next')
+                if next_page and next_page != '2':  # Avoid infinite loops
+                    start = data['serpapi_pagination'].get('current', 0) * 10
+                    print(f"↪️  Fetching next page of results... (Start: {start})")
+                else:
+                    print("ℹ️  No more pages available")
+                    break
+            else:
+                print("ℹ️  No pagination information found")
+                break
+                
+            attempts += 1
+            
+        except Exception as e:
+            print(f"Error fetching jobs: {str(e)}")
+            break
+    
+    # Prepare the final list of jobs
+    jobs_to_return = all_jobs[:max_jobs]
+    
+    # Analyze job sources - ensure we're getting all sources
+    sources = {}
+    for job in jobs_to_return:
+        # Get the source, default to 'Direct Employer' if not specified
+        source = job.get('via', 'Direct Employer')
+        
+        # Clean up source names
+        if isinstance(source, str):
+            source = source.replace('via ', '').strip()
+            if not source or source.lower() in ['via', '']:
+                source = 'Direct Employer'
+        else:
+            source = 'Direct Employer'
+        
+        # Keep the original source name instead of normalizing to track all sources
+        # This will help us see all unique sources
+            
+        sources[source] = sources.get(source, 0) + 1
+    
+    # Print detailed source information
+    print("\n📊 Job Sources Summary (showing all unique sources):")
+    if not sources:
+        print("⚠️ No job sources found - check API response format")
+    else:
+        # Show all unique sources, sorted by count
+        for source, count in sorted(sources.items(), key=lambda x: x[1], reverse=True):
+            print(f"- {source}: {count} jobs")
+        
+        # Show a warning if we're only getting one source
+        if len(sources) == 1:
+            print("\n⚠️ Only one source detected. The API might be limiting results.")
+            print("   Try adjusting the search query or location for more diverse results.")
+    
+    print(f"\n✅ Found {len(jobs_to_return)} unique jobs matching: '{query}'")
+    
+    return jobs_to_return
 
 def rank_jobs_domain_aware(resume_text, jobs, resume_analysis, model_name="all-MiniLM-L6-v2"):
     """Rank jobs by similarity using domain-aware scoring."""
@@ -241,7 +423,8 @@ def main():
     parser = argparse.ArgumentParser(description="AI Job Recommender")
     parser.add_argument("--resume", required=True, help="Path to resume file")
     parser.add_argument("--api-key", default=SERPAPI_API_KEY, help="SerpApi API key")
-    parser.add_argument("--top", type=int, default=DEFAULT_TOP_RESULTS, help="Number of top jobs")
+    parser.add_argument("--top", type=int, default=50, help="Number of top jobs to display (default: 50)")
+    parser.add_argument("--fetch", type=int, default=100, help="Maximum number of jobs to fetch (default: 100)")
     parser.add_argument("--out", default="job_recommendations.csv", help="CSV output path")
     parser.add_argument("--location", default=DEFAULT_LOCATION, help="Job location")
     args = parser.parse_args()
@@ -250,25 +433,54 @@ def main():
         print("ERROR: Provide SerpApi API key", file=sys.stderr)
         sys.exit(1)
 
+    print(f"🔍 Analyzing resume and finding matching jobs...\n")
     resume_text = extract_resume_text(args.resume)
     resume_analysis = analyze_resume_type(resume_text)
     auto_query = generate_smart_query(resume_analysis, location=args.location)
     
-    jobs = fetch_jobs_from_serpapi(auto_query, args.api_key)
+    print(f"🌐 Searching for jobs with query: '{auto_query}'")
+    jobs = fetch_jobs_from_serpapi(auto_query, args.api_key, max_jobs=args.fetch)
+    
     if not jobs:
-        print("No jobs found.", file=sys.stderr)
+        print("❌ No jobs found. Try a different search query or location.", file=sys.stderr)
         sys.exit(0)
 
+    print(f"\n✨ Found {len(jobs)} jobs. Analyzing best matches...")
     ranked = rank_jobs_domain_aware(resume_text, jobs, resume_analysis)
+    
+    # Sort by similarity score in descending order
+    ranked.sort(key=lambda x: x.get('similarity', 0), reverse=True)
+    
+    # Get top N jobs to display
     top_n = ranked[:args.top]
     
-    for i, j in enumerate(top_n, 1):
-        print(f"{i}. {j.get('title','')} - {j.get('company_name','')}")
-        print(f"   📍 {j.get('location','')} | Match: {round(j.get('similarity', 0.0) * 100, 2)}%")
-        print(f"   🔗 Apply: {j.get('share_link') or j.get('link') or ''}")
+    # Print job recommendations
+    print(f"\n🎯 Top {len(top_n)} Job Recommendations (showing best matches first):\n")
+    
+    for i, job in enumerate(top_n, 1):
+        title = job.get('title', 'No Title')
+        company = job.get('company_name', 'Unknown Company')
+        location = job.get('location', 'Location not specified')
+        similarity = round(job.get('similarity', 0.0) * 100, 1)
+        apply_link = job.get('share_link') or job.get('link') or 'No link available'
+        
+        # Add emoji based on match score
+        match_emoji = "⭐" * min(5, int(similarity // 20) + 1)
+        
+        print(f"{i}. {title} - {company}")
+        print(f"   📍 {location}")
+        print(f"   {match_emoji} Match: {similarity}%")
+        print(f"   🔗 Apply: {apply_link}")
+        
+        # Show job description snippet if available
+        if 'description' in job and job['description']:
+            desc = job['description'][:150] + '...' if len(job['description']) > 150 else job['description']
+            print(f"   📝 {desc}")
         print()
 
-    save_to_csv(top_n, args.out)
+    # Save all ranked jobs to CSV, not just the displayed ones
+    save_to_csv(ranked, args.out)
+    print(f"\n💾 Saved {len(ranked)} job recommendations to {args.out}")
     print(f"💾 Saved to: {args.out}")
 
 if __name__ == "__main__":

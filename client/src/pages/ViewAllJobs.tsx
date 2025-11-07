@@ -31,25 +31,20 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { FLASK_ENDPOINTS } from "@/config/api";
 
 type JobType = {
-  
   id: string;
   title: string;
   company: string;
   location: string;
-  salary: string;
   matchPercentage: number;
   skills: string[];
   posted: string;
   description?: string;
   isNew?: boolean;
   type: 'Full-time' | 'Part-time' | 'Contract' | 'Remote';
-  experience: string;
   logo?: string;
   benefits: string[];
-  urgency: 'High' | 'Medium' | 'Low';
   applyLink?: string;
 };
-
 
 export default function ViewAllJobs() {
   const navigate = useNavigate();
@@ -57,195 +52,151 @@ export default function ViewAllJobs() {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(true);
-  const [selectedExperience, setSelectedExperience] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
-  const [selectedUrgency, setSelectedUrgency] = useState('all');
   const [sortBy, setSortBy] = useState('match');
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const suggestedLocations: string[] = [
     'Bangalore','Remote','San Francisco','New York','London','Toronto','Sydney','Berlin','Singapore','Dubai'
   ];
 
-  // Extended demo data with more jobs
   const defaultJobs: JobType[] = [
     {
       id: '1',
       title: 'Senior Frontend Developer',
       company: 'TechCorp Solutions',
       location: 'San Francisco, CA',
-      salary: '$120,000 - $150,000',
       matchPercentage: 95,
       skills: ['React', 'TypeScript', 'Next.js', 'Tailwind CSS'],
       posted: '2 hours ago',
       description: 'Join our dynamic team to build cutting-edge web applications. We\'re looking for a passionate developer who loves clean code and user experience.',
       isNew: true,
       type: 'Full-time',
-      experience: '5+ years',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Stock Options'],
-      urgency: 'High'
+      benefits: ['Health Insurance', '401k', 'Remote Work', 'Stock Options']
     },
     {
       id: '2',
       title: 'Product Manager',
       company: 'InnovateLab',
       location: 'New York, NY',
-      salary: '$130,000 - $160,000',
       matchPercentage: 88,
       skills: ['Product Strategy', 'Agile', 'Data Analysis', 'User Research'],
       posted: '1 day ago',
       description: 'Lead product development from concept to launch. Work with cross-functional teams to deliver exceptional user experiences.',
       isNew: true,
       type: 'Full-time',
-      experience: '3+ years',
-      benefits: ['Health Insurance', '401k', 'Flexible PTO', 'Learning Budget'],
-      urgency: 'Medium'
+      benefits: ['Health Insurance', '401k', 'Flexible PTO', 'Learning Budget']
     },
     {
       id: '3',
       title: 'DevOps Engineer',
       company: 'CloudScale Systems',
       location: 'Austin, TX',
-      salary: '$110,000 - $140,000',
       matchPercentage: 82,
       skills: ['AWS', 'Docker', 'Kubernetes', 'Terraform'],
       posted: '3 days ago',
       description: 'Build and maintain our cloud infrastructure. Ensure high availability and scalability of our systems.',
       isNew: false,
       type: 'Full-time',
-      experience: '4+ years',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Conference Budget'],
-      urgency: 'Low'
+      benefits: ['Health Insurance', '401k', 'Remote Work', 'Conference Budget']
     },
     {
       id: '4',
       title: 'UX/UI Designer',
       company: 'Creative Studios',
       location: 'Los Angeles, CA',
-      salary: '$90,000 - $120,000',
       matchPercentage: 78,
       skills: ['Figma', 'Adobe Creative Suite', 'Prototyping', 'User Testing'],
       posted: '1 week ago',
       description: 'Create beautiful and intuitive user interfaces. Collaborate with product and engineering teams.',
       isNew: false,
       type: 'Full-time',
-      experience: '2+ years',
-      benefits: ['Health Insurance', '401k', 'Creative Tools', 'Flexible Hours'],
-      urgency: 'Medium'
+      benefits: ['Health Insurance', '401k', 'Creative Tools', 'Flexible Hours']
     },
     {
       id: '5',
       title: 'Data Scientist',
       company: 'Analytics Pro',
       location: 'Seattle, WA',
-      salary: '$140,000 - $180,000',
       matchPercentage: 91,
       skills: ['Python', 'Machine Learning', 'SQL', 'Statistics'],
       posted: '2 days ago',
       description: 'Build predictive models and extract insights from large datasets. Drive data-driven decision making.',
       isNew: true,
       type: 'Full-time',
-      experience: '6+ years',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Research Budget'],
-      urgency: 'High'
+      benefits: ['Health Insurance', '401k', 'Remote Work', 'Research Budget']
     },
     {
       id: '6',
       title: 'Backend Developer',
       company: 'ServerTech',
       location: 'Boston, MA',
-      salary: '$100,000 - $130,000',
       matchPercentage: 85,
       skills: ['Node.js', 'Python', 'PostgreSQL', 'Redis'],
       posted: '4 days ago',
       description: 'Build scalable backend services and APIs. Work with modern technologies and best practices.',
       isNew: false,
       type: 'Full-time',
-      experience: '3+ years',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Learning Budget'],
-      urgency: 'Medium'
+      benefits: ['Health Insurance', '401k', 'Remote Work', 'Learning Budget']
     },
     {
       id: '7',
       title: 'Mobile Developer',
       company: 'AppWorks',
       location: 'Miami, FL',
-      salary: '$95,000 - $125,000',
       matchPercentage: 79,
       skills: ['React Native', 'iOS', 'Android', 'Firebase'],
       posted: '5 days ago',
       description: 'Develop cross-platform mobile applications. Create engaging user experiences for iOS and Android.',
       isNew: false,
       type: 'Full-time',
-      experience: '4+ years',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Device Budget'],
-      urgency: 'Low'
+      benefits: ['Health Insurance', '401k', 'Remote Work', 'Device Budget']
     },
     {
       id: '8',
       title: 'QA Engineer',
       company: 'QualityFirst',
       location: 'Denver, CO',
-      salary: '$85,000 - $110,000',
       matchPercentage: 76,
       skills: ['Selenium', 'Jest', 'Cypress', 'Test Automation'],
       posted: '1 week ago',
       description: 'Ensure software quality through comprehensive testing. Develop and maintain test automation frameworks.',
       isNew: false,
       type: 'Full-time',
-      experience: '3+ years',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Training Budget'],
-      urgency: 'Medium'
+      benefits: ['Health Insurance', '401k', 'Remote Work', 'Training Budget']
     },
     {
       id: '9',
       title: 'Full Stack Developer',
       company: 'WebSolutions',
       location: 'Chicago, IL',
-      salary: '$110,000 - $140,000',
       matchPercentage: 87,
       skills: ['React', 'Node.js', 'MongoDB', 'AWS'],
       posted: '3 days ago',
       description: 'Build end-to-end web applications. Work on both frontend and backend development.',
       isNew: true,
       type: 'Full-time',
-      experience: '4+ years',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Conference Budget'],
-      urgency: 'High'
+      benefits: ['Health Insurance', '401k', 'Remote Work', 'Conference Budget']
     },
     {
       id: '10',
       title: 'Machine Learning Engineer',
       company: 'AITech',
       location: 'San Diego, CA',
-      salary: '$150,000 - $200,000',
       matchPercentage: 93,
       skills: ['TensorFlow', 'PyTorch', 'Python', 'MLOps'],
       posted: '1 day ago',
       description: 'Build and deploy machine learning models. Work on cutting-edge AI technologies.',
       isNew: true,
       type: 'Full-time',
-      experience: '5+ years',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Research Budget'],
-      urgency: 'High'
+      benefits: ['Health Insurance', '401k', 'Remote Work', 'Research Budget']
     }
   ];
 
   const [jobs] = useState<JobType[]>(Array.isArray(location?.state?.jobs) && location.state.jobs.length > 0 ? location.state.jobs : defaultJobs);
   const csvDownload: string | null = null; // CSV removed in favor of location-based query
-  const query: string | null = location?.state?.query || null;
 
   const filters = [
-    { id: 'all', label: 'All Jobs', count: jobs.length },
-    { id: 'new', label: 'New Matches', count: jobs.filter(job => job.isNew).length },
-    { id: 'high-match', label: 'High Match', count: jobs.filter(job => job.matchPercentage >= 90).length },
-    { id: 'remote', label: 'Remote', count: jobs.filter(job => job.type === 'Remote').length }
-  ];
-
-  const experienceLevels = [
-    { id: 'all', label: 'All Experience' },
-    { id: 'entry', label: 'Entry Level (0-2 years)' },
-    { id: 'mid', label: 'Mid Level (3-5 years)' },
-    { id: 'senior', label: 'Senior (6+ years)' }
+    { id: 'all', label: 'All Jobs', count: jobs.length }
   ];
 
   const jobTypes = [
@@ -256,18 +207,9 @@ export default function ViewAllJobs() {
     { id: 'Remote', label: 'Remote' }
   ];
 
-  const urgencyLevels = [
-    { id: 'all', label: 'All Priority' },
-    { id: 'High', label: 'High Priority' },
-    { id: 'Medium', label: 'Medium Priority' },
-    { id: 'Low', label: 'Low Priority' }
-  ];
-
   const sortOptions = [
     { id: 'match', label: 'Best Match' },
-    { id: 'salary', label: 'Highest Salary' },
-    { id: 'posted', label: 'Recently Posted' },
-    { id: 'experience', label: 'Experience Level' }
+    { id: 'posted', label: 'Recently Posted' }
   ];
 
   const filteredJobs = jobs.filter(job => {
@@ -280,23 +222,15 @@ export default function ViewAllJobs() {
       job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    const matchesExperience = selectedExperience === 'all' ||
-      (selectedExperience === 'entry' && parseInt(job.experience) <= 2) ||
-      (selectedExperience === 'mid' && parseInt(job.experience) >= 3 && parseInt(job.experience) <= 5) ||
-      (selectedExperience === 'senior' && parseInt(job.experience) >= 6);
-    
     const matchesType = selectedType === 'all' || job.type === selectedType;
-    const matchesUrgency = selectedUrgency === 'all' || job.urgency === selectedUrgency;
     
-    return matchesFilter && matchesSearch && matchesExperience && matchesType && matchesUrgency;
+    return matchesFilter && matchesSearch && matchesType;
   });
 
   const sortedJobs = [...filteredJobs].sort((a, b) => {
     switch (sortBy) {
       case 'match':
         return b.matchPercentage - a.matchPercentage;
-      case 'salary':
-        return parseInt(b.salary.replace(/[^0-9]/g, '')) - parseInt(a.salary.replace(/[^0-9]/g, ''));
       case 'posted':
         return new Date(b.posted).getTime() - new Date(a.posted).getTime();
       case 'experience':
@@ -306,14 +240,6 @@ export default function ViewAllJobs() {
     }
   });
 
-  const getUrgencyColor = (urgency: string) => {
-    switch (urgency) {
-      case 'High': return 'bg-red-100 text-red-700 border-red-200';
-      case 'Medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case 'Low': return 'bg-green-100 text-green-700 border-green-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
-    }
-  };
 
   const getMatchColor = (percentage: number) => {
     if (percentage >= 90) return 'bg-green-100 text-green-700 border-green-200';
@@ -324,9 +250,7 @@ export default function ViewAllJobs() {
 
   const clearAllFilters = () => {
     setSelectedFilter('all');
-    setSelectedExperience('all');
     setSelectedType('all');
-    setSelectedUrgency('all');
     setSearchQuery('');
   };
 
@@ -435,20 +359,6 @@ export default function ViewAllJobs() {
                     </div>
                   </div>
 
-                  {/* Experience Level */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Experience Level</label>
-                    <select
-                      value={selectedExperience}
-                      onChange={(e) => setSelectedExperience(e.target.value)}
-                      className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      {experienceLevels.map((level) => (
-                        <option key={level.id} value={level.id}>{level.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
                   {/* Job Type */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700">Job Type</label>
@@ -459,20 +369,6 @@ export default function ViewAllJobs() {
                     >
                       {jobTypes.map((type) => (
                         <option key={type.id} value={type.id}>{type.label}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Urgency */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Priority Level</label>
-                    <select
-                      value={selectedUrgency}
-                      onChange={(e) => setSelectedUrgency(e.target.value)}
-                      className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                      {urgencyLevels.map((urgency) => (
-                        <option key={urgency.id} value={urgency.id}>{urgency.label}</option>
                       ))}
                     </select>
                   </div>
@@ -526,10 +422,6 @@ export default function ViewAllJobs() {
               <p className="text-gray-600">
                 Showing <span className="font-semibold">{sortedJobs.length}</span> of <span className="font-semibold">{jobs.length}</span> jobs
               </p>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Target className="h-4 w-4" />
-                {query ? `Query: ${query}` : `Sorted by ${sortOptions.find(opt => opt.id === sortBy)?.label}`}
-              </div>
             </div>
 
             {/* Job Listings */}
@@ -544,23 +436,14 @@ export default function ViewAllJobs() {
                     transition={{ delay: index * 0.05 }}
                     className="group"
                   >
-                    <Card className={`border-2 transition-all duration-300 hover:shadow-lg cursor-pointer ${
-                      job.isNew ? 'border-blue-200 bg-blue-50/30' : 'border-gray-100 hover:border-blue-200'
-                    }`}>
+                    <Card className="border-2 border-gray-100 hover:border-blue-200 transition-all duration-300 hover:shadow-lg cursor-pointer">
                       <CardContent className="p-6">
                         {/* Job Header */}
                         <div className="flex justify-between items-start mb-4">
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                                {job.title}
-                              </h3>
-                              {job.isNew && (
-                                <Badge className="bg-green-500 text-white animate-pulse">
-                                  New Match
-                                </Badge>
-                              )}
-                            </div>
+                            <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-2">
+                              {job.title}
+                            </h3>
                             <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
                               <div className="flex items-center gap-1">
                                 <Building2 className="h-4 w-4" />
@@ -580,7 +463,6 @@ export default function ViewAllJobs() {
                             <Badge className={`mb-2 ${getMatchColor(job.matchPercentage)}`}>
                               {job.matchPercentage}% Match
                             </Badge>
-                            <div className="text-sm font-medium text-gray-900">{job.salary}</div>
                             <Badge variant="outline" className="text-xs mt-1">
                               {job.type}
                             </Badge>
@@ -588,20 +470,10 @@ export default function ViewAllJobs() {
                         </div>
 
                         {/* Job Details */}
-                        <div className="grid md:grid-cols-3 gap-4 mb-4">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <TrendingUp className="h-4 w-4" />
-                            Experience: {job.experience}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Clock className="h-4 w-4" />
-                            Posted: {job.posted}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge className={`text-xs ${getUrgencyColor(job.urgency)}`}>
-                              {job.urgency} Priority
-                            </Badge>
-                          </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+                          <span>{job.location}</span>
+                          <span className="text-gray-300">•</span>
+                          <span>{job.type}</span>
                         </div>
 
                         {/* Skills */}
