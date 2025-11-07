@@ -255,6 +255,9 @@ export const FormMockInterview = ({ initialData }: FormMockInterviewProps) => {
                     value={field.value || ""}
                     />
                 </FormControl>
+                <p className="text-sm text-muted-foreground">
+                  💡 Enter 0 for fresher-level questions (basic concepts and fundamentals only)
+                </p>
               </FormItem>
             )}
             />

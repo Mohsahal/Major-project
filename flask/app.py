@@ -93,7 +93,7 @@ def analyze_skill_gap(resume_text, job_description):
         
         # First, extract skills from both resume and job description using a more direct approach
         llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             temperature=0.1,
             max_output_tokens=2000,
             google_api_key=GEMINI_API_KEY

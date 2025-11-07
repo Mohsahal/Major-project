@@ -246,8 +246,11 @@ export default function SkillGapAnalysisPage() {
       });
 
       const data = await response.json();
+      console.log('Skill gap analysis response:', data);
 
       if (data.success) {
+        console.log('Analysis data:', data.analysis);
+        console.log('Learning resources:', data.learning_resources);
         setAnalysisResult(data);
         setShowDemo(false);
         toast({
@@ -532,12 +535,16 @@ export default function SkillGapAnalysisPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="flex flex-wrap gap-2">
-                          {analysisResult.analysis.present_skills.map((skill, index) => (
-                            <Badge key={index} variant="outline" className="bg-green-100 text-green-800 text-sm px-3 py-1">
-                              <CheckCircle2 className="h-3 w-3 mr-1" />
-                              {skill}
-                            </Badge>
-                          ))}
+                          {analysisResult.analysis.present_skills.length > 0 ? (
+                            analysisResult.analysis.present_skills.map((skill, index) => (
+                              <Badge key={index} variant="outline" className="bg-green-100 text-green-800 text-sm px-3 py-1">
+                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                {skill}
+                              </Badge>
+                            ))
+                          ) : (
+                            <p className="text-gray-500 text-sm">No matching skills found in your resume for this job description.</p>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -552,12 +559,16 @@ export default function SkillGapAnalysisPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="flex flex-wrap gap-2">
-                          {analysisResult.analysis.missing_skills.map((skill, index) => (
-                            <Badge key={index} variant="outline" className="bg-red-100 text-red-800 text-sm px-3 py-1">
-                              <AlertCircle className="h-3 w-3 mr-1" />
-                              {skill}
-                            </Badge>
-                          ))}
+                          {analysisResult.analysis.missing_skills.length > 0 ? (
+                            analysisResult.analysis.missing_skills.map((skill, index) => (
+                              <Badge key={index} variant="outline" className="bg-red-100 text-red-800 text-sm px-3 py-1">
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                                {skill}
+                              </Badge>
+                            ))
+                          ) : (
+                            <p className="text-gray-500 text-sm">Great! You have all the required skills for this position.</p>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
@@ -642,121 +653,151 @@ export default function SkillGapAnalysisPage() {
                 </TabsContent>
 
                 <TabsContent value="gaps">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {analysisResult.analysis.missing_skills.map((skill, index) => (
-                      <Card key={index}>
-                        <CardContent className="pt-6">
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-2">
-                              <h3 className="font-medium text-lg">{skill}</h3>
-                              <Badge variant="outline" className={
-                                getSkillPriority(skill) === 'high' ? 'bg-red-100 text-red-800' :
-                                getSkillPriority(skill) === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-blue-100 text-blue-800'
-                              }>
-                                {getSkillPriority(skill)} Priority
-                              </Badge>
+                  {analysisResult.analysis.missing_skills.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {analysisResult.analysis.missing_skills.map((skill, index) => (
+                        <Card key={index}>
+                          <CardContent className="pt-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-medium text-lg">{skill}</h3>
+                                <Badge variant="outline" className={
+                                  getSkillPriority(skill) === 'high' ? 'bg-red-100 text-red-800' :
+                                  getSkillPriority(skill) === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-blue-100 text-blue-800'
+                                }>
+                                  {getSkillPriority(skill)} Priority
+                                </Badge>
+                              </div>
+                              <AlertCircle className="h-6 w-6 text-red-500" />
                             </div>
-                            <AlertCircle className="h-6 w-6 text-red-500" />
-                          </div>
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Target className="h-4 w-4 text-gray-400" />
-                              <span>Required for this position</span>
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Target className="h-4 w-4 text-gray-400" />
+                                <span>Required for this position</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <BookOpen className="h-4 w-4 text-gray-400" />
+                                <span>Not found in your resume</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm">
+                                <Calendar className="h-4 w-4 text-gray-400" />
+                                <span>Estimated time to learn: 2-4 months</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <BookOpen className="h-4 w-4 text-gray-400" />
-                              <span>Not found in your resume</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Calendar className="h-4 w-4 text-gray-400" />
-                              <span>Estimated time to learn: 2-4 months</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <Card>
+                      <CardContent className="pt-6 text-center py-12">
+                        <CheckCircle2 className="h-16 w-16 mx-auto text-green-500 mb-4" />
+                        <h3 className="text-xl font-semibold mb-2">No Skill Gaps Found!</h3>
+                        <p className="text-gray-600">You have all the required skills for this position.</p>
+                      </CardContent>
+                    </Card>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="recommendations">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {analysisResult.learning_resources.recommendations.map((recommendation, index) => (
-                      <Card key={index}>
-                        <CardContent className="pt-6">
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-medium text-lg">{recommendation.skill}</h3>
-                            <Badge variant="outline" className={
-                              recommendation.priority === 'high' ? 'bg-red-100 text-red-800' :
-                              recommendation.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-blue-100 text-blue-800'
-                            }>
-                              {recommendation.priority} Priority
-                            </Badge>
-                          </div>
-                          <div className="space-y-3">
-                            {recommendation.resources.map((resource, idx) => (
-                              <div key={idx} className="flex items-start gap-2 text-sm">
-                                <BookOpen className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                                <span>{resource}</span>
-                              </div>
-                            ))}
-                            <div className="flex items-center gap-2 text-sm pt-2 border-t">
-                              <Calendar className="h-4 w-4 text-gray-400" />
-                              <span>Estimated time: {recommendation.estimated_time}</span>
+                  {analysisResult.learning_resources.recommendations.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {analysisResult.learning_resources.recommendations.map((recommendation, index) => (
+                        <Card key={index}>
+                          <CardContent className="pt-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="font-medium text-lg">{recommendation.skill}</h3>
+                              <Badge variant="outline" className={
+                                recommendation.priority === 'high' ? 'bg-red-100 text-red-800' :
+                                recommendation.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-blue-100 text-blue-800'
+                              }>
+                                {recommendation.priority} Priority
+                              </Badge>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                            <div className="space-y-3">
+                              {recommendation.resources.map((resource, idx) => (
+                                <div key={idx} className="flex items-start gap-2 text-sm">
+                                  <BookOpen className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                                  <span>{resource}</span>
+                                </div>
+                              ))}
+                              <div className="flex items-center gap-2 text-sm pt-2 border-t">
+                                <Calendar className="h-4 w-4 text-gray-400" />
+                                <span>Estimated time: {recommendation.estimated_time}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <Card>
+                      <CardContent className="pt-6 text-center py-12">
+                        <CheckCircle2 className="h-16 w-16 mx-auto text-green-500 mb-4" />
+                        <h3 className="text-xl font-semibold mb-2">No Learning Recommendations Needed!</h3>
+                        <p className="text-gray-600">You already have all the skills required for this position.</p>
+                      </CardContent>
+                    </Card>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="videos">
-                  <div className="space-y-8">
-                    {Object.entries(analysisResult.learning_resources.youtube_videos).map(([skill, videos]) => (
-                      <Card key={skill}>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Play className="h-5 w-5" />
-                            {skill} Tutorials
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {videos.map((video, index) => (
-                              <div key={index} className="border rounded-lg overflow-hidden bg-white">
-                                <div className="aspect-video bg-gray-100">
-                                  <img 
-                                    src={video.thumbnail} 
-                                    alt={video.title}
-                                    className="w-full h-full object-cover"
-                                  />
+                  {Object.keys(analysisResult.learning_resources.youtube_videos).length > 0 ? (
+                    <div className="space-y-8">
+                      {Object.entries(analysisResult.learning_resources.youtube_videos).map(([skill, videos]) => (
+                        <Card key={skill}>
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                              <Play className="h-5 w-5" />
+                              {skill} Tutorials
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                              {videos.map((video, index) => (
+                                <div key={index} className="border rounded-lg overflow-hidden bg-white">
+                                  <div className="aspect-video bg-gray-100">
+                                    <img 
+                                      src={video.thumbnail} 
+                                      alt={video.title}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                  <div className="p-4">
+                                    <h4 className="font-medium text-sm line-clamp-2 mb-2">
+                                      {video.title}
+                                    </h4>
+                                    <p className="text-xs text-gray-500 mb-3">
+                                      {video.channel}
+                                    </p>
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline" 
+                                      className="w-full"
+                                      onClick={() => window.open(video.url, '_blank')}
+                                    >
+                                      <Play className="h-3 w-3 mr-1" />
+                                      Watch
+                                    </Button>
+                                  </div>
                                 </div>
-                                <div className="p-4">
-                                  <h4 className="font-medium text-sm line-clamp-2 mb-2">
-                                    {video.title}
-                                  </h4>
-                                  <p className="text-xs text-gray-500 mb-3">
-                                    {video.channel}
-                                  </p>
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline" 
-                                    className="w-full"
-                                    onClick={() => window.open(video.url, '_blank')}
-                                  >
-                                    <Play className="h-3 w-3 mr-1" />
-                                    Watch
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <Card>
+                      <CardContent className="pt-6 text-center py-12">
+                        <Play className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                        <h3 className="text-xl font-semibold mb-2">No Video Resources Available</h3>
+                        <p className="text-gray-600">Video tutorials will appear here when skill gaps are identified.</p>
+                      </CardContent>
+                    </Card>
+                  )}
                 </TabsContent>
               </Tabs>
             </div>

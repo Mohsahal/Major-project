@@ -40,27 +40,50 @@ export const useSpeechToText = (options: UseSpeechToTextOptions = {}): UseSpeech
       };
 
       recognitionInstance.onresult = (event) => {
-        let finalTranscript = '';
         let interimTranscript = '';
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript;
-          const confidence = event.results[i][0].confidence;
+          const confidence = event.results[i][0].confidence || 1;
 
           if (event.results[i].isFinal) {
-            finalTranscript += transcript;
-            setResults(prev => [...prev, { transcript, confidence }]);
+            // Only add final results to avoid duplicates
+            console.log('Final transcript:', transcript);
+            setResults(prev => [...prev, { transcript: transcript.trim(), confidence }]);
+            setInterimResult(null); // Clear interim when final is received
           } else {
+            // Accumulate interim results for display
             interimTranscript += transcript;
           }
         }
 
-        setInterimResult(interimTranscript || null);
+        // Only update interim if there's actually interim text
+        if (interimTranscript) {
+          setInterimResult(interimTranscript.trim());
+        }
       };
 
       recognitionInstance.onerror = (event) => {
         console.error('Speech recognition error:', event.error);
         setIsRecording(false);
+        
+        // Provide specific error messages
+        switch (event.error) {
+          case 'no-speech':
+            console.warn('No speech detected. Please try speaking again.');
+            break;
+          case 'audio-capture':
+            console.error('No microphone found. Please connect a microphone.');
+            break;
+          case 'not-allowed':
+            console.error('Microphone permission denied. Please allow microphone access.');
+            break;
+          case 'network':
+            console.error('Network error. Please check your internet connection.');
+            break;
+          default:
+            console.error('Speech recognition error:', event.error);
+        }
       };
 
       recognitionInstance.onend = () => {
@@ -73,15 +96,26 @@ export const useSpeechToText = (options: UseSpeechToTextOptions = {}): UseSpeech
 
   const startSpeechToText = useCallback(() => {
     if (recognition) {
-      recognition.start();
+      try {
+        recognition.start();
+        console.log('Speech recognition started');
+      } catch (error) {
+        console.error('Error starting speech recognition:', error);
+        // Recognition might already be running, which is okay
+      }
     } else {
-      console.error('Speech recognition not supported');
+      console.error('Speech recognition not supported in this browser');
     }
   }, [recognition]);
 
   const stopSpeechToText = useCallback(() => {
     if (recognition) {
-      recognition.stop();
+      try {
+        recognition.stop();
+        console.log('Speech recognition stopped');
+      } catch (error) {
+        console.error('Error stopping speech recognition:', error);
+      }
     }
   }, [recognition]);
 

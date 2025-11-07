@@ -25,17 +25,19 @@ import {
 interface InterviewPinProps {
   interview: Interview;
   onMockPage?: boolean;
+  isCompletedOverride?: boolean;
 }
 
 export const InterviewPin = ({
   interview,
   onMockPage = false,
+  isCompletedOverride,
 }: InterviewPinProps) => {
   const navigate = useNavigate();
 
   // Calculate interview stats
   const questionCount = interview?.questions?.length || 0;
-  const isCompleted = questionCount > 0;
+  const isCompleted = typeof isCompletedOverride === 'boolean' ? isCompletedOverride : (questionCount > 0);
   const experienceLevel = interview?.experience || 0;
 
   // Get experience color

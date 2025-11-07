@@ -33,11 +33,12 @@ import { useEffect, useState, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useDataRefresh } from "@/hooks/useDataRefresh";
-import { API_ENDPOINTS } from "@/config/api";
+import { API_ENDPOINTS, ApiClient } from "@/config/api";
 
 export const InterviewDashboard = () => {
   const [interviews, setInterviews] = useState<Interview[]>([]);
   const [loading, setLoading] = useState(false);
+  const [answersByInterview, setAnswersByInterview] = useState<Record<string, number>>({});
   const { user, getToken, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -105,6 +106,29 @@ export const InterviewDashboard = () => {
       console.log("Processed interviews list:", list);
       console.log("List length:", list.length);
       setInterviews(list);
+
+      // Fetch user answer counts per interview to determine completion status
+      try {
+        if (token && list.length > 0) {
+          const results = await Promise.all(
+            list.map(async (it) => {
+              const resp = await ApiClient.getUserAnswersByInterview(it.id, token);
+              const count = resp.success && Array.isArray(resp.data) ? resp.data.length : 0;
+              return [it.id, count] as const;
+            })
+          );
+          const counts: Record<string, number> = {};
+          results.forEach(([id, count]) => {
+            counts[id] = count;
+          });
+          setAnswersByInterview(counts);
+        } else {
+          setAnswersByInterview({});
+        }
+      } catch (e) {
+        console.warn("Failed to fetch answers counts", e);
+        setAnswersByInterview({});
+      }
     } catch (error) {
       console.error("Error on fetching : ", error);
       toast.error("Error..", {
@@ -139,7 +163,7 @@ export const InterviewDashboard = () => {
 
   // Calculate dashboard statistics
   const totalInterviews = interviews.length;
-  const completedInterviews = interviews.filter(i => i.questions && i.questions.length > 0).length;
+  const completedInterviews = interviews.filter(i => (answersByInterview[i.id] || 0) > 0).length;
   const averageExperience = interviews.length > 0 
     ? Math.round(interviews.reduce((sum, i) => sum + i.experience, 0) / interviews.length)
     : 0;
@@ -278,7 +302,11 @@ export const InterviewDashboard = () => {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {interviews.map((interview) => (
-                  <InterviewPin key={interview.id} interview={interview} />
+                  <InterviewPin 
+                    key={interview.id} 
+                    interview={interview} 
+                    isCompletedOverride={(answersByInterview[interview.id] || 0) > 0}
+                  />
                 ))}
               </div>
             </>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import Sidebar from "@/components/Dashboard/Sidebar"
 import StatsOverview from "@/components/Dashboard/StatsOverview";
 import JobRecommendations from "@/components/Dashboard/JobRecommendations";
@@ -16,25 +16,6 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [jobMatches, setJobMatches] = useState<number>(0);
   const navigate = useNavigate();
-
-  // Handle scroll events to auto-close sidebar
-  useEffect(() => {
-    const mainElement = mainRef.current;
-    if (!mainElement) return;
-
-    const handleScroll = () => {
-      // Close sidebar immediately when scrolling starts
-      if (sidebarOpen) {
-        setSidebarOpen(false);
-      }
-    };
-
-    mainElement.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      mainElement.removeEventListener('scroll', handleScroll);
-    };
-  }, [sidebarOpen]);
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-50">

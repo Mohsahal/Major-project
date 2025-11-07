@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { TooltipButton } from "./tooltip-button";
 import { Volume2, VolumeX } from "lucide-react";
 import { RecordAnswer } from "./record-answer";
+import { toast } from "sonner";
 
 interface QuestionSectionProps {
   questions: { question: string; answer: string }[];
@@ -11,6 +13,7 @@ interface QuestionSectionProps {
 }
 
 export const QuestionSection = ({ questions, interviewId }: QuestionSectionProps) => {
+  const navigate = useNavigate();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isWebCam, setIsWebCam] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -27,8 +30,13 @@ export const QuestionSection = ({ questions, interviewId }: QuestionSectionProps
         handlePlayQuestion(questions[nextIndex].question);
       }, 500);
     } else {
-      // All questions completed
-      console.log("Interview completed!");
+      // All questions completed - redirect to feedback page
+      toast.success("Interview Completed!", {
+        description: "Redirecting to feedback page...",
+      });
+      setTimeout(() => {
+        navigate(`/generate/feedback/${interviewId}`);
+      }, 1500); // Wait 1.5 seconds before redirecting
     }
   };
 

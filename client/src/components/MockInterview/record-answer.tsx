@@ -53,6 +53,7 @@ export const RecordAnswer = ({
     results,
     startSpeechToText,
     stopSpeechToText,
+    resetTranscript,
   } = useSpeechToText({
     continuous: true,
     useLegacyResults: false,
@@ -65,6 +66,7 @@ export const RecordAnswer = ({
   const [loading, setLoading] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(true); // Track speaker state
   const [isCameraOn, setIsCameraOn] = useState(true); // Track camera state
+  const [inputMode, setInputMode] = useState<'speech' | 'text'>('speech'); // Track input mode
   const webcamRef = useRef<WebCam>(null);
 
   const { user, getToken } = useAuth();
@@ -137,14 +139,63 @@ export const RecordAnswer = ({
     // Step 1: Trim any surrounding whitespace
     let cleanText = responseText.trim();
 
-    // Step 2: Remove any occurrences of "json" or code block symbols (``` or `)
-    cleanText = cleanText.replace(/(json|```|`)/g, "");
+    // Step 2: Remove markdown code blocks (```json ... ``` or ``` ... ```)
+    cleanText = cleanText.replace(/```(?:json)?\s*/g, "").replace(/```\s*$/g, "");
+    
+    // Step 3: Try to extract JSON object between curly braces
+    const jsonMatch = cleanText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanText = jsonMatch[0];
+    }
 
-    // Step 3: Parse the clean JSON text into an array of objects
+    // Step 4: Fix common JSON issues with control characters
     try {
-      return JSON.parse(cleanText);
+      // First attempt: try parsing as-is
+      const parsed = JSON.parse(cleanText);
+      
+      // Validate that we have the expected structure
+      if (!parsed || typeof parsed !== 'object') {
+        throw new Error("Response is not a valid object");
+      }
+      
+      return parsed;
     } catch (error) {
-      throw new Error("Invalid JSON format: " + (error as Error)?.message);
+      // Step 5: If parsing fails, try to fix control characters
+      console.warn("Initial JSON parse failed, attempting to fix control characters...");
+      
+      try {
+        // More robust approach: Find the feedback value and fix it properly
+        // Match from "feedback": " to the closing " before the next field or end
+        let fixedJson = cleanText.replace(
+          /"feedback"\s*:\s*"([\s\S]*?)"\s*(?=[,}])/,
+          (match, content) => {
+            // Escape all control characters in the feedback content
+            const escaped = content
+              .replace(/\\/g, '\\\\')  // Escape backslashes first
+              .replace(/"/g, '\\"')     // Escape quotes
+              .replace(/\n/g, '\\n')    // Escape newlines
+              .replace(/\r/g, '\\r')    // Escape carriage returns
+              .replace(/\t/g, '\\t')    // Escape tabs
+              .replace(/\f/g, '\\f')    // Escape form feeds
+              .replace(/\b/g, '\\b');   // Escape backspaces
+            return `"feedback": "${escaped}"`;
+          }
+        );
+        
+        const parsed = JSON.parse(fixedJson);
+        console.log("Successfully parsed after fixing control characters");
+        
+        // Validate structure
+        if (!parsed || typeof parsed !== 'object') {
+          throw new Error("Response is not a valid object");
+        }
+        
+        return parsed;
+      } catch (secondError) {
+        console.error("JSON parsing error (after fixes):", secondError);
+        console.error("Attempted to parse:", cleanText);
+        throw new Error("Invalid JSON format: " + (error as Error)?.message);
+      }
     }
   };
 
@@ -154,44 +205,109 @@ export const RecordAnswer = ({
     userAns: string
   ): Promise<AIResponse> => {
     setIsAiGenerating(true);
-    const prompt = `
-      Question: "${qst}"
-      User Answer: "${userAns}"
-      Correct Answer: "${qstAns}"
-      Please compare the user's answer to the correct answer, and provide a rating (from 1 to 10) based on answer quality, and offer feedback for improvement.
-      Return the result in JSON format with the fields "ratings" (number) and "feedback" (string).
-    `;
+    const prompt = `You are an expert technical interviewer evaluating candidate responses.
+
+Question: "${qst}"
+
+Correct/Expected Answer: "${qstAns}"
+
+Candidate's Answer: "${userAns}"
+
+Compare the candidate's answer to the expected answer and provide:
+1. A rating from 1 to 10 (where 1 is completely wrong and 10 is perfect)
+2. Constructive feedback for improvement
+
+IMPORTANT: Return ONLY a valid JSON object in this EXACT format, with no additional text, explanations, or markdown:
+{
+  "ratings": <number between 1-10>,
+  "feedback": "<detailed constructive feedback string>"
+}
+
+Do not include any text before or after the JSON object. Do not use markdown code blocks or backticks.`;
 
     try {
-      const aiResult = await chatSession.sendMessage(prompt);
+      let aiResult;
+      try {
+        aiResult = await chatSession.sendMessage(prompt);
+      } catch (chatError) {
+        console.error('ChatSession error:', chatError);
+        throw new Error(`AI service error: ${chatError instanceof Error ? chatError.message : 'Unknown error'}`);
+      }
 
       const responseText = aiResult.response.text();
-      console.log('AI Response text:', responseText);
+      console.log('AI Response (raw):', responseText);
+      
+      // Check if response is an error message or empty
+      if (!responseText || responseText.trim() === '') {
+        throw new Error('AI service returned an empty response');
+      }
+      
+      if (responseText.includes('error') || responseText.includes('Sorry') || responseText.includes('No response')) {
+        throw new Error(`AI service error: ${responseText}`);
+      }
       
       try {
         const parsedResult: AIResponse = cleanJsonResponse(responseText);
         console.log('Parsed AI result:', parsedResult);
         
-        // Validate the parsed result
-        if (typeof parsedResult.ratings !== 'number' || typeof parsedResult.feedback !== 'string') {
-          throw new Error('Invalid AI response format');
+        // Validate the parsed result structure and types
+        if (!parsedResult || typeof parsedResult !== 'object') {
+          throw new Error('Response is not an object');
         }
+        
+        if (typeof parsedResult.ratings !== 'number' || parsedResult.ratings < 1 || parsedResult.ratings > 10) {
+          console.warn('Invalid ratings value:', parsedResult.ratings);
+          parsedResult.ratings = 5; // Default to middle rating
+        }
+        
+        if (typeof parsedResult.feedback !== 'string' || parsedResult.feedback.trim() === '') {
+          throw new Error('Invalid or empty feedback string');
+        }
+        
+        toast.success("Feedback Generated", {
+          description: "Your answer has been evaluated successfully."
+        });
         
         return parsedResult;
       } catch (parseError) {
         console.error('Failed to parse AI response:', parseError);
+        console.error('Raw response was:', responseText);
+        toast.error("Parsing Error", {
+          description: "Unable to parse AI feedback. Check console for details."
+        });
         // Return a default response if parsing fails
         return {
           ratings: 5,
-          feedback: 'Unable to generate feedback. Please try again.'
+          feedback: 'Unable to generate structured feedback. Please try recording your answer again.'
         };
       }
     } catch (error) {
-      console.log(error);
-      toast("Error", {
-        description: "An error occurred while generating feedback.",
-      });
-      return { ratings: 0, feedback: "Unable to generate feedback" };
+      console.error('Error generating feedback:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Show more specific error messages
+      if (errorMessage.includes('API Error 500')) {
+        toast.error("Server Error", {
+          description: "The AI service is having issues. Please check if the GEMINI_API_KEY is configured correctly.",
+        });
+      } else if (errorMessage.includes('Failed to fetch') || errorMessage.includes('network')) {
+        toast.error("Network Error", {
+          description: "Unable to connect to the AI service. Please check your internet connection and server status.",
+        });
+      } else if (errorMessage.includes('AI service error')) {
+        toast.error("AI Service Error", {
+          description: errorMessage,
+        });
+      } else {
+        toast.error("Error", {
+          description: `Failed to generate feedback: ${errorMessage}`,
+        });
+      }
+      
+      return { 
+        ratings: 0, 
+        feedback: `Unable to generate feedback. Error: ${errorMessage}` 
+      };
     } finally {
       setIsAiGenerating(false);
     }
@@ -200,8 +316,33 @@ export const RecordAnswer = ({
   const recordNewAnswer = () => {
     setUserAnswer("");
     setAiResult(null);
-    stopSpeechToText();
-    startSpeechToText();
+    if (inputMode === 'speech') {
+      stopSpeechToText();
+      // Reset transcript to clear previous results
+      resetTranscript();
+      setTimeout(() => {
+        startSpeechToText();
+      }, 300); // Small delay to ensure clean start
+    }
+  };
+
+  // Submit text answer for evaluation
+  const submitTextAnswer = async () => {
+    if (userAnswer?.length < 30) {
+      toast.error("Error", {
+        description: "Your answer should be more than 30 characters",
+      });
+      return;
+    }
+
+    // Generate AI result
+    const aiResult = await generateResult(
+      question.question,
+      question.answer,
+      userAnswer
+    );
+
+    setAiResult(aiResult);
   };
 
   const saveUserAnswer = async () => {
@@ -275,13 +416,18 @@ export const RecordAnswer = ({
   };
 
   useEffect(() => {
-    const combineTranscripts = results
-      .filter((result): result is ResultType => typeof result !== "string")
-      .map((result) => result.transcript)
-      .join(" ");
+    // Only update from speech results if in speech mode
+    if (inputMode === 'speech') {
+      const combineTranscripts = results
+        .filter((result): result is ResultType => typeof result !== "string")
+        .map((result) => result.transcript)
+        .join(" ")
+        .trim();
 
-    setUserAnswer(combineTranscripts);
-  }, [results]);
+      setUserAnswer(combineTranscripts);
+      console.log('User answer updated:', combineTranscripts);
+    }
+  }, [results, inputMode]);
 
   return (
     <div className="w-full flex flex-col items-center gap-8 mt-4">
@@ -304,6 +450,41 @@ export const RecordAnswer = ({
             style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
           ></div>
         </div>
+      </div>
+
+      {/* Input Mode Toggle - Segmented Control */}
+      <div className="inline-flex items-center gap-3 p-1 bg-gray-100 rounded-lg">
+        <button
+          onClick={() => {
+            setInputMode('speech');
+            setUserAnswer('');
+            setAiResult(null);
+          }}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
+            inputMode === 'speech'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <Mic className="w-4 h-4" />
+          Voice
+        </button>
+        <button
+          onClick={() => {
+            setInputMode('text');
+            stopSpeechToText();
+            setUserAnswer('');
+            setAiResult(null);
+          }}
+          className={`flex items-center gap-2 px-6 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
+            inputMode === 'text'
+              ? 'bg-white text-blue-600 shadow-sm'
+              : 'text-gray-600 hover:text-gray-900'
+          }`}
+        >
+          <span className="text-base">✏️</span>
+          Text
+        </button>
       </div>
 
       {/* Camera Section */}
@@ -365,25 +546,41 @@ export const RecordAnswer = ({
           buttonClassName={isSpeakerOn ? "bg-blue-100 hover:bg-blue-200 text-blue-700" : "bg-gray-100 hover:bg-gray-200 text-gray-700"}
         />
 
-        <TooltipButton
-          content={isRecording ? "Stop Recording" : "Start Recording"}
-          icon={
-            isRecording ? (
-              <CircleStop className="min-w-5 min-h-5" />
-            ) : (
-              <Mic className="min-w-5 min-h-5" />
-            )
-          }
-          onClick={recordUserAnswer}
-          buttonClassName={isRecording ? "bg-red-100 hover:bg-red-200 text-red-700" : "bg-blue-100 hover:bg-blue-200 text-blue-700"}
-        />
+        {/* Speech Mode Controls */}
+        {inputMode === 'speech' && (
+          <>
+            <TooltipButton
+              content={isRecording ? "Stop Recording" : "Start Recording"}
+              icon={
+                isRecording ? (
+                  <CircleStop className="min-w-5 min-h-5" />
+                ) : (
+                  <Mic className="min-w-5 min-h-5" />
+                )
+              }
+              onClick={recordUserAnswer}
+              buttonClassName={isRecording ? "bg-red-100 hover:bg-red-200 text-red-700" : "bg-blue-100 hover:bg-blue-200 text-blue-700"}
+            />
 
-        <TooltipButton
-          content="Record Again"
-          icon={<RefreshCw className="min-w-5 min-h-5" />}
-          onClick={recordNewAnswer}
-          buttonClassName="bg-gray-100 hover:bg-gray-200 text-gray-700"
-        />
+            <TooltipButton
+              content="Record Again"
+              icon={<RefreshCw className="min-w-5 min-h-5" />}
+              onClick={recordNewAnswer}
+              buttonClassName="bg-gray-100 hover:bg-gray-200 text-gray-700"
+            />
+          </>
+        )}
+
+        {/* Text Mode Controls */}
+        {inputMode === 'text' && (
+          <TooltipButton
+            content="Submit Answer for Evaluation"
+            icon={<CircleStop className="min-w-5 min-h-5" />}
+            onClick={submitTextAnswer}
+            disabled={userAnswer.length < 30 || isAiGenerating}
+            buttonClassName="bg-blue-100 hover:bg-blue-200 text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          />
+        )}
 
         <TooltipButton
           content="Save Result"
@@ -402,15 +599,41 @@ export const RecordAnswer = ({
 
       {/* Answer Display */}
       <div className="w-full max-w-4xl mt-4 p-6 border rounded-lg bg-gray-50">
-        <h2 className="text-lg font-semibold mb-3">Your Answer:</h2>
-        
-        <div className="bg-white p-4 rounded-md border">
-          <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
-            {userAnswer || "Start recording to see your answer here..."}
-          </p>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">Your Answer:</h2>
+          {inputMode === 'speech' && isRecording && (
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="text-sm text-red-600 font-medium">Recording...</span>
+            </div>
+          )}
+          {inputMode === 'text' && (
+            <span className="text-sm text-gray-600">
+              {userAnswer.length} characters (min: 30)
+            </span>
+          )}
         </div>
+        
+        {/* Text Input Mode */}
+        {inputMode === 'text' ? (
+          <textarea
+            value={userAnswer}
+            onChange={(e) => setUserAnswer(e.target.value)}
+            placeholder="Type your answer here... (minimum 30 characters)"
+            className="w-full min-h-[200px] p-4 text-sm text-gray-700 bg-white border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+            disabled={isAiGenerating}
+          />
+        ) : (
+          /* Speech Input Mode - Read Only */
+          <div className="bg-white p-4 rounded-md border min-h-[200px]">
+            <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+              {userAnswer || "Click 'Start Recording' to begin speaking your answer..."}
+            </p>
+          </div>
+        )}
 
-        {interimResult && (
+        {/* Interim Speech Results */}
+        {inputMode === 'speech' && interimResult && (
           <div className="mt-3 p-3 bg-blue-50 rounded-md border-l-4 border-blue-400">
             <p className="text-sm text-blue-700">
               <strong>Currently speaking:</strong> {interimResult}
@@ -418,8 +641,21 @@ export const RecordAnswer = ({
           </div>
         )}
 
+        {/* AI Generating Feedback Loading State */}
+        {isAiGenerating && (
+          <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+            <div className="flex items-center gap-3">
+              <Loader className="w-5 h-5 animate-spin text-purple-600" />
+              <div>
+                <h3 className="text-md font-semibold text-gray-800">Generating Feedback...</h3>
+                <p className="text-sm text-gray-600">AI is evaluating your answer. Please wait...</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* AI Feedback Display */}
-        {aiResult && (
+        {aiResult && !isAiGenerating && (
           <div className="mt-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-md font-semibold text-gray-800">AI Feedback</h3>

@@ -7,7 +7,7 @@ Handles skill extraction, analysis, and learning recommendations.
 import os
 import json
 import re
-from langchain_google_genai import ChatGoogleGenerativeAI
+from google import genai
 from googleapiclient.discovery import build
 
 class SkillGapAnalyzer:
@@ -25,146 +25,140 @@ class SkillGapAnalyzer:
                 print(f"Failed to initialize YouTube API client: {e}")
 
     def analyze_skill_gap(self, resume_text, job_description):
-        """Analyze skill gap between resume and job description."""
+        """Analyze skill gap between resume and job description using comprehensive AI analysis."""
         try:
             if not self.gemini_api_key:
                 raise Exception("GEMINI_API_KEY not configured")
             
-            # First, extract skills from both resume and job description using a more direct approach
-            llm = ChatGoogleGenerativeAI(
-                model="gemini-1.5-flash",
-                temperature=0.1,
-                max_output_tokens=2000,
-                google_api_key=self.gemini_api_key
+            # Configure Gemini API using new SDK syntax
+            client = genai.Client(api_key=self.gemini_api_key)
+            
+            # Use a single comprehensive prompt for better accuracy
+            comprehensive_prompt = """You are an expert technical recruiter performing a detailed skill gap analysis.
+
+RESUME:
+{resume_text}
+
+JOB DESCRIPTION:
+{job_description}
+
+TASK: Perform a comprehensive skill gap analysis comparing the resume against the job requirements.
+
+INSTRUCTIONS:
+1. Carefully read both the resume and job description
+2. Extract ALL technical skills, tools, technologies, frameworks, and methodologies from the job description
+3. Identify which of these skills are present in the resume (with evidence)
+4. Identify which skills are missing from the resume
+5. Identify additional skills in the resume not mentioned in the job description
+
+Return your analysis in this EXACT JSON format (no markdown, no extra text):
+{{
+  "job_required_skills": ["skill1", "skill2", ...],
+  "present_skills": ["skill1", "skill2", ...],
+  "missing_skills": ["skill1", "skill2", ...],
+  "additional_skills": ["skill1", "skill2", ...],
+  "skill_details": {{
+    "skill_name": {{
+      "status": "present|missing|additional",
+      "evidence": "where found in resume or why missing",
+      "importance": "high|medium|low",
+      "proficiency_level": "expert|intermediate|beginner|not_found"
+    }}
+  }}
+}}
+
+IMPORTANT:
+- Be thorough and extract ALL skills from the job description
+- Match skills intelligently (e.g., "JS" = "JavaScript", "React.js" = "React")
+- Consider synonyms and related technologies
+- Include both hard skills (Python, AWS) and soft skills (Agile, Leadership)
+- Provide evidence for each skill match
+
+JSON only:"""
+            
+            # Generate comprehensive analysis
+            print("Generating comprehensive skill gap analysis...")
+            analysis_response = client.models.generate_content(
+                model='gemini-2.0-flash-exp',
+                contents=comprehensive_prompt.format(
+                    resume_text=resume_text[:4000],
+                    job_description=job_description
+                )
             )
             
-            # Step 1: Extract skills from job description
-            job_skills_prompt = """
-            Extract all technical skills, programming languages, frameworks, tools, and technologies mentioned in the job description.
+            analysis_text = analysis_response.text.strip()
+            print(f"AI Analysis response (first 300 chars): {analysis_text[:300]}")
             
-            Job Description: {job_description}
-            
-            Return ONLY a JSON array of skill names, like this:
-            ["Python", "React", "Docker", "AWS", "MongoDB"]
-            
-            Focus on:
-            - Programming languages (Python, JavaScript, Java, etc.)
-            - Frameworks (React, Angular, Django, Flask, etc.)
-            - Databases (MySQL, MongoDB, PostgreSQL, etc.)
-            - Cloud platforms (AWS, Azure, GCP, etc.)
-            - Tools (Docker, Kubernetes, Git, Jenkins, etc.)
-            - Methodologies (Agile, Scrum, DevOps, etc.)
-            
-            Only return the JSON array, no other text.
-            """
-            
-            job_skills_response = llm.invoke(job_skills_prompt.format(job_description=job_description))
-            job_skills_text = job_skills_response.content.strip()
-            
-            # Clean and parse job skills
+            # Parse the comprehensive analysis
             try:
-                # Remove any markdown formatting
-                job_skills_text = job_skills_text.replace('```json', '').replace('```', '').strip()
-                job_skills = json.loads(job_skills_text)
-                if not isinstance(job_skills, list):
-                    job_skills = []
-            except json.JSONDecodeError:
-                # Fallback: extract using regex
-                job_skills = self.extract_skills_from_text(job_description)
-            
-            # Step 2: Extract skills from resume
-            resume_skills_prompt = """
-            Extract all technical skills, programming languages, frameworks, tools, and technologies mentioned in the resume.
-            
-            Resume Content: {resume_content}
-            
-            Return ONLY a JSON array of skill names, like this:
-            ["Python", "JavaScript", "React", "Git"]
-            
-            Focus on:
-            - Programming languages (Python, JavaScript, Java, etc.)
-            - Frameworks (React, Angular, Django, Flask, etc.)
-            - Databases (MySQL, MongoDB, PostgreSQL, etc.)
-            - Cloud platforms (AWS, Azure, GCP, etc.)
-            - Tools (Docker, Kubernetes, Git, Jenkins, etc.)
-            - Methodologies (Agile, Scrum, DevOps, etc.)
-            
-            Only return the JSON array, no other text.
-            """
-            
-            resume_skills_response = llm.invoke(resume_skills_prompt.format(resume_content=resume_text[:3000]))
-            resume_skills_text = resume_skills_response.content.strip()
-            
-            # Clean and parse resume skills
-            try:
-                # Remove any markdown formatting
-                resume_skills_text = resume_skills_text.replace('```json', '').replace('```', '').strip()
-                resume_skills = json.loads(resume_skills_text)
-                if not isinstance(resume_skills, list):
-                    resume_skills = []
-            except json.JSONDecodeError:
-                # Fallback: extract using regex
-                resume_skills = self.extract_skills_from_text(resume_text)
-            
-            # Step 3: Compare skills and identify gaps
-            # Normalize skill names for comparison
-            job_skills_normalized = [skill.lower().strip() for skill in job_skills]
-            resume_skills_normalized = [skill.lower().strip() for skill in resume_skills]
-            
-            # Find present and missing skills
-            present_skills = []
-            missing_skills = []
-            
-            for skill in job_skills:
-                skill_lower = skill.lower().strip()
-                if skill_lower in resume_skills_normalized:
-                    present_skills.append(skill)
-                else:
-                    missing_skills.append(skill)
-            
-            # Find additional skills in resume
-            additional_skills = []
-            for skill in resume_skills:
-                skill_lower = skill.lower().strip()
-                if skill_lower not in job_skills_normalized:
-                    additional_skills.append(skill)
-            
-            # Step 4: Create detailed skill analysis
-            skill_analysis = {}
-            
-            # Analyze present skills
-            for skill in present_skills:
-                skill_analysis[skill] = {
-                    "status": "present",
-                    "importance": "high" if skill.lower() in ["python", "javascript", "react", "java", "aws", "docker"] else "medium",
-                    "level": "intermediate"  # Default level
+                # Clean markdown formatting
+                analysis_text = analysis_text.replace('```json', '').replace('```', '').strip()
+                
+                # Extract JSON object
+                if '{' in analysis_text and '}' in analysis_text:
+                    start = analysis_text.find('{')
+                    end = analysis_text.rfind('}') + 1
+                    analysis_text = analysis_text[start:end]
+                
+                analysis_data = json.loads(analysis_text)
+                
+                # Extract the key components
+                present_skills = analysis_data.get('present_skills', [])
+                missing_skills = analysis_data.get('missing_skills', [])
+                additional_skills = analysis_data.get('additional_skills', [])
+                skill_details = analysis_data.get('skill_details', {})
+                
+                # Build skill_analysis from skill_details
+                skill_analysis = {}
+                for skill, details in skill_details.items():
+                    skill_analysis[skill] = {
+                        "status": details.get('status', 'unknown'),
+                        "importance": details.get('importance', 'medium'),
+                        "level": details.get('proficiency_level', 'intermediate'),
+                        "evidence": details.get('evidence', '')
+                    }
+                
+                # If skill_analysis is empty, create basic analysis
+                if not skill_analysis:
+                    for skill in present_skills:
+                        skill_analysis[skill] = {
+                            "status": "present",
+                            "importance": "high" if skill.lower() in ["python", "javascript", "react", "java", "aws", "docker", "machine learning", "data science"] else "medium",
+                            "level": "intermediate"
+                        }
+                    
+                    for skill in missing_skills:
+                        skill_analysis[skill] = {
+                            "status": "missing",
+                            "importance": "high" if skill.lower() in ["python", "javascript", "react", "java", "aws", "docker", "machine learning", "data science"] else "medium",
+                            "level": "basic"
+                        }
+                    
+                    for skill in additional_skills:
+                        skill_analysis[skill] = {
+                            "status": "additional",
+                            "importance": "medium",
+                            "level": "intermediate"
+                        }
+                
+                print(f"✓ Comprehensive Analysis: Present={len(present_skills)}, Missing={len(missing_skills)}, Additional={len(additional_skills)}")
+                
+                return {
+                    "present_skills": present_skills,
+                    "missing_skills": missing_skills,
+                    "additional_skills": additional_skills,
+                    "skill_analysis": skill_analysis
                 }
-            
-            # Analyze missing skills
-            for skill in missing_skills:
-                skill_analysis[skill] = {
-                    "status": "missing",
-                    "importance": "high" if skill.lower() in ["python", "javascript", "react", "java", "aws", "docker"] else "medium",
-                    "level": "basic"  # Default level for missing skills
-                }
-            
-            # Analyze additional skills
-            for skill in additional_skills:
-                skill_analysis[skill] = {
-                    "status": "additional",
-                    "importance": "medium",
-                    "level": "intermediate"
-                }
-            
-            return {
-                "present_skills": present_skills,
-                "missing_skills": missing_skills,
-                "additional_skills": additional_skills,
-                "skill_analysis": skill_analysis
-            }
+                
+            except (json.JSONDecodeError, KeyError, TypeError) as e:
+                print(f"Error parsing comprehensive analysis: {e}")
+                print("Falling back to regex-based extraction...")
+                return self.extract_skills_fallback_improved(resume_text, job_description)
             
         except Exception as e:
             print(f"Error in skill gap analysis: {e}")
+            import traceback
+            traceback.print_exc()
             # Fallback to regex-based extraction
             return self.extract_skills_fallback_improved(resume_text, job_description)
 

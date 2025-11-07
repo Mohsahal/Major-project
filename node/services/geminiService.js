@@ -9,7 +9,7 @@ const ai = new GoogleGenerativeAI(apiKey);
 
 async function analyzeResume(resumeContent) {
   try {
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     const prompt = `You are an extremely precise resume parser and analyst. Your task is to extract key information from the provided resume content into a structured JSON object, focusing on accuracy and detail.
 
@@ -82,7 +82,7 @@ Crucially, return only the JSON object. Do not include any introductory text, ma
 
 async function findMatchingJobs(resumeAnalysis) {
   try {
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
     
     const prompt = `You are an expert job recommendation engine specifically tasked with generating job recommendations that are an excellent, direct match for the provided resume analysis. Your recommendations must align closely with the candidate's extracted skills, experience, and education.
 

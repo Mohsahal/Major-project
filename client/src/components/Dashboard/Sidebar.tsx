@@ -71,8 +71,6 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
         "flex flex-col bg-sidebar border-muted-foreground border-gray-200 transition-all duration-200 ease-out pt-16 will-change-transform",
         isOpen ? "w-64" : "w-20"
       )}
-      onMouseEnter={() => !isOpen && onToggle(true)}
-      onMouseLeave={() => isOpen && onToggle(false)}
     >
       <div className="flex items-center justify-between p-7 border-b border-gray-200">
         <div className={cn("flex items-center", !isOpen && "justify-center w-full")}>
