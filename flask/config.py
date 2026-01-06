@@ -13,7 +13,6 @@ load_dotenv()
 # ==========================
 # API Configuration
 # ==========================
-SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY", "")
 
@@ -41,11 +40,12 @@ def check_api_keys():
     """Check if the API keys are properly configured."""
     status = True
 
-    if not SERPAPI_API_KEY:
-        print("⚠️  WARNING: SerpApi API key not configured!")
-        status = False
-    else:
-        print("✅ SerpApi API key is configured.")
+    # Note: APIFY not needed for stateless mode
+    # if not APIFY_API_TOKEN:
+    #     print("⚠️  WARNING: Apify API token not configured!")
+    #     status = False
+    # else:
+    #     print("✅ Apify API token is configured.")
 
     if not GEMINI_API_KEY:
         print("⚠️  WARNING: Gemini API key not configured!")

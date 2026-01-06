@@ -14,10 +14,22 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
     // Check if user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Check if user has a password (not a Google-only user)
+    if (!user.password) {
+      return res.status(401).json({ 
+        message: 'This account was created with Google. Please use Google Sign-In or reset your password.' 
+      });
     }
 
     // Check password
@@ -258,10 +270,32 @@ router.get('/me', authMiddleware, async (req, res) => {
 
 router.put('/me', authMiddleware, async (req, res) => {
   try {
-    const updates = (({ name, profileImage }) => ({ name, profileImage }))(req.body);
-    const user = await User.findByIdAndUpdate(req.user.id, updates, { new: true }).select('-password');
+    const allowedUpdates = [
+      'name', 'profileImage', 'title', 'location', 'phone', 'website',
+      'socials', 'bio', 'education', 'skills', 'experience', 'languages',
+      'certifications', 'careerGoals'
+    ];
+    const updates = {};
+    
+    allowedUpdates.forEach(field => {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    });
+    
+    const user = await User.findByIdAndUpdate(
+      req.user.id, 
+      updates, 
+      { new: true, runValidators: true }
+    ).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
     res.json({ success: true, data: user, message: 'Profile updated' });
   } catch (e) {
-    res.status(400).json({ success: false, message: 'Failed to update profile' });
+    console.error('Profile update error:', e);
+    res.status(400).json({ success: false, message: 'Failed to update profile', error: e.message });
   }
 });

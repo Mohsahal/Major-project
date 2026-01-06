@@ -1,4 +1,27 @@
-import { ArrowRight, RefreshCw, Loader2, Star, Upload, FileText, X, MapPin, Building2, DollarSign, Clock, TrendingUp, Filter, Search, Bookmark, Share2, Eye, Sparkles, Zap, Target, Users, Briefcase, ChevronDown, Plus } from "lucide-react";
+import {
+  ArrowRight,
+  RefreshCw,
+  Loader2,
+  Star,
+  Upload,
+  FileText,
+  X,
+  MapPin,
+  Building2,
+  DollarSign,
+  Clock,
+  TrendingUp,
+  Filter,
+  Search,
+  Eye,
+  Sparkles,
+  Zap,
+  Target,
+  Users,
+  Briefcase,
+  ChevronDown,
+  Plus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +30,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { FLASK_ENDPOINTS, ensureFlaskAwake } from "@/config/api";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandInput,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
 import { Skeleton } from "@/components/ui/skeleton";
 
 type JobType = {
@@ -21,135 +54,242 @@ type JobType = {
   posted: string;
   description?: string;
   isNew?: boolean;
-  type: 'Full-time' | 'Part-time' | 'Contract' | 'Remote';
+  type: "Full-time" | "Part-time" | "Contract" | "Remote";
   experience: string;
   logo?: string;
-  benefits: string[];
-  urgency: 'High' | 'Medium' | 'Low';
+  urgency: "High" | "Medium" | "Low";
   applyLink?: string;
+  experienceLevel?: string;
+  workType?: string;
+  contractType?: string;
 };
 
 type JobRecommendationsProps = {
   onJobsUpdated?: (jobs: JobType[]) => void;
 };
 
-export default function JobRecommendations({ onJobsUpdated }: JobRecommendationsProps) {
+export default function JobRecommendations({
+  onJobsUpdated,
+}: JobRecommendationsProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedResume, setUploadedResume] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [selectedFilter, setSelectedFilter] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedWorkType, setSelectedWorkType] = useState('all');
   const [showRecommendations, setShowRecommendations] = useState(false);
-  const [isGeneratingRecommendations, setIsGeneratingRecommendations] = useState(false);
+  const [isGeneratingRecommendations, setIsGeneratingRecommendations] =
+    useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const [csvDownload, setCsvDownload] = useState<string | null>(null);
   const [autoQuery, setAutoQuery] = useState<string | null>(null);
-  const [jobLocation, setJobLocation] = useState<string>('Bangalore');
-  const [isLocationOpen, setIsLocationOpen] = useState<boolean>(false);
-  const [locationQuery, setLocationQuery] = useState<string>('');
-  const suggestedLocations: string[] = [
-    'Bangalore',
-    'Remote',
-    'San Francisco',
-    'New York',
-    'London',
-    'Toronto',
-    'Sydney',
-    'Berlin',
-    'Singapore',
-    'Dubai'
-  ];
+  // location filter removed
+  // const [jobLocation, setJobLocation] = useState<string>("Bangalore");
+  // const [isLocationOpen, setIsLocationOpen] = useState<boolean>(false);
+  // const [locationQuery, setLocationQuery] = useState<string>("");
+  // const suggestedLocations: string[] = [
+  //   "Bangalore",
+  //   "Remote",
+  //   "San Francisco",
+  //   "New York",
+  //   "London",
+  //   "Toronto",
+  //   "Sydney",
+  //   "Berlin",
+  //   "Singapore",
+  //   "Dubai",
+  // ];
+
+  // Helper function to detect if a job is remote
+  const isRemoteJob = (job: JobType) => {
+    const location = job.location?.toLowerCase() || '';
+    const title = job.title?.toLowerCase() || '';
+    const description = job.description?.toLowerCase() || '';
+    
+    return location.includes('remote') || 
+           title.includes('remote') || 
+           description.includes('remote') ||
+           location.includes('work from home') ||
+           description.includes('work from home');
+  };
+
+  // Helper function to detect if a job is hybrid
+  const isHybridJob = (job: JobType) => {
+    const location = job.location?.toLowerCase() || '';
+    const description = job.description?.toLowerCase() || '';
+    
+    return location.includes('hybrid') || 
+           description.includes('hybrid');
+  };
+
+  // Helper function to get days since posted
+  const getDaysSincePosted = (postedTime: string) => {
+    if (postedTime.includes('day ago') || postedTime.includes('days ago')) {
+      const days = parseInt(postedTime.match(/\d+/)?.[0] || '0');
+      return days;
+    } else if (postedTime.includes('week ago') || postedTime.includes('weeks ago')) {
+      const weeks = parseInt(postedTime.match(/\d+/)?.[0] || '0');
+      return weeks * 7;
+    } else if (postedTime.includes('month ago') || postedTime.includes('months ago')) {
+      const months = parseInt(postedTime.match(/\d+/)?.[0] || '0');
+      return months * 30;
+    }
+    return 0;
+  };
 
   // Demo data with realistic job information
   const [jobs, setJobs] = useState<JobType[]>([
     {
-      id: '1',
-      title: 'Senior Frontend Developer',
-      company: 'TechCorp Solutions',
-      location: 'San Francisco, CA',
+      id: "1",
+      title: "Senior Frontend Developer",
+      company: "TechCorp Solutions",
+      location: "San Francisco, CA",
       matchPercentage: 95,
-      skills: ['React', 'TypeScript', 'Next.js', 'Tailwind CSS'],
-      posted: '2 hours ago',
-      description: 'Join our dynamic team to build cutting-edge web applications. We\'re looking for a passionate developer who loves clean code and user experience.',
+      skills: ["React", "TypeScript", "Next.js", "Tailwind CSS"],
+      posted: "2 hours ago",
+      description:
+        "Join our dynamic team to build cutting-edge web applications. We're looking for a passionate developer who loves clean code and user experience.",
       isNew: true,
-      type: 'Full-time',
-      experience: '5+ years',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Stock Options'],
-      urgency: 'High'
+      type: "Full-time",
+      experience: "5+ years",
+      urgency: "High",
     },
     {
-      id: '2',
-      title: 'Product Manager',
-      company: 'InnovateLab',
-      location: 'New York, NY',
+      id: "2",
+      title: "Product Manager",
+      company: "InnovateLab",
+      location: "New York, NY",
       matchPercentage: 88,
-      skills: ['Product Strategy', 'Agile', 'Data Analysis', 'User Research'],
-      posted: '1 day ago',
-      description: 'Lead product development from concept to launch. Work with cross-functional teams to deliver exceptional user experiences.',
+      skills: ["Product Strategy", "Agile", "Data Analysis", "User Research"],
+      posted: "1 day ago",
+      description:
+        "Lead product development from concept to launch. Work with cross-functional teams to deliver exceptional user experiences.",
       isNew: true,
-      type: 'Full-time',
-      experience: '3+ years',
-      benefits: ['Health Insurance', '401k', 'Flexible PTO', 'Learning Budget'],
-      urgency: 'Medium'
-    }
+      type: "Full-time",
+      experience: "3+ years",
+      urgency: "Medium",
+    },
+    {
+      id: "3",
+      title: "Junior Software Developer",
+      company: "StartupCorp",
+      location: "Remote",
+      matchPercentage: 78,
+      skills: ["JavaScript", "React", "HTML", "CSS"],
+      posted: "3 days ago",
+      description:
+        "Perfect opportunity for fresh graduates! Join our team to learn and grow in a supportive environment.",
+      isNew: false,
+      type: "Full-time",
+      experience: "0-1 years",
+      urgency: "Low",
+    },
+    {
+      id: "4",
+      title: "Software Engineering Intern",
+      company: "TechGiant",
+      location: "San Francisco, CA",
+      matchPercentage: 65,
+      skills: ["Python", "Git", "SQL"],
+      posted: "1 week ago",
+      description:
+        "Summer internship program for students. Great learning opportunity with experienced mentors.",
+      isNew: false,
+      type: "Full-time",
+      experience: "Intern",
+      urgency: "Medium",
+    },
   ]);
 
   // Demo job for when no resume is uploaded
   const demoJob: JobType = {
-    id: 'demo',
-    title: 'Full Stack Developer',
-    company: 'DemoTech Solutions',
-    location: 'Remote / Anywhere',
+    id: "demo",
+    title: "Full Stack Developer",
+    company: "DemoTech Solutions",
+    location: "Remote / Anywhere",
     matchPercentage: 85,
-    skills: ['React', 'Node.js', 'TypeScript', 'MongoDB'],
-    posted: '1 week ago',
-    description: 'This is a demo job recommendation to show you what you can expect after uploading your resume. Upload your resume to get personalized AI-powered job matches!',
+    skills: ["React", "Node.js", "TypeScript", "MongoDB"],
+    posted: "1 week ago",
+    description:
+      "This is a demo job recommendation to show you what you can expect after uploading your resume. Upload your resume to get personalized AI-powered job matches!",
     isNew: false,
-    type: 'Full-time',
-    experience: '3+ years',
-    benefits: ['Health Insurance', '401k', 'Remote Work', 'Learning Budget'],
-    urgency: 'Medium'
+    type: "Full-time",
+    experience: "3+ years",
+    urgency: "Medium",
   };
 
   // Get featured jobs (top 2 by match percentage)
   const featuredJobs = jobs.slice(0, 2);
   const totalJobsCount = jobs.length; // Total available jobs
 
+  // Count jobs for each filter category
+  const remoteJobsCount = jobs.filter(isRemoteJob).length;
+  const hybridJobsCount = jobs.filter(isHybridJob).length;
+
   const filters = [
-    { id: 'all', label: 'All Jobs', count: jobs.length }
+    { id: "all", label: "All Jobs", count: jobs.length },
+    { id: "remote", label: "Remote", count: remoteJobsCount },
+    { id: "hybrid", label: "Hybrid", count: hybridJobsCount },
+    { id: "high-match", label: "High Match (90%+)", count: jobs.filter(job => job.matchPercentage >= 90).length }
   ];
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesFilter = selectedFilter === 'all' || 
-      (selectedFilter === 'new' && job.isNew);
-    
-    const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+  // Filter options for sidebar
+  const workTypeOptions = [
+    { id: 'all', label: 'All Types', count: jobs.length },
+    { id: 'remote', label: 'Remote', count: remoteJobsCount },
+    { id: 'hybrid', label: 'Hybrid', count: hybridJobsCount },
+    { id: 'onsite', label: 'On-site', count: jobs.length - remoteJobsCount - hybridJobsCount }
+  ];
+
+  const filteredJobs = jobs.filter((job) => {
+    // Quick filter tabs
+    const matchesFilter = selectedFilter === "all" || 
+      (selectedFilter === "new" && job.isNew) ||
+      (selectedFilter === "high-match" && job.matchPercentage >= 90) ||
+      (selectedFilter === "remote" && isRemoteJob(job)) ||
+      (selectedFilter === "hybrid" && isHybridJob(job));
+
+    // Search query
+    const matchesSearch =
+      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
+      job.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.skills.some((skill) =>
+        skill.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+    // Work type filter
+    const matchesWorkType = selectedWorkType === 'all' || 
+      (selectedWorkType === 'remote' && isRemoteJob(job)) ||
+      (selectedWorkType === 'hybrid' && isHybridJob(job)) ||
+      (selectedWorkType === 'onsite' && !isRemoteJob(job) && !isHybridJob(job));
     
-    return matchesFilter && matchesSearch;
+    return matchesFilter && matchesSearch && matchesWorkType;
   });
 
   const validateFile = (file: File): boolean => {
-    const validTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
+    const validTypes = [
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "text/plain",
+    ];
     if (!validTypes.includes(file.type)) {
       toast({
         title: "Invalid file type",
         description: "Please upload a PDF, DOCX or TXT file",
-        variant: "destructive"
+        variant: "destructive",
       });
       return false;
     }
-
 
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "File too large",
         description: "Please upload a file smaller than 5MB",
-        variant: "destructive"
+        variant: "destructive",
       });
       return false;
     }
@@ -167,10 +307,10 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
 
     try {
       const formData = new FormData();
-      formData.append('resume', file);
+      formData.append("resume", file);
 
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
+        setUploadProgress((prev) => {
           if (prev >= 90) {
             clearInterval(progressInterval);
             return prev;
@@ -180,20 +320,22 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
       }, 200);
 
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       clearInterval(progressInterval);
       setUploadProgress(100);
-        
-        toast({
-          title: "Resume uploaded successfully",
-          description: "Click 'Get AI Recommendations' to see personalized job matches",
-        });
+
+      toast({
+        title: "Resume uploaded successfully",
+        description:
+          "Click 'Get AI Recommendations' to see personalized job matches",
+      });
     } catch (error) {
       toast({
         title: "Upload failed",
-        description: "There was an error uploading your resume. Please try again.",
-        variant: "destructive"
+        description:
+          "There was an error uploading your resume. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsUploading(false);
@@ -206,7 +348,7 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
     setShowRecommendations(false); // Hide recommendations when resume is removed
     onJobsUpdated?.([]);
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -214,82 +356,119 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
     if (!uploadedResume) {
       toast({
         title: "No resume uploaded",
-        description: "Please upload a resume first to get personalized recommendations",
-        variant: "destructive"
+        description:
+          "Please upload a resume first to get personalized recommendations",
+        variant: "destructive",
       });
       return;
     }
 
     setIsGeneratingRecommendations(true);
-    
+
     try {
       await ensureFlaskAwake();
       const formData = new FormData();
-      formData.append('resume', uploadedResume);
-      if (jobLocation) {
-        formData.append('location', jobLocation);
-      }
-      // Request only LinkedIn direct links from Flask API
-      formData.append('provider', 'linkedin');
-      formData.append('only_provider', 'true');
+      formData.append("resume", uploadedResume);
+      // location filter removed — not sending location to backend
+
+      // Request all jobs (we'll handle URLs properly on client side)
+      formData.append("provider", "all");
+      formData.append("only_provider", "false");
 
       const response = await fetch(FLASK_ENDPOINTS.UPLOAD_RESUME, {
-        method: 'POST',
+        method: "POST",
         body: formData,
       });
 
-      const data = await response.json();
+      // Check if response is OK before parsing
       if (!response.ok) {
-        throw new Error(data.error || data.message || 'Failed to fetch recommendations');
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          // If response is not JSON, use status text
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
+      // Check content type before parsing JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Response is not JSON. Please check the server configuration.");
+      }
+
+      const data = await response.json();
+
       if (data && data.success && Array.isArray(data.top_jobs)) {
-        const mapped: JobType[] = data.top_jobs.map((j: any, idx: number) => ({
-          id: `${idx + 1}`,
-          title: j.title || 'Untitled Role',
-          company: j.company || 'Unknown Company',
-          location: j.location || '—',
-          matchPercentage: typeof j.similarity === 'number' ? Math.round(j.similarity) : 0,
-          skills: [],
-          posted: 'Recently',
-          description: j.description || '',
-          isNew: true,
-          type: 'Full-time',
-          experience: '—',
-          benefits: [],
-          urgency: (j.similarity || 0) >= 85 ? 'High' : (j.similarity || 0) >= 70 ? 'Medium' : 'Low',
-          applyLink: (j.apply_link && typeof j.apply_link === 'string' && j.apply_link.trim().length > 0)
-            ? j.apply_link
-            : `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(`${j.title || ''} ${j.company || ''}`.trim())}`
-        }));
+        // Debug: Log the first job to see what fields we're receiving
+        if (data.top_jobs.length > 0) {
+          console.log("Sample job data received from backend:", data.top_jobs[0]);
+        }
         
+        const mapped: JobType[] = data.top_jobs.map(
+          (j: any, idx: number) =>
+            ({
+              id: j.id || `${idx + 1}`,
+              title: j.title || "Untitled Role",
+              company: j.company || "Unknown Company",
+              location: j.location || "—",
+              matchPercentage:
+                typeof j.similarity === "number" ? Math.round(j.similarity) : 0,
+              skills: j.skills_matched || j.skills_required || [],
+              posted: j.posted_time || "Recently",
+              description: j.description || "",
+              isNew: true,
+              type: "Full-time",
+              urgency:
+                (j.similarity || 0) >= 85
+                  ? "High"
+                  : (j.similarity || 0) >= 70
+                  ? "Medium"
+                  : "Low",
+              applyLink: j.apply_link || j.job_url || j.apply_url || "#",
+              // Pass through additional fields for ViewAllJobs
+              ...(j.apply_link && { apply_link: j.apply_link }),
+              ...(j.job_url && { job_url: j.job_url }),
+              ...(j.apply_url && { apply_url: j.apply_url }),
+            } as JobType & {
+              apply_link?: string;
+              job_url?: string;
+              apply_url?: string;
+            })
+        );
 
         setJobs(mapped);
         setCsvDownload(data.csv_download || null);
         setAutoQuery(data.query || null);
-      setShowRecommendations(true);
-      onJobsUpdated?.(mapped);
-      toast({
-        title: "Recommendations Generated! 🎯",
-          description: `Found ${mapped.length} jobs${data.query ? ` for "${data.query}"` : ''}`,
-      });
+        setShowRecommendations(true);
+        onJobsUpdated?.(mapped);
+        toast({
+          title: "Recommendations Generated! 🎯",
+          description: `Found ${mapped.length} jobs${
+            data.query ? ` for "${data.query}"` : ""
+          }`,
+        });
       } else {
-        throw new Error('Unexpected response format from recommender');
+        throw new Error("Unexpected response format from recommender");
       }
-      
+
       // Scroll to recommendations
       setTimeout(() => {
-        const element = document.getElementById('job-listings');
+        const element = document.getElementById("job-listings");
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
         }
       }, 500);
-      
     } catch (error) {
       toast({
         title: "Generation failed",
-        description: error instanceof Error ? error.message : "There was an error generating recommendations. Please try again.",
-        variant: "destructive"
+        description:
+          error instanceof Error
+            ? error.message
+            : "There was an error generating recommendations. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsGeneratingRecommendations(false);
@@ -324,22 +503,27 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
-      case 'High': return 'bg-red-100 text-red-700 border-red-200';
-      case 'Medium': return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case 'Low': return 'bg-green-100 text-green-700 border-green-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-200';
+      case "High":
+        return "bg-red-100 text-red-700 border-red-200";
+      case "Medium":
+        return "bg-yellow-100 text-yellow-700 border-yellow-200";
+      case "Low":
+        return "bg-green-100 text-green-700 border-green-200";
+      default:
+        return "bg-gray-100 text-gray-700 border-gray-200";
     }
   };
 
   const getMatchColor = (percentage: number) => {
-    if (percentage >= 90) return 'bg-green-100 text-green-700 border-green-200';
-    if (percentage >= 80) return 'bg-blue-100 text-blue-700 border-blue-200';
-    if (percentage >= 70) return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-    return 'bg-gray-100 text-gray-700 border-gray-200';
+    if (percentage >= 90) return "bg-green-100 text-green-700 border-green-200";
+    if (percentage >= 80) return "bg-blue-100 text-blue-700 border-blue-200";
+    if (percentage >= 70)
+      return "bg-yellow-100 text-yellow-700 border-yellow-200";
+    return "bg-gray-100 text-gray-700 border-gray-200";
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
@@ -353,90 +537,64 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                 <Star className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <CardTitle className="text-2xl text-gray-900">Job Recommendations</CardTitle>
-                <p className="text-gray-600 text-sm">AI-powered job matches based on your resume</p>
+                <CardTitle className="text-2xl text-gray-900">
+                  Job Recommendations
+                </CardTitle>
+                <p className="text-gray-600 text-sm">
+                  AI-powered job matches based on your resume
+                </p>
               </div>
-        </div>
-        <div className="flex gap-3 flex-wrap items-center">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-700">Location</span>
-            <Popover open={isLocationOpen} onOpenChange={(open)=>{ setIsLocationOpen(open); if (!open) setLocationQuery(''); }}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="flex items-center gap-2 min-w-[180px] justify-between">
-                  <span className="flex items-center gap-2 truncate">
-                    <MapPin className="h-4 w-4" />
-                    <span className="truncate max-w-[120px]">{jobLocation || 'Select location'}</span>
-                  </span>
-                  <ChevronDown className="h-4 w-4 opacity-60" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64 p-0">
-                <Command>
-                  <CommandInput placeholder="Search city or type Remote..." value={locationQuery} onValueChange={setLocationQuery} />
-                  <CommandEmpty>No results found.</CommandEmpty>
-                  <CommandGroup>
-                    {locationQuery && !suggestedLocations.some(l=>l.toLowerCase()===locationQuery.toLowerCase()) && (
-                      <CommandItem key="__custom_loc__" onSelect={() => { setJobLocation(locationQuery); setIsLocationOpen(false); setLocationQuery(''); }}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Use "{locationQuery}"
-                      </CommandItem>
-                    )}
-                    {suggestedLocations.filter(loc=> loc.toLowerCase().includes(locationQuery.toLowerCase())).map((loc) => (
-                      <CommandItem key={loc} onSelect={() => { setJobLocation(loc); setIsLocationOpen(false); setLocationQuery(''); }}>
-                        <MapPin className="mr-2 h-4 w-4" />
-                        {loc}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            {jobLocation && (
-              <Button variant="ghost" size="sm" onClick={() => setJobLocation('')} className="px-2">
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={(e) => {
-              const file = e.target.files?.[0];
+            </div>
+            <div className="flex gap-3 flex-wrap items-center">
+              {/* location filter removed */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
                   if (file) handleFileUpload(file);
-            }}
-            accept=".pdf,.docx,.txt"
-            className="hidden"
-          />
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading || isGeneratingRecommendations}
-            className="flex items-center gap-2 hover:bg-blue-50 disabled:opacity-70 disabled:cursor-not-allowed"
-          >
-            {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {uploadedResume ? 'Change Resume' : 'Upload Resume'}
-          </Button>
-          <Button 
-            size="sm" 
-            onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
-            className="bg-blue-600 hover:bg-blue-700"
-            disabled={isGeneratingRecommendations}
-          >
-            {isGeneratingRecommendations ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Loading Jobs
-              </>
-            ) : (
-              <>
-                View All Jobs
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
+                }}
+                accept=".pdf,.docx,.txt"
+                className="hidden"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading || isGeneratingRecommendations}
+                className="flex items-center gap-2 hover:bg-blue-50 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isUploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Upload className="h-4 w-4" />
+                )}
+                {uploadedResume ? "Change Resume" : "Upload Resume"}
+              </Button>
+              <Button
+                size="sm"
+                onClick={() =>
+                  navigate("/view-all-jobs", {
+                    state: { jobs, csvDownload, query: autoQuery },
+                  })
+                }
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={isGeneratingRecommendations}
+              >
+                {isGeneratingRecommendations ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Loading Jobs
+                  </>
+                ) : (
+                  <>
+                    View All Jobs
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
         </CardHeader>
 
         {/* Upload / Loading Progress */}
@@ -445,14 +603,18 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
             <div className="bg-white rounded-lg p-4 border border-blue-200">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm font-medium text-blue-700">
-                  {isUploading ? 'Uploading resume...' : 'Generating recommendations...'}
+                  {isUploading
+                    ? "Uploading resume..."
+                    : "Generating recommendations..."}
                 </span>
                 {isUploading && (
-                  <span className="text-sm text-blue-600">{uploadProgress}%</span>
+                  <span className="text-sm text-blue-600">
+                    {uploadProgress}%
+                  </span>
                 )}
               </div>
               <div className="w-full bg-blue-200 rounded-full h-2">
-                <div 
+                <div
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${isUploading ? uploadProgress : 90}%` }}
                 />
@@ -464,9 +626,9 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
         {/* Uploaded Resume Display with Get Recommendations Button */}
         {uploadedResume && !isUploading && (
           <CardContent className="pt-0">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
               {/* Resume Info */}
@@ -476,18 +638,22 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                     <FileText className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="font-medium text-blue-900">{uploadedResume.name}</p>
-                    <p className="text-sm text-blue-600">Resume uploaded successfully</p>
+                    <p className="font-medium text-blue-900">
+                      {uploadedResume.name}
+                    </p>
+                    <p className="text-sm text-blue-600">
+                      Resume uploaded successfully
+                    </p>
                   </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRemoveResume}
-            className="h-8 w-8 p-0 hover:bg-blue-100"
-          >
-            <X className="h-4 w-4 text-blue-500" />
-          </Button>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRemoveResume}
+                  className="h-8 w-8 p-0 hover:bg-blue-100"
+                >
+                  <X className="h-4 w-4 text-blue-500" />
+                </Button>
               </div>
 
               {/* Perfect Get Recommendations Button */}
@@ -504,8 +670,13 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                       <Sparkles className="h-8 w-8 text-white" />
                     </div>
                     <div className="text-left">
-                      <h3 className="text-xl font-bold text-white">Ready for AI-Powered Recommendations?</h3>
-                      <p className="text-blue-100 text-sm">Get personalized job matches based on your skills and experience</p>
+                      <h3 className="text-xl font-bold text-white">
+                        Ready for AI-Powered Recommendations?
+                      </h3>
+                      <p className="text-blue-100 text-sm">
+                        Get personalized job matches based on your skills and
+                        experience
+                      </p>
                     </div>
                   </div>
 
@@ -546,26 +717,28 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                   </div>
                 </div>
               </motion.div>
-        </motion.div>
+            </motion.div>
           </CardContent>
-      )}
+        )}
       </Card>
 
       {/* Demo Job Recommendation - Show when no resume is uploaded */}
       {!uploadedResume && !showRecommendations && (
-          <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           className="space-y-4"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Sample Job Recommendation</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Sample Job Recommendation
+            </h2>
             <Badge variant="outline" className="text-blue-600 border-blue-200">
               Demo Preview
             </Badge>
           </div>
-          
+
           <Card className="border-2 border-dashed border-blue-200 bg-blue-50/30">
             <CardContent className="p-6">
               {/* Demo Job Header */}
@@ -575,7 +748,10 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                     <h3 className="text-lg font-semibold text-gray-900">
                       {demoJob.title}
                     </h3>
-                    <Badge variant="outline" className="text-blue-600 border-blue-200 animate-pulse">
+                    <Badge
+                      variant="outline"
+                      className="text-blue-600 border-blue-200 animate-pulse"
+                    >
                       Demo
                     </Badge>
                   </div>
@@ -588,34 +764,38 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                       <MapPin className="h-4 w-4" />
                       {demoJob.location}
                     </div>
-              </div>
-              </div>
-              <div className="text-right">
-                  <Badge className={`mb-2 ${getMatchColor(demoJob.matchPercentage)}`}>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <Badge
+                    className={`mb-2 ${getMatchColor(demoJob.matchPercentage)}`}
+                  >
                     {demoJob.matchPercentage}% Match
                   </Badge>
                   <Badge variant="outline" className="text-xs mt-1">
                     {demoJob.type}
                   </Badge>
+                </div>
               </div>
-            </div>
 
               {/* Demo Job Description */}
-              <p className="text-gray-600 mb-4 leading-relaxed">{demoJob.description}</p>
+              <p className="text-gray-600 mb-4 leading-relaxed">
+                {demoJob.description}
+              </p>
 
               {/* Demo Job Skills */}
               <div className="mb-4">
-              <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap">
                   {demoJob.skills.map((skill) => (
-                  <Badge 
-                    key={skill} 
-                    variant="outline" 
+                    <Badge
+                      key={skill}
+                      variant="outline"
                       className="bg-blue-50 text-blue-700 border-blue-200"
-                  >
-                    {skill}
-                  </Badge>
-                ))}
-              </div>
+                    >
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
               </div>
 
               {/* Demo Call to Action */}
@@ -623,10 +803,14 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                 <div className="text-center space-y-3">
                   <div className="flex items-center justify-center gap-2 text-blue-600">
                     <Sparkles className="h-5 w-5" />
-                    <span className="font-medium">Upload your resume to see personalized recommendations like this!</span>
+                    <span className="font-medium">
+                      Upload your resume to see personalized recommendations
+                      like this!
+                    </span>
                   </div>
                   <p className="text-sm text-blue-600">
-                    Our AI will analyze your skills and experience to find the perfect job matches.
+                    Our AI will analyze your skills and experience to find the
+                    perfect job matches.
                   </p>
                 </div>
               </div>
@@ -646,10 +830,13 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
             <div className="p-2 bg-green-100 rounded-full">
               <Sparkles className="h-6 w-6 text-green-600" />
             </div>
-            <h3 className="text-lg font-semibold text-green-800">AI Analysis Complete! 🎯</h3>
+            <h3 className="text-lg font-semibold text-green-800">
+              AI Analysis Complete! 🎯
+            </h3>
           </div>
           <p className="text-green-700 mb-4">
-            We've analyzed your resume and found {totalJobsCount} job matches with up to 95% skill alignment.
+            We've analyzed your resume and found {totalJobsCount} job matches
+            with up to 95% skill alignment.
           </p>
           <div className="flex items-center justify-center gap-4 text-sm text-green-600">
             <span className="flex items-center gap-1">
@@ -678,11 +865,17 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
           className="space-y-4"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Featured Recommendations</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Featured Recommendations
+            </h2>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
+              onClick={() =>
+                navigate("/view-all-jobs", {
+                  state: { jobs, csvDownload, query: autoQuery },
+                })
+              }
               className="text-blue-600 hover:text-blue-700 border-blue-200"
             >
               View All {totalJobsCount} Jobs
@@ -700,9 +893,13 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                 transition={{ delay: 0.4 + index * 0.1 }}
                 className="group"
               >
-                <Card className={`border-2 transition-all duration-300 hover:shadow-lg cursor-pointer ${
-                  job.isNew ? 'border-blue-200 bg-blue-50/30' : 'border-gray-100 hover:border-blue-200'
-                }`}>
+                <Card
+                  className={`border-2 transition-all duration-300 hover:shadow-lg cursor-pointer ${
+                    job.isNew
+                      ? "border-blue-200 bg-blue-50/30"
+                      : "border-gray-100 hover:border-blue-200"
+                  }`}
+                >
                   <CardContent className="p-6">
                     {/* Job Header */}
                     <div className="flex justify-between items-start mb-4">
@@ -729,29 +926,36 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                         </div>
                       </div>
                       <div className="text-right">
-                        <Badge className={`mb-2 ${getMatchColor(job.matchPercentage)}`}>
+                        <Badge
+                          className={`mb-2 ${getMatchColor(
+                            job.matchPercentage
+                          )}`}
+                        >
                           {job.matchPercentage}% Match
                         </Badge>
                         <Badge variant="outline" className="text-xs mt-1">
                           {job.type}
                         </Badge>
                       </div>
-            </div>
+                    </div>
 
                     {/* Skills */}
                     <div className="mb-4">
                       <div className="flex gap-2 flex-wrap">
                         {job.skills.slice(0, 3).map((skill) => (
-                          <Badge 
-                            key={skill} 
-                            variant="outline" 
+                          <Badge
+                            key={skill}
+                            variant="outline"
                             className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 transition-colors"
                           >
                             {skill}
                           </Badge>
                         ))}
                         {job.skills.length > 3 && (
-                          <Badge variant="outline" className="text-xs text-gray-500">
+                          <Badge
+                            variant="outline"
+                            className="text-xs text-gray-500"
+                          >
                             +{job.skills.length - 3} more
                           </Badge>
                         )}
@@ -760,26 +964,50 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
 
                     {/* Action Buttons */}
                     <div className="flex gap-2 pt-4 border-t border-gray-100">
-                      <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => {
-                        const link = job.applyLink || '#';
-                        if (link && link !== '#') {
-                          const w = window.open(link, '_blank', 'noopener,noreferrer');
-                          if (w) { w.opener = null; }
-                        }
-                      }}>
+                      <Button
+                        size="sm"
+                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                        onClick={() => {
+                          // Prioritize LinkedIn job URL for "View Details"
+                          const linkedinUrl = (job as any).job_url || "";
+                          const applyUrl = (job as any).apply_url || (job as any).apply_link || job.applyLink || "";
+                          
+                          // Use LinkedIn URL if available, otherwise fall back to apply URL
+                          const link = linkedinUrl || applyUrl || "#";
+
+                          console.log("Job URL fields (JobRecommendations):", {
+                            job_url: (job as any).job_url,
+                            apply_url: (job as any).apply_url,
+                            apply_link: (job as any).apply_link,
+                            applyLink: job.applyLink,
+                            finalLink: link,
+                            isLinkedIn: linkedinUrl.includes('linkedin.com')
+                          });
+
+                          if (link && link !== "#" && link.trim() !== "") {
+                            const w = window.open(
+                              link,
+                              "_blank",
+                              "noopener,noreferrer"
+                            );
+                            if (w) {
+                              w.opener = null;
+                            }
+                          } else {
+                            console.error("No valid URL found for job:", job);
+                            alert("No valid job URL available");
+                          }
+                        }}
+                      >
                         <Eye className="h-4 w-4 mr-2" />
                         View Details
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Bookmark className="h-4 w-4 mr-2" />
-                        Save
                       </Button>
                     </div>
                   </CardContent>
                 </Card>
-          </motion.div>
-        ))}
-      </div>
+              </motion.div>
+            ))}
+          </div>
         </motion.div>
       )}
 
@@ -797,11 +1025,16 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                 <Briefcase className="h-8 w-8 text-indigo-600" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-indigo-900">Discover More Opportunities</h3>
-                <p className="text-indigo-700">Explore all {totalJobsCount} job recommendations with advanced filtering</p>
+                <h3 className="text-xl font-bold text-indigo-900">
+                  Discover More Opportunities
+                </h3>
+                <p className="text-indigo-700">
+                  Explore all {totalJobsCount} job recommendations with advanced
+                  filtering
+                </p>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-center gap-6 text-sm text-indigo-600">
               <span className="flex items-center gap-1">
                 <Target className="h-4 w-4" />
@@ -819,7 +1052,11 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
 
             <Button
               size="lg"
-              onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
+              onClick={() =>
+                navigate("/view-all-jobs", {
+                  state: { jobs, csvDownload, query: autoQuery },
+                })
+              }
               className="bg-indigo-600 hover:bg-indigo-700 px-8 py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
             >
               <Eye className="h-5 w-5 mr-2" />
@@ -839,11 +1076,17 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
           className="space-y-4"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Quick Actions</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Quick Actions
+            </h2>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
+              onClick={() =>
+                navigate("/view-all-jobs", {
+                  state: { jobs, csvDownload, query: autoQuery },
+                })
+              }
               className="text-blue-600 hover:text-blue-700 border-blue-200"
             >
               View All {totalJobsCount} Jobs
@@ -861,8 +1104,8 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                     onClick={() => setSelectedFilter(filter.id)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap ${
                       selectedFilter === filter.id
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? "bg-blue-600 text-white shadow-md"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
                     {filter.label}
@@ -902,11 +1145,17 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
           className="space-y-4"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Search Results</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Search Results
+            </h2>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
+              onClick={() =>
+                navigate("/view-all-jobs", {
+                  state: { jobs, csvDownload, query: autoQuery },
+                })
+              }
               className="text-blue-600 hover:text-blue-700 border-blue-200"
             >
               View All Results
@@ -918,7 +1167,7 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
           <div className="space-y-4">
             <AnimatePresence>
               {filteredJobs.slice(0, 3).map((job, index) => (
-                <motion.div 
+                <motion.div
                   key={job.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -926,9 +1175,13 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                   transition={{ delay: index * 0.1 }}
                   className="group"
                 >
-                  <Card className={`border-2 transition-all duration-300 hover:shadow-lg cursor-pointer ${
-                    job.isNew ? 'border-blue-200 bg-blue-50/30' : 'border-gray-100 hover:border-blue-200'
-                  }`}>
+                  <Card
+                    className={`border-2 transition-all duration-300 hover:shadow-lg cursor-pointer ${
+                      job.isNew
+                        ? "border-blue-200 bg-blue-50/30"
+                        : "border-gray-100 hover:border-blue-200"
+                    }`}
+                  >
                     <CardContent className="p-6">
                       {/* Job Header */}
                       <div className="flex justify-between items-start mb-4">
@@ -959,7 +1212,11 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                           </div>
                         </div>
                         <div className="text-right">
-                          <Badge className={`mb-2 ${getMatchColor(job.matchPercentage)}`}>
+                          <Badge
+                            className={`mb-2 ${getMatchColor(
+                              job.matchPercentage
+                            )}`}
+                          >
                             {job.matchPercentage}% Match
                           </Badge>
                           <Badge variant="outline" className="text-xs mt-1">
@@ -972,16 +1229,19 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                       <div className="mb-4">
                         <div className="flex gap-2 flex-wrap">
                           {job.skills.slice(0, 3).map((skill) => (
-                            <Badge 
-                              key={skill} 
-                              variant="outline" 
+                            <Badge
+                              key={skill}
+                              variant="outline"
                               className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 transition-colors"
                             >
                               {skill}
                             </Badge>
                           ))}
                           {job.skills.length > 3 && (
-                            <Badge variant="outline" className="text-xs text-gray-500">
+                            <Badge
+                              variant="outline"
+                              className="text-xs text-gray-500"
+                            >
                               +{job.skills.length - 3} more
                             </Badge>
                           )}
@@ -990,19 +1250,27 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
 
                       {/* Action Buttons */}
                       <div className="flex gap-2 pt-4 border-t border-gray-100">
-                        <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => {
-                          const link = job.applyLink || '#';
-                          if (link && link !== '#') {
-                            const w = window.open(link, '_blank', 'noopener,noreferrer');
-                            if (w) { w.opener = null; }
-                          }
-                        }}>
+                        <Button
+                          size="sm"
+                          className="flex-1 bg-blue-600 hover:bg-blue-700"
+                          onClick={() => {
+                            const link = job.applyLink || "#";
+                            if (link && link !== "#") {
+                              const w = window.open(
+                                link,
+                                "_blank",
+                                "noopener,noreferrer"
+                              );
+                              if (w) {
+                                w.opener = null;
+                              }
+                            } else {
+                              alert("No valid job URL available");
+                            }
+                          }}
+                        >
                           <Eye className="h-4 w-4 mr-2" />
                           View Details
-                        </Button>
-                        <Button size="sm" variant="outline">
-                          <Bookmark className="h-4 w-4 mr-2" />
-                          Save
                         </Button>
                       </div>
                     </CardContent>
@@ -1020,11 +1288,15 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                 <div className="text-gray-400 mb-4">
                   <Search className="h-16 w-16 mx-auto" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-600 mb-2">No jobs found</h3>
-                <p className="text-gray-500 mb-4">Try adjusting your search criteria</p>
+                <h3 className="text-lg font-medium text-gray-600 mb-2">
+                  No jobs found
+                </h3>
+                <p className="text-gray-500 mb-4">
+                  Try adjusting your search criteria
+                </p>
                 <Button
                   variant="outline"
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => setSearchQuery("")}
                   className="text-blue-600 hover:text-blue-700"
                 >
                   Clear Search
@@ -1041,7 +1313,11 @@ export default function JobRecommendations({ onJobsUpdated }: JobRecommendations
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => navigate('/view-all-jobs', { state: { jobs, csvDownload, query: autoQuery } })}
+                  onClick={() =>
+                    navigate("/view-all-jobs", {
+                      state: { jobs, csvDownload, query: autoQuery },
+                    })
+                  }
                   className="text-blue-600 hover:text-blue-700 border-blue-200"
                 >
                   View All {filteredJobs.length} Results

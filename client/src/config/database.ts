@@ -1,80 +1,42 @@
 
+// Stateless Database Configuration - No Data Storage
+// This configuration is maintained for compatibility but does not store any user data
 
 const API_BASE_URL = (import.meta as ImportMeta)?.env?.VITE_API_BASE_URL || 'https://job-reco-backend.onrender.com/api';
 
+// Mock database interface for compatibility (no actual data storage)
 export const db = {
   collection: (collectionName: string) => ({
     add: async (data: Record<string, unknown>) => {
-      const response = await fetch(`${API_BASE_URL}/${collectionName}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('futurefind_token')}`
-        },
-        body: JSON.stringify(data)
-      });
-      const result = await response.json();
-      return { id: result.id || result._id };
+      // Stateless mode: return mock ID without storing data
+      console.warn('Stateless mode: Data not stored, returning mock ID');
+      return { id: `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` };
     },
     get: async () => {
-      const response = await fetch(`${API_BASE_URL}/${collectionName}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('futurefind_token')}`
-        }
-      });
-      const data = await response.json();
-      return {
-        docs: data.map((item: Record<string, unknown>) => ({
-          id: item._id || item.id,
-          data: () => item
-        }))
-      };
+      // Stateless mode: return empty result
+      console.warn('Stateless mode: No stored data available');
+      return { docs: [] };
     }
   }),
   doc: (collectionName: string, docId: string) => ({
     get: async () => {
-      const response = await fetch(`${API_BASE_URL}/${collectionName}/${docId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('futurefind_token')}`
-        }
-      });
-      const data = await response.json();
+      // Stateless mode: return non-existent document
+      console.warn('Stateless mode: No stored documents available');
       return {
-        exists: !!data,
-        id: data._id || data.id,
-        data: () => data
+        exists: false,
+        id: null,
+        data: () => null
       };
     }
   })
 };
 
 export const query = (collectionRef: { _path?: { segments?: string[] } }, ...constraints: any[]) => {
-  // Mock query function that filters data
+  // Stateless mode: Mock query function (no data storage)
   return {
     get: async () => {
-      const response = await fetch(`${API_BASE_URL}/${collectionRef._path?.segments?.[0] || 'userAnswers'}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('futurefind_token')}`
-        }
-      });
-      const data = await response.json();
-      
-      // Apply constraints (simplified filtering)
-      let filteredData = data;
-      constraints.forEach(constraint => {
-        if (constraint.type === 'where') {
-          filteredData = filteredData.filter((item: Record<string, unknown>) => 
-            item[constraint.field] === constraint.value
-          );
-        }
-      });
-      
-      return {
-        docs: filteredData.map((item: Record<string, unknown>) => ({
-          id: item._id || item.id,
-          data: () => item
-        }))
-      };
+      console.warn('Stateless mode: Query returns empty results - no data stored');
+      return { docs: [] };
     }
   };
 };
@@ -90,17 +52,21 @@ export const collection = (db: any, collectionName: string) => ({
   _path: { segments: [collectionName] }
 });
 
+// Stateless utility functions (no data persistence)
 export const getDocs = async (queryRef: any) => {
-  return await queryRef.get();
+  console.warn('Stateless mode: getDocs returns empty results');
+  return { docs: [] };
 };
 
 export const getDoc = async (docRef: any) => {
-  return await docRef.get();
+  console.warn('Stateless mode: getDoc returns non-existent document');
+  return { exists: false, data: () => null };
 };
 
 export const addDoc = async (collectionRef: any, data: any) => {
-  return await collectionRef.add(data);
+  console.warn('Stateless mode: addDoc returns mock ID without storing data');
+  return { id: `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` };
 };
 
 export const serverTimestamp = () => new Date();
-export const auth = {} as any;
+export const auth = {} as any; // Mock auth for compatibility

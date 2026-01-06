@@ -2,17 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mic, 
   CheckCircle, 
   BarChart2, 
-  Zap, 
   ArrowRight, 
   Star, 
   Clock, 
-  Target, 
   Settings,
   TrendingUp,
   Users,
@@ -29,7 +26,6 @@ import {
 
 const Index = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState('technical');
 
   // Auto-advance slides every 4 seconds
   useEffect(() => {
@@ -69,41 +65,7 @@ const Index = () => {
       bgColor: "bg-white"
     }
   ];
-
-  const categories = [
-    {
-      id: 'technical',
-      name: 'Technical Interviews',
-      icon: <Zap className="h-6 w-6" />,
-      color: 'bg-white text-blue-700 border-blue-200',
-      questions: 150,
-      difficulty: 'Advanced'
-    },
-    {
-      id: 'behavioral',
-      name: 'Behavioral Questions',
-      icon: <Users className="h-6 w-6" />,
-      color: 'bg-white text-green-700 border-green-200',
-      questions: 200,
-      difficulty: 'Intermediate'
-    },
-    {
-      id: 'hr',
-      name: 'HR & Screening',
-      icon: <Star className="h-6 w-6" />,
-      color: 'bg-white text-purple-700 border-purple-200',
-      questions: 100,
-      difficulty: 'Beginner'
-    },
-    {
-      id: 'custom',
-      name: 'Custom Scenarios',
-      icon: <Target className="h-6 w-6" />,
-      color: 'bg-white text-orange-700 border-orange-200',
-      questions: 50,
-      difficulty: 'Expert'
-    }
-  ];
+  
 
   const stats = [
     { label: 'Questions Available', value: '500+', icon: <BookOpen className="h-5 w-5" /> },
@@ -184,55 +146,6 @@ const Index = () => {
               </div>
               <div className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">{stat.value}</div>
               <div className="text-sm text-gray-600">{stat.label}</div>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Interview Categories */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="container mx-auto px-4 mb-16 sm:mb-24"
-      >
-        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8 sm:mb-12 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">
-          Choose Your Interview Category
-        </h2>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 max-w-6xl mx-auto">
-          {categories.map((category, index) => (
-            <motion.div
-              key={category.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
-              whileHover={{ y: -8, scale: 1.02 }}
-              className="cursor-pointer"
-              onClick={() => setSelectedCategory(category.id)}
-            >
-              <Card className={`border-2 transition-all duration-300 ${
-                selectedCategory === category.id 
-                  ? 'border-indigo-500 shadow-lg shadow-indigo-500/20' 
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}>
-                <CardContent className="p-4 sm:p-6 text-center">
-                  <div className={`inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 rounded-2xl ${category.color} mb-3 sm:mb-4`}>
-                    {category.icon}
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-semibold mb-2 sm:mb-3 text-gray-800">{category.name}</h3>
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <div className="flex justify-between">
-                      <span>Questions:</span>
-                      <span className="font-medium">{category.questions}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Level:</span>
-                      <Badge variant="outline" className="text-xs">{category.difficulty}</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </motion.div>
           ))}
         </div>

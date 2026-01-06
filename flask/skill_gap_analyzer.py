@@ -7,7 +7,7 @@ Handles skill extraction, analysis, and learning recommendations.
 import os
 import json
 import re
-from google import genai
+import google.generativeai as genai
 from googleapiclient.discovery import build
 
 class SkillGapAnalyzer:
@@ -156,9 +156,18 @@ JSON only:"""
                 return self.extract_skills_fallback_improved(resume_text, job_description)
             
         except Exception as e:
-            print(f"Error in skill gap analysis: {e}")
+            error_msg = str(e)
+            print(f"\n⚠️  Error in AI skill gap analysis: {error_msg}")
+            
+            # Check if it's a quota/rate limit error
+            if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg or "quota" in error_msg.lower():
+                print("📊 API quota exceeded. Falling back to regex-based skill extraction...")
+            else:
+                print("📊 AI analysis failed. Falling back to regex-based skill extraction...")
+            
             import traceback
             traceback.print_exc()
+            
             # Fallback to regex-based extraction
             return self.extract_skills_fallback_improved(resume_text, job_description)
 
@@ -166,6 +175,18 @@ JSON only:"""
         """Extract skills from text using regex patterns."""
         # Comprehensive list of technical skills
         skills_patterns = {
+            # General Security Terms (catch common variations)
+            "security": r"\bsecurity\b",
+            "monitoring": r"\bmonitoring\b",
+            "detection": r"\bdetection\b",
+            "investigation": r"\binvestigation\b",
+            "response": r"\bresponse\b",
+            "analysis": r"\banalysis\b",
+            "risk assessment": r"\brisk assessment\b",
+            "threat detection": r"\bthreat detection\b",
+            "vulnerability management": r"\bvulnerability management\b",
+            "security monitoring": r"\bsecurity monitoring\b",
+            
             # Programming Languages
             "python": r"\bpython\b",
             "javascript": r"\b(?:javascript|js)\b",
@@ -274,7 +295,68 @@ JSON only:"""
             "kafka": r"\bkafka\b",
             "rabbitmq": r"\brabbitmq\b",
             "nginx": r"\bnginx\b",
-            "apache": r"\bapache\b"
+            "apache": r"\bapache\b",
+            
+            # Cybersecurity Skills
+            "cybersecurity": r"\b(?:cybersecurity|cyber security|cyber-security)\b",
+            "information security": r"\b(?:information security|infosec)\b",
+            "network security": r"\bnetwork security\b",
+            "penetration testing": r"\b(?:penetration testing|pen testing|pentesting)\b",
+            "vulnerability assessment": r"\bvulnerability assessment\b",
+            "siem": r"\bsiem\b",
+            "splunk": r"\bsplunk\b",
+            "wireshark": r"\bwireshark\b",
+            "metasploit": r"\bmetasploit\b",
+            "nmap": r"\bnmap\b",
+            "burp suite": r"\b(?:burp suite|burpsuite)\b",
+            "owasp": r"\bowasp\b",
+            "firewall": r"\bfirewall\b",
+            "ids": r"\b(?:ids|intrusion detection system)\b",
+            "ips": r"\b(?:ips|intrusion prevention system)\b",
+            "vpn": r"\bvpn\b",
+            "encryption": r"\bencryption\b",
+            "ssl": r"\b(?:ssl|tls)\b",
+            "pki": r"\bpki\b",
+            "iam": r"\b(?:iam|identity and access management)\b",
+            "soc": r"\b(?:soc|security operations center)\b",
+            "incident response": r"\bincident response\b",
+            "threat intelligence": r"\bthreat intelligence\b",
+            "malware analysis": r"\bmalware analysis\b",
+            "forensics": r"\b(?:forensics|digital forensics)\b",
+            "compliance": r"\bcompliance\b",
+            "gdpr": r"\bgdpr\b",
+            "hipaa": r"\bhipaa\b",
+            "pci dss": r"\b(?:pci dss|pci-dss)\b",
+            "iso 27001": r"\biso 27001\b",
+            
+            # Security Tools and Frameworks
+            "kali linux": r"\b(?:kali linux|kali)\b",
+            "nessus": r"\bnessus\b",
+            "qualys": r"\bqualys\b",
+            "rapid7": r"\brapid7\b",
+            "crowdstrike": r"\bcrowdstrike\b",
+            "sentinel": r"\bsentinel\b",
+            "carbon black": r"\bcarbon black\b",
+            "palo alto": r"\b(?:palo alto|paloalto)\b",
+            "checkpoint": r"\bcheckpoint\b",
+            "fortinet": r"\bfortinet\b",
+            
+            # Additional Common Skills
+            "sql": r"\b(?:sql|structured query language)\b",
+            "nosql": r"\b(?:nosql|no sql)\b",
+            "api": r"\b(?:api|application programming interface)\b",
+            "microservices": r"\bmicroservices\b",
+            "kubernetes": r"\b(?:kubernetes|k8s)\b",
+            "jenkins": r"\bjenkins\b",
+            "gitlab ci": r"\b(?:gitlab ci|gitlab-ci)\b",
+            "github actions": r"\bgithub actions\b",
+            "jira": r"\bjira\b",
+            "confluence": r"\bconfluence\b",
+            "slack": r"\bslack\b",
+            "microsoft office": r"\b(?:microsoft office|ms office|office 365)\b",
+            "excel": r"\bexcel\b",
+            "powerpoint": r"\bpowerpoint\b",
+            "word": r"\bword\b"
         }
         
         found_skills = []
@@ -288,9 +370,26 @@ JSON only:"""
 
     def extract_skills_fallback_improved(self, resume_text, job_description):
         """Improved fallback method to extract skills using regex patterns."""
+        print("\n" + "="*60)
+        print("🔄 FALLBACK MODE: Using regex-based skill extraction")
+        print("="*60)
+        
         # Extract skills from both texts
         job_skills = self.extract_skills_from_text(job_description)
         resume_skills = self.extract_skills_from_text(resume_text)
+        
+        print(f"📋 Skills extracted from job description: {len(job_skills)}")
+        if job_skills:
+            print(f"   Found: {', '.join(job_skills[:10])}")
+        else:
+            print("   ⚠️  No skills found in job description using regex patterns")
+            print("   This may indicate the job description uses terminology not in our skill patterns")
+        
+        print(f"📄 Skills extracted from resume: {len(resume_skills)}")
+        if resume_skills:
+            print(f"   Found: {', '.join(resume_skills[:10])}")
+        else:
+            print("   ⚠️  No skills found in resume using regex patterns")
         
         # Normalize for comparison
         job_skills_normalized = [skill.lower().strip() for skill in job_skills]
@@ -314,20 +413,25 @@ JSON only:"""
             if skill_lower not in job_skills_normalized:
                 additional_skills.append(skill)
         
+        print(f"\n📊 COMPARISON RESULTS:")
+        print(f"   ✅ Present skills: {len(present_skills)}")
+        print(f"   ❌ Missing skills: {len(missing_skills)}")
+        print(f"   ➕ Additional skills: {len(additional_skills)}")
+        
         # Create skill analysis
         skill_analysis = {}
         
         for skill in present_skills:
             skill_analysis[skill] = {
                 "status": "present",
-                "importance": "high" if skill.lower() in ["python", "javascript", "react", "java", "aws", "docker"] else "medium",
+                "importance": "high" if skill.lower() in ["python", "javascript", "react", "java", "aws", "docker", "cybersecurity", "network security"] else "medium",
                 "level": "intermediate"
             }
         
         for skill in missing_skills:
             skill_analysis[skill] = {
                 "status": "missing",
-                "importance": "high" if skill.lower() in ["python", "javascript", "react", "java", "aws", "docker"] else "medium",
+                "importance": "high" if skill.lower() in ["python", "javascript", "react", "java", "aws", "docker", "cybersecurity", "network security"] else "medium",
                 "level": "basic"
             }
         
@@ -338,12 +442,16 @@ JSON only:"""
                 "level": "intermediate"
             }
         
-        return {
+        result = {
             "present_skills": present_skills,
             "missing_skills": missing_skills,
             "additional_skills": additional_skills,
             "skill_analysis": skill_analysis
         }
+        
+        print("="*60 + "\n")
+        
+        return result
 
     def get_youtube_videos(self, skill, max_results=3):
         """Get YouTube video suggestions for a skill."""

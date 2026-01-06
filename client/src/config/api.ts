@@ -1,334 +1,327 @@
-// API Configuration and endpoints
-export const API_BASE_URL = (import.meta as ImportMeta).env.VITE_API_BASE_URL || 'http://localhost:1000/api';
-export const FLASK_BASE_URL = (import.meta as ImportMeta).env.VITE_FLASK_BASE_URL || 'http://localhost:2000';
+// API Configuration
+export const FLASK_BASE_URL =
+  import.meta.env.VITE_FLASK_BASE_URL || "http://localhost:2000";
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:1000/api";
 
-// API Endpoints
+// Flask endpoints
+export const FLASK_ENDPOINTS = {
+  SKILL_GAP_ANALYSIS: `${FLASK_BASE_URL}/skill-gap-analysis`,
+  JOB_RECOMMENDATIONS: `${FLASK_BASE_URL}/job-recommendations`,
+  RESUME_ANALYSIS: `${FLASK_BASE_URL}/resume-analysis`,
+  JOBS: `${FLASK_BASE_URL}/jobs`,
+  UPLOAD_RESUME: `${FLASK_BASE_URL}/upload-resume`,
+} as const;
+
+// API endpoints for Node.js backend
 export const API_ENDPOINTS = {
-  // Interviews
-  INTERVIEWS: `${API_BASE_URL}/interviews`,
-  INTERVIEW_BY_ID: (id: string) => `${API_BASE_URL}/interviews/${id}`,
-  
-  // Resumes
-  RESUMES: `${API_BASE_URL}/resumes`,
-  RESUME_BY_ID: (id: string) => `${API_BASE_URL}/resumes/${id}`,
-  
-  // User Answers
-  USER_ANSWERS: `${API_BASE_URL}/user-answers`,
-  USER_ANSWERS_BY_INTERVIEW: (interviewId: string) => `${API_BASE_URL}/user-answers/interview/${interviewId}`,
-  
-  // AI Generation
-  AI_GENERATE_QUESTIONS: `${API_BASE_URL}/ai/generate-questions`,
-  AI_GENERATE_SUMMARY: `${API_BASE_URL}/ai/generate-summary`,
-  AI_GENERATE_EXPERIENCE: `${API_BASE_URL}/ai/generate-experience`,
-  AI_GENERATE_PROJECT: `${API_BASE_URL}/ai/generate-project`,
-  
-  // Authentication
+  // Direct endpoints (for backward compatibility with AuthContext)
   LOGIN: `${API_BASE_URL}/auth/login`,
   REGISTER: `${API_BASE_URL}/auth/signup`,
-  VERIFY_TOKEN: `${API_BASE_URL}/auth/verify`,
   PROFILE_ME: `${API_BASE_URL}/auth/me`,
   GOOGLE_LOGIN: `${API_BASE_URL}/auth/google-login`,
   GOOGLE_SIGNUP: `${API_BASE_URL}/auth/google-signup`,
-};
+  RESUMES: `${API_BASE_URL}/resume`,
+  RESUME_BY_ID: (id: string) => `${API_BASE_URL}/resume/${id}`,
+  INTERVIEWS: `${API_BASE_URL}/interviews`,
 
-export const FLASK_ENDPOINTS = {
-  UPLOAD_RESUME: `${FLASK_BASE_URL}/upload`,
-  DOWNLOAD_CSV: (filename: string) => `${FLASK_BASE_URL}/download/${filename}`,
-};
+  // Nested structure for new code
+  AUTH: {
+    LOGIN: `${API_BASE_URL}/auth/login`,
+    REGISTER: `${API_BASE_URL}/auth/signup`,
+    LOGOUT: `${API_BASE_URL}/auth/logout`,
+    PROFILE: `${API_BASE_URL}/auth/me`,
+    GOOGLE_LOGIN: `${API_BASE_URL}/auth/google-login`,
+    GOOGLE_SIGNUP: `${API_BASE_URL}/auth/google-signup`,
+  },
+  QUESTIONS: {
+    GENERATE: `${API_BASE_URL}/ai/generate-questions`,
+    GET_BY_INTERVIEW: (interviewId: string) =>
+      `${API_BASE_URL}/questions/interview/${interviewId}`,
+  },
+  FEEDBACK: {
+    SUBMIT: `${API_BASE_URL}/feedback`,
+    GET_BY_INTERVIEW: (interviewId: string) =>
+      `${API_BASE_URL}/feedback/interview/${interviewId}`,
+  },
+  AI: {
+    GENERATE_SUMMARY: `${API_BASE_URL}/ai/generate-summary`,
+    GENERATE_EXPERIENCE: `${API_BASE_URL}/ai/generate-experience`,
+    GENERATE_PROJECT: `${API_BASE_URL}/ai/generate-project`,
+  },
+} as const;
 
-// Utility: Ensure Flask server is awake and reachable (Render cold start mitigation)
-export async function ensureFlaskAwake(maxRetries = 2, delayMs = 1200): Promise<void> {
-  const healthUrl = `${FLASK_BASE_URL}/health`;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const res = await fetch(healthUrl, { method: 'GET' });
-      if (res.ok) {
-        return;
-      }
-    } catch (_) {
-      // swallow and retry
-    }
-    if (attempt < maxRetries) {
-      await new Promise(r => setTimeout(r, delayMs));
-    }
-  }
-  // If still not reachable, proceed and let the main request surface the error
-}
-
-// API Response types
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
-}
-
+// Interview type definition
 export interface Interview {
   id: string;
   position: string;
   description: string;
   experience: number;
-  userId: string;
   techStack: string;
-  questions: Question[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Question {
-  question: string;
-  answer: string;
-}
-
-export interface UserAnswer {
-  id: string;
-  mockIdRef: string;
-  question: string;
-  correct_ans: string;
-  user_ans: string;
-  feedback: string;
-  rating: number;
   userId: string;
-  confidence?: number;
-  areas?: string[];
-  timestamp?: string;
-  answerLength?: number;
-  relevanceScore?: number;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
+  questions?: any[];
 }
 
-
-// API Helper functions
+// API Client class for making requests
 export class ApiClient {
+  private static baseUrl = API_BASE_URL;
+
   private static async request<T>(
     endpoint: string,
     options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
-    try {
-      console.log('API Request:', {
-        endpoint,
-        method: options.method || 'GET',
-        headers: options.headers,
-        body: options.body
-      });
-      
-      console.log('Request options:', JSON.stringify(options, null, 2));
-      console.log('Body type:', typeof options.body);
-      console.log('Body content:', options.body);
-      
-      const requestConfig = {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-        ...options,
+  ): Promise<T> {
+    const url = endpoint.startsWith("http")
+      ? endpoint
+      : `${this.baseUrl}${endpoint}`;
+
+    const config: RequestInit = {
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    // Add auth token if available (prefer AuthContext key, fallback to legacy key)
+    const token =
+      localStorage.getItem("futurefind_token") ||
+      localStorage.getItem("authToken");
+    if (token) {
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${token}`,
       };
-      
-      // Ensure Content-Type is set correctly
-      if (requestConfig.body && typeof requestConfig.body === 'string') {
-        requestConfig.headers = {
-          ...requestConfig.headers,
-          'Content-Type': 'application/json',
-        };
-      }
-      
-            console.log('Final request config:', JSON.stringify(requestConfig, null, 2));
-      console.log('Content-Type header:', requestConfig.headers['Content-Type']);
-      console.log('Body length:', requestConfig.body ? (requestConfig.body as string).length : 0);
-      
-      const response = await fetch(endpoint, requestConfig);
-      
-      console.log('Response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries())
-      });
-      
-      const responseData = await response.json();
+    }
+
+    try {
+      const response = await fetch(url, config);
 
       if (!response.ok) {
-        // Handle error responses
-        const errorMessage = responseData.message || responseData.error || `HTTP ${response.status}: ${response.statusText}`;
-        throw new Error(errorMessage);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Handle successful responses
-      if (responseData.success === true) {
-        // Server returns { success: true, data: {...} }
-        return {
-          success: true,
-          data: responseData.data,
-          message: responseData.message
-        };
-      } else if (responseData.success === false) {
-        // Server returns { success: false, message: "..." }
-        return {
-          success: false,
-          error: responseData.message || responseData.error || 'Request failed'
-        };
-      } else {
-        // Legacy format or direct data response
-        return {
-          success: true,
-          data: responseData
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        return await response.json();
+      }
+
+      return response.text() as unknown as T;
+    } catch (error) {
+      console.error("API request failed:", error);
+      throw error;
+    }
+  }
+
+  static async get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: "GET" });
+  }
+
+  static async post<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: "POST",
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  static async put<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: "PUT",
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  static async delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: "DELETE" });
+  }
+
+  // Interview-specific methods
+  static async createInterview(
+    interview: Omit<Interview, "id" | "createdAt">
+  ): Promise<Interview> {
+    return this.post<Interview>(`${API_BASE_URL}/interviews`, interview);
+  }
+
+  static async getInterviews(): Promise<Interview[]> {
+    return this.get<Interview[]>(`${API_BASE_URL}/interviews`);
+  }
+
+  static async getInterview(id: string): Promise<Interview> {
+    return this.get<Interview>(`${API_BASE_URL}/interviews/${id}`);
+  }
+
+  static async updateInterview(
+    id: string,
+    interview: Partial<Interview>
+  ): Promise<Interview> {
+    return this.put<Interview>(`${API_BASE_URL}/interviews/${id}`, interview);
+  }
+
+  static async deleteInterview(id: string): Promise<void> {
+    return this.delete<void>(`${API_BASE_URL}/interviews/${id}`);
+  }
+
+  // Get interview by ID (returns {success, data} format)
+  static async getInterviewById(
+    id: string,
+    token?: string
+  ): Promise<{ success: boolean; data?: Interview; message?: string }> {
+    const endpoint = `${API_BASE_URL}/interviews/${id}`;
+    const config: RequestInit = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    };
+
+    // Use token from parameter or fallback to localStorage
+    if (!token) {
+      token =
+        localStorage.getItem("futurefind_token") ||
+        localStorage.getItem("authToken") ||
+        undefined;
+      if (token) {
+        config.headers = {
+          ...config.headers,
+          Authorization: `Bearer ${token}`,
         };
       }
+    }
+
+    try {
+      const response = await fetch(endpoint, config);
+      const data = await response.json();
+      return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error("API request failed:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        message: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
 
-  // Interview methods
-  static async getInterviews(token: string): Promise<ApiResponse<Interview[]>> {
-    return this.request(API_ENDPOINTS.INTERVIEWS, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  }
+  // Get user answers by interview ID (returns {success, data} format)
+  static async getUserAnswersByInterview(
+    interviewId: string,
+    token?: string
+  ): Promise<{ success: boolean; data?: any[]; message?: string }> {
+    const endpoint = `${API_BASE_URL}/user-answers/interview/${interviewId}`;
+    const config: RequestInit = {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    };
 
-  static async getInterviewById(id: string, token: string): Promise<ApiResponse<Interview>> {
-    return this.request(API_ENDPOINTS.INTERVIEW_BY_ID(id), {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  }
-
-  static async createInterview(data: Partial<Interview>, token: string): Promise<ApiResponse<Interview>> {
-    return this.request(API_ENDPOINTS.INTERVIEWS, {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  }
-
-  static async updateInterview(id: string, data: Partial<Interview>, token: string): Promise<ApiResponse<Interview>> {
-    return this.request(API_ENDPOINTS.INTERVIEW_BY_ID(id), {
-      method: 'PUT',
-      body: JSON.stringify(data),
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  }
-
-  static async deleteInterview(id: string, token: string): Promise<ApiResponse<void>> {
-    return this.request(API_ENDPOINTS.INTERVIEW_BY_ID(id), {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  }
-
-  // Profile methods
-  static async getProfile(token: string): Promise<ApiResponse<any>> {
-    return this.request(API_ENDPOINTS.PROFILE_ME, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  }
-
-  static async updateProfile(data: { name?: string; profileImage?: string }, token: string): Promise<ApiResponse<any>> {
-    return this.request(API_ENDPOINTS.PROFILE_ME, {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${token}` },
-      body: JSON.stringify(data),
-    });
-  }
-
-  // User Answer methods
-  static async saveUserAnswer(data: Partial<UserAnswer>, token: string): Promise<ApiResponse<UserAnswer>> {
-    console.log('saveUserAnswer called with:', { data, token: token ? 'Token exists' : 'No token' });
-    console.log('Data to be sent:', JSON.stringify(data, null, 2));
-    
-    // Create a simple fetch request to test
-    try {
-      const response = await fetch(API_ENDPOINTS.USER_ANSWERS, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-      
-      console.log('Direct fetch response status:', response.status);
-      console.log('Direct fetch response headers:', Object.fromEntries(response.headers.entries()));
-      
-      const responseData = await response.json();
-      console.log('Direct fetch response data:', responseData);
-      
-      if (!response.ok) {
-        return {
-          success: false,
-          error: responseData.message || responseData.error || `HTTP ${response.status}`
+    // Use token from parameter or fallback to localStorage
+    if (!token) {
+      token =
+        localStorage.getItem("futurefind_token") ||
+        localStorage.getItem("authToken") ||
+        undefined;
+      if (token) {
+        config.headers = {
+          ...config.headers,
+          Authorization: `Bearer ${token}`,
         };
       }
-      
-      return {
-        success: true,
-        data: responseData.data || responseData,
-        message: responseData.message
-      };
+    }
+
+    try {
+      const response = await fetch(endpoint, config);
+      const data = await response.json();
+      return data;
     } catch (error) {
-      console.error('Direct fetch error:', error);
+      console.error("API request failed:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : "Unknown error",
       };
     }
   }
 
-  static async getUserAnswersByInterview(interviewId: string, token: string): Promise<ApiResponse<UserAnswer[]>> {
-    return this.request(API_ENDPOINTS.USER_ANSWERS_BY_INTERVIEW(interviewId), {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-  }
+  // Save user answer (returns {success, data} format)
+  static async saveUserAnswer(
+    answerData: {
+      mockIdRef: string;
+      question: string;
+      correct_ans: string;
+      user_ans: string;
+      feedback: string;
+      rating: number;
+      userId: string;
+      confidence?: number;
+      areas?: string[];
+      answerLength?: number;
+      relevanceScore?: number;
+      timestamp?: Date;
+    },
+    token?: string
+  ): Promise<{ success: boolean; data?: any; message?: string }> {
+    const endpoint = `${API_BASE_URL}/user-answers`;
+    const config: RequestInit = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify(answerData),
+    };
 
-  // AI Generation methods
-  static async generateQuestions(data: {
-    position: string;
-    description: string;
-    experience: number;
-    techStack: string;
-  }): Promise<ApiResponse<Question[]>> {
-    return this.request(API_ENDPOINTS.AI_GENERATE_QUESTIONS, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    // Use token from parameter or fallback to localStorage
+    if (!token) {
+      token =
+        localStorage.getItem("futurefind_token") ||
+        localStorage.getItem("authToken") ||
+        undefined;
+      if (token) {
+        config.headers = {
+          ...config.headers,
+          Authorization: `Bearer ${token}`,
+        };
+      }
+    }
+
+    try {
+      const response = await fetch(endpoint, config);
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("API request failed:", error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
   }
 }
 
-// Error handling utilities
-export const handleApiError = (error: unknown): string => {
-  if (error instanceof Error) {
-    return error.message;
+// Utility function to ensure Flask backend is awake
+export const ensureFlaskAwake = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(`${FLASK_BASE_URL}/health`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    return response.ok;
+  } catch (error) {
+    console.warn("Flask backend is not responding:", error);
+    return false;
   }
-  if (typeof error === 'string') {
-    return error;
-  }
-  return 'An unexpected error occurred';
 };
 
-// Validation utilities
-export const validateInterviewData = (data: unknown): boolean => {
-  if (typeof data !== 'object' || data === null) return false;
-  const interviewData = data as Record<string, unknown>;
-  return !!(
-    interviewData.position &&
-    interviewData.description &&
-    typeof interviewData.experience === 'number' &&
-    interviewData.techStack
-  );
-};
-
-export const validateUserAnswerData = (data: unknown): boolean => {
-  if (typeof data !== 'object' || data === null) return false;
-  const answerData = data as Record<string, unknown>;
-  return !!(
-    answerData.mockIdRef &&
-    answerData.question &&
-    answerData.correct_ans &&
-    answerData.user_ans &&
-    answerData.feedback &&
-    typeof answerData.rating === 'number'
-  );
+// Default export for convenience
+export default {
+  FLASK_BASE_URL,
+  API_BASE_URL,
+  FLASK_ENDPOINTS,
+  API_ENDPOINTS,
+  ApiClient,
+  ensureFlaskAwake,
 };

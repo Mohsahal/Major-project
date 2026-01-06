@@ -50,7 +50,7 @@ export const FormMockInterview = ({ initialData }: FormMockInterviewProps) => {
   const { isValid, isSubmitting } = form.formState;
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { getToken } = useAuth();
+  const { getToken, user } = useAuth();
 
   const title = initialData
     ? initialData.position
@@ -86,7 +86,7 @@ export const FormMockInterview = ({ initialData }: FormMockInterviewProps) => {
   };
 
   const generateAiResponse = async (data: FormData) => {
-    const res = await fetch(API_ENDPOINTS.AI_GENERATE_QUESTIONS, {
+    const res = await fetch(API_ENDPOINTS.QUESTIONS.GENERATE, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -110,9 +110,20 @@ export const FormMockInterview = ({ initialData }: FormMockInterviewProps) => {
         if (isValid) {
           const aiResult = await generateAiResponse(data);
           const token = getToken();
-          if (!token) throw new Error('No auth token');
-          const resp = await ApiClient.updateInterview(initialData.id, { ...data, questions: aiResult }, token);
-          if (!resp.success) throw new Error(resp.error || 'Update failed');
+          if (!token) {
+            toast.error('Please login to create mock interviews');
+            navigate('/login');
+            return;
+          }
+          const interviewData = {
+            position: data.position,
+            description: data.description,
+            experience: data.experience,
+            techStack: data.techStack,
+            userId: user?.id || '',
+            questions: aiResult
+          };
+          const resp = await ApiClient.updateInterview(initialData.id, interviewData);
           toast(toastMessage.title, { description: toastMessage.description });
         }
       } else {
@@ -120,9 +131,20 @@ export const FormMockInterview = ({ initialData }: FormMockInterviewProps) => {
         if (isValid) {
           const aiResult = await generateAiResponse(data);
           const token = getToken();
-          if (!token) throw new Error('No auth token');
-          const resp = await ApiClient.createInterview({ ...data, questions: aiResult }, token);
-          if (!resp.success) throw new Error(resp.error || 'Create failed');
+          if (!token) {
+            toast.error('Please login to create mock interviews');
+            navigate('/login');
+            return;
+          }
+          const interviewData = {
+            position: data.position,
+            description: data.description,
+            experience: data.experience,
+            techStack: data.techStack,
+            userId: user?.id || '',
+            questions: aiResult
+          };
+          const resp = await ApiClient.createInterview(interviewData);
           toast(toastMessage.title, { description: toastMessage.description });
         }
       }
@@ -170,8 +192,7 @@ export const FormMockInterview = ({ initialData }: FormMockInterviewProps) => {
             try {
               const token = getToken();
               if (!token) throw new Error('No auth token');
-              const resp = await ApiClient.deleteInterview(initialData.id, token);
-              if (!resp.success) throw new Error(resp.error || 'Delete failed');
+              await ApiClient.deleteInterview(initialData.id);
               toast("Deleted..!", { description: "Interview deleted successfully" });
               navigate("/generate");
             } catch (e) {

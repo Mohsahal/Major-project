@@ -13,7 +13,7 @@ const userAnswerRoutes = require('./routes/user-answer');
 const resumeParserRoutes = require('./routes/resumeParser');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 1000;
 
 // Middleware
 app.use(cors());
@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/job-recommendation')
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/job-recommendation')
   .then(() => console.log('MongoDB connected successfully'))
   .catch(err => console.error('MongoDB connection error:', err));
 
@@ -39,6 +39,15 @@ app.use('/api/resume-parser', resumeParserRoutes);
 // Basic route for testing
 app.get('/', (req, res) => {
   res.send('Job Recommendation API is running...');
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    message: 'Server is healthy',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Error handling middleware

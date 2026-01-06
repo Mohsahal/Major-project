@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import Sidebar from "@/components/Dashboard/Sidebar"
+import Sidebar from "@/components/Dashboard/Sidebar";
 import StatsOverview from "@/components/Dashboard/StatsOverview";
 import JobRecommendations from "@/components/Dashboard/JobRecommendations";
 import ResumeBuilder from "@/components/Dashboard/ResumeBuilder";

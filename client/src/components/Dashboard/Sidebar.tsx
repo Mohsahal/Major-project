@@ -136,22 +136,6 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
             </span>
           )}
         </a>
-        <a
-          href="/settings"
-          className={cn(
-            "flex items-center gap-3 px-4 py-3 text-sidebar-foreground hover:bg-gray-100 rounded-lg transition-all duration-150 ease-out transform hover:scale-[1.02]",
-            isOpen ? "justify-start" : "justify-center"
-          )}
-        >
-          <div className="flex-shrink-0">
-            <Cog className="h-5 w-5" />
-          </div>
-          {isOpen && (
-            <span className="font-medium transition-opacity duration-150">
-              Settings
-            </span>
-          )}
-        </a>
       </div>
     </div>
   );

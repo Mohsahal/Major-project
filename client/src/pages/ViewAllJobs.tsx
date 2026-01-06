@@ -9,8 +9,6 @@ import {
   TrendingUp, 
   Filter, 
   Search, 
-  Bookmark, 
-  Share2, 
   Eye, 
   Star,
   Briefcase,
@@ -42,8 +40,11 @@ type JobType = {
   isNew?: boolean;
   type: 'Full-time' | 'Part-time' | 'Contract' | 'Remote';
   logo?: string;
-  benefits: string[];
   applyLink?: string;
+  experienceLevel?: string;
+  workType?: string;
+  contractType?: string;
+  experience?: string;
 };
 
 export default function ViewAllJobs() {
@@ -52,152 +53,76 @@ export default function ViewAllJobs() {
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(true);
-  const [selectedType, setSelectedType] = useState('all');
+  const [selectedWorkType, setSelectedWorkType] = useState('all');
   const [sortBy, setSortBy] = useState('match');
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const suggestedLocations: string[] = [
     'Bangalore','Remote','San Francisco','New York','London','Toronto','Sydney','Berlin','Singapore','Dubai'
   ];
 
-  const defaultJobs: JobType[] = [
-    {
-      id: '1',
-      title: 'Senior Frontend Developer',
-      company: 'TechCorp Solutions',
-      location: 'San Francisco, CA',
-      matchPercentage: 95,
-      skills: ['React', 'TypeScript', 'Next.js', 'Tailwind CSS'],
-      posted: '2 hours ago',
-      description: 'Join our dynamic team to build cutting-edge web applications. We\'re looking for a passionate developer who loves clean code and user experience.',
-      isNew: true,
-      type: 'Full-time',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Stock Options']
-    },
-    {
-      id: '2',
-      title: 'Product Manager',
-      company: 'InnovateLab',
-      location: 'New York, NY',
-      matchPercentage: 88,
-      skills: ['Product Strategy', 'Agile', 'Data Analysis', 'User Research'],
-      posted: '1 day ago',
-      description: 'Lead product development from concept to launch. Work with cross-functional teams to deliver exceptional user experiences.',
-      isNew: true,
-      type: 'Full-time',
-      benefits: ['Health Insurance', '401k', 'Flexible PTO', 'Learning Budget']
-    },
-    {
-      id: '3',
-      title: 'DevOps Engineer',
-      company: 'CloudScale Systems',
-      location: 'Austin, TX',
-      matchPercentage: 82,
-      skills: ['AWS', 'Docker', 'Kubernetes', 'Terraform'],
-      posted: '3 days ago',
-      description: 'Build and maintain our cloud infrastructure. Ensure high availability and scalability of our systems.',
-      isNew: false,
-      type: 'Full-time',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Conference Budget']
-    },
-    {
-      id: '4',
-      title: 'UX/UI Designer',
-      company: 'Creative Studios',
-      location: 'Los Angeles, CA',
-      matchPercentage: 78,
-      skills: ['Figma', 'Adobe Creative Suite', 'Prototyping', 'User Testing'],
-      posted: '1 week ago',
-      description: 'Create beautiful and intuitive user interfaces. Collaborate with product and engineering teams.',
-      isNew: false,
-      type: 'Full-time',
-      benefits: ['Health Insurance', '401k', 'Creative Tools', 'Flexible Hours']
-    },
-    {
-      id: '5',
-      title: 'Data Scientist',
-      company: 'Analytics Pro',
-      location: 'Seattle, WA',
-      matchPercentage: 91,
-      skills: ['Python', 'Machine Learning', 'SQL', 'Statistics'],
-      posted: '2 days ago',
-      description: 'Build predictive models and extract insights from large datasets. Drive data-driven decision making.',
-      isNew: true,
-      type: 'Full-time',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Research Budget']
-    },
-    {
-      id: '6',
-      title: 'Backend Developer',
-      company: 'ServerTech',
-      location: 'Boston, MA',
-      matchPercentage: 85,
-      skills: ['Node.js', 'Python', 'PostgreSQL', 'Redis'],
-      posted: '4 days ago',
-      description: 'Build scalable backend services and APIs. Work with modern technologies and best practices.',
-      isNew: false,
-      type: 'Full-time',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Learning Budget']
-    },
-    {
-      id: '7',
-      title: 'Mobile Developer',
-      company: 'AppWorks',
-      location: 'Miami, FL',
-      matchPercentage: 79,
-      skills: ['React Native', 'iOS', 'Android', 'Firebase'],
-      posted: '5 days ago',
-      description: 'Develop cross-platform mobile applications. Create engaging user experiences for iOS and Android.',
-      isNew: false,
-      type: 'Full-time',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Device Budget']
-    },
-    {
-      id: '8',
-      title: 'QA Engineer',
-      company: 'QualityFirst',
-      location: 'Denver, CO',
-      matchPercentage: 76,
-      skills: ['Selenium', 'Jest', 'Cypress', 'Test Automation'],
-      posted: '1 week ago',
-      description: 'Ensure software quality through comprehensive testing. Develop and maintain test automation frameworks.',
-      isNew: false,
-      type: 'Full-time',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Training Budget']
-    },
-    {
-      id: '9',
-      title: 'Full Stack Developer',
-      company: 'WebSolutions',
-      location: 'Chicago, IL',
-      matchPercentage: 87,
-      skills: ['React', 'Node.js', 'MongoDB', 'AWS'],
-      posted: '3 days ago',
-      description: 'Build end-to-end web applications. Work on both frontend and backend development.',
-      isNew: true,
-      type: 'Full-time',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Conference Budget']
-    },
-    {
-      id: '10',
-      title: 'Machine Learning Engineer',
-      company: 'AITech',
-      location: 'San Diego, CA',
-      matchPercentage: 93,
-      skills: ['TensorFlow', 'PyTorch', 'Python', 'MLOps'],
-      posted: '1 day ago',
-      description: 'Build and deploy machine learning models. Work on cutting-edge AI technologies.',
-      isNew: true,
-      type: 'Full-time',
-      benefits: ['Health Insurance', '401k', 'Remote Work', 'Research Budget']
+  // Helper function to detect if a job is remote
+  const isRemoteJob = (job: JobType) => {
+    const location = job.location?.toLowerCase() || '';
+    const title = job.title?.toLowerCase() || '';
+    const description = job.description?.toLowerCase() || '';
+    
+    return location.includes('remote') || 
+           title.includes('remote') || 
+           description.includes('remote') ||
+           location.includes('work from home') ||
+           description.includes('work from home');
+  };
+
+  // Helper function to detect if a job is hybrid
+  const isHybridJob = (job: JobType) => {
+    const location = job.location?.toLowerCase() || '';
+    const description = job.description?.toLowerCase() || '';
+    
+    return location.includes('hybrid') || 
+           description.includes('hybrid');
+  };
+
+  // Helper function to get days since posted
+  const getDaysSincePosted = (postedTime: string) => {
+    const now = new Date();
+    if (postedTime.includes('day ago') || postedTime.includes('days ago')) {
+      const days = parseInt(postedTime.match(/\d+/)?.[0] || '0');
+      return days;
+    } else if (postedTime.includes('week ago') || postedTime.includes('weeks ago')) {
+      const weeks = parseInt(postedTime.match(/\d+/)?.[0] || '0');
+      return weeks * 7;
+    } else if (postedTime.includes('month ago') || postedTime.includes('months ago')) {
+      const months = parseInt(postedTime.match(/\d+/)?.[0] || '0');
+      return months * 30;
     }
-  ];
+    return 0;
+  };
+
+  
 
   const [jobs] = useState<JobType[]>(Array.isArray(location?.state?.jobs) && location.state.jobs.length > 0 ? location.state.jobs : defaultJobs);
   const csvDownload: string | null = null; // CSV removed in favor of location-based query
 
+  // Count jobs for each filter category
+  const remoteJobsCount = jobs.filter(isRemoteJob).length;
+  const hybridJobsCount = jobs.filter(isHybridJob).length;
+  const onSiteJobsCount = jobs.length - remoteJobsCount - hybridJobsCount;
+
   const filters = [
-    { id: 'all', label: 'All Jobs', count: jobs.length }
+    { id: 'all', label: 'All Jobs', count: jobs.length },
+    { id: 'remote', label: 'Remote', count: remoteJobsCount },
+    { id: 'hybrid', label: 'Hybrid', count: hybridJobsCount },
+    { id: 'high-match', label: 'High Match (90%+)', count: jobs.filter(job => job.matchPercentage >= 90).length }
   ];
+
+  // Filter options for sidebar
+  const workTypeOptions = [
+    { id: 'all', label: 'All Types', count: jobs.length },
+    { id: 'remote', label: 'Remote', count: remoteJobsCount },
+    { id: 'hybrid', label: 'Hybrid', count: hybridJobsCount },
+    { id: 'onsite', label: 'On-site', count: onSiteJobsCount }
+  ];
+
 
   const jobTypes = [
     { id: 'all', label: 'All Types' },
@@ -212,19 +137,28 @@ export default function ViewAllJobs() {
     { id: 'posted', label: 'Recently Posted' }
   ];
 
+  // Add the filtering logic here
   const filteredJobs = jobs.filter(job => {
+    // Quick filter tabs
     const matchesFilter = selectedFilter === 'all' || 
       (selectedFilter === 'new' && job.isNew) ||
       (selectedFilter === 'high-match' && job.matchPercentage >= 90) ||
-      (selectedFilter === 'remote' && job.type === 'Remote');
+      (selectedFilter === 'remote' && isRemoteJob(job)) ||
+      (selectedFilter === 'hybrid' && isHybridJob(job));
     
+    // Search query
     const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      job.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
     
-    const matchesType = selectedType === 'all' || job.type === selectedType;
+    // Work type filter
+    const matchesWorkType = selectedWorkType === 'all' || 
+      (selectedWorkType === 'remote' && isRemoteJob(job)) ||
+      (selectedWorkType === 'hybrid' && isHybridJob(job)) ||
+      (selectedWorkType === 'onsite' && !isRemoteJob(job) && !isHybridJob(job));
     
-    return matchesFilter && matchesSearch && matchesType;
+    return matchesFilter && matchesSearch && matchesWorkType;
   });
 
   const sortedJobs = [...filteredJobs].sort((a, b) => {
@@ -233,13 +167,10 @@ export default function ViewAllJobs() {
         return b.matchPercentage - a.matchPercentage;
       case 'posted':
         return new Date(b.posted).getTime() - new Date(a.posted).getTime();
-      case 'experience':
-        return parseInt(b.experience) - parseInt(a.experience);
       default:
         return 0;
     }
   });
-
 
   const getMatchColor = (percentage: number) => {
     if (percentage >= 90) return 'bg-green-100 text-green-700 border-green-200';
@@ -250,7 +181,7 @@ export default function ViewAllJobs() {
 
   const clearAllFilters = () => {
     setSelectedFilter('all');
-    setSelectedType('all');
+    setSelectedWorkType('all');
     setSearchQuery('');
   };
 
@@ -359,19 +290,22 @@ export default function ViewAllJobs() {
                     </div>
                   </div>
 
-                  {/* Job Type */}
+                  {/* Work Type */}
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">Job Type</label>
+                    <label className="text-sm font-medium text-gray-700">Work Type</label>
                     <select
-                      value={selectedType}
-                      onChange={(e) => setSelectedType(e.target.value)}
+                      value={selectedWorkType}
+                      onChange={(e) => setSelectedWorkType(e.target.value)}
                       className="w-full p-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      {jobTypes.map((type) => (
-                        <option key={type.id} value={type.id}>{type.label}</option>
+                      {workTypeOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label} ({option.count})
+                        </option>
                       ))}
                     </select>
                   </div>
+
 
                   {/* Sort By */}
                   <div className="space-y-2">
@@ -496,40 +430,37 @@ export default function ViewAllJobs() {
                           <p className="text-gray-600 mb-4 leading-relaxed">{job.description}</p>
                         )}
 
-                        {/* Benefits */}
-                        {job.benefits && (
-                          <div className="mb-4">
-                            <p className="text-sm font-medium text-gray-700 mb-2">Benefits:</p>
-                            <div className="flex gap-2 flex-wrap">
-                              {job.benefits.map((benefit) => (
-                                <Badge key={benefit} variant="outline" className="text-xs">
-                                  {benefit}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
                         
 
                         {/* Action Buttons */}
                         <div className="flex gap-3 pt-4 border-t border-gray-100">
                           <Button size="sm" className="flex-1 bg-blue-600 hover:bg-blue-700" onClick={() => {
-                            const link = job.applyLink || '#';
-                            if (link && link !== '#') {
+                            // Prioritize LinkedIn job URL for "View Details"
+                            const linkedinUrl = (job as any).job_url || '';
+                            const applyUrl = (job as any).apply_url || (job as any).apply_link || job.applyLink || '';
+                            
+                            // Use LinkedIn URL if available, otherwise fall back to apply URL
+                            const link = linkedinUrl || applyUrl || '#';
+                            
+                            console.log('Job URL fields (ViewAllJobs):', {
+                              job_url: (job as any).job_url,
+                              apply_url: (job as any).apply_url,
+                              apply_link: (job as any).apply_link,
+                              applyLink: job.applyLink,
+                              finalLink: link,
+                              isLinkedIn: linkedinUrl.includes('linkedin.com')
+                            });
+                            
+                            if (link && link !== '#' && link.trim() !== '') {
                               const w = window.open(link, '_blank', 'noopener,noreferrer');
                               if (w) { w.opener = null; }
+                            } else {
+                              console.error('No valid URL found for job:', job);
+                              alert('No valid job URL available');
                             }
                           }}>
                             <Eye className="h-4 w-4 mr-2" />
                             View Details
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Bookmark className="h-4 w-4 mr-2" />
-                            Save
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            <Share2 className="h-4 w-4 mr-2" />
-                            Share
                           </Button>
                         </div>
                       </CardContent>

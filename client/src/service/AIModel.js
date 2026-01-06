@@ -2,7 +2,7 @@ import { API_ENDPOINTS } from '@/config/api'
 
 export async function generateSummaryWithAI(jobTitle, token) {
   try {
-    const response = await fetch(API_ENDPOINTS.AI_GENERATE_SUMMARY, {
+    const response = await fetch(API_ENDPOINTS.AI.GENERATE_SUMMARY, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -26,7 +26,7 @@ export async function generateSummaryWithAI(jobTitle, token) {
 
 export async function generateExperienceDescription(position, company, industry = "Technology", token) {
   try {
-    const response = await fetch(API_ENDPOINTS.AI_GENERATE_EXPERIENCE, {
+    const response = await fetch(API_ENDPOINTS.AI.GENERATE_EXPERIENCE, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ export async function generateExperienceDescription(position, company, industry 
 
 export async function generateProjectDescription(projectName, technologies, role, token) {
   try {
-    const response = await fetch(API_ENDPOINTS.AI_GENERATE_PROJECT, {
+    const response = await fetch(API_ENDPOINTS.AI.GENERATE_PROJECT, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
 import { API_ENDPOINTS } from '@/config/api';
 import { toast } from '@/components/ui/use-toast';
 
@@ -42,7 +41,43 @@ export const ResumeProvider: React.FC<ResumeProviderProps> = ({ children }) => {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [recentResume, setRecentResume] = useState<Resume | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { getToken, isAuthenticated } = useAuth();
+  const [authReady, setAuthReady] = useState(false);
+  
+  // Initialize auth context as null and set it in useEffect
+  const [authContext, setAuthContext] = useState<any>(null);
+  
+  // Get auth values with fallbacks
+  const getToken = authContext?.getToken || (() => null);
+  const isAuthenticated = authContext?.isAuthenticated || false;
+  
+  // Set up auth context after component mounts to avoid circular dependency
+  useEffect(() => {
+    const setupAuth = async () => {
+      try {
+        // Import useAuth dynamically to avoid circular dependency during initialization
+        const { useAuth } = await import('./AuthContext');
+        const auth = useAuth();
+        setAuthContext(auth);
+        setAuthReady(true);
+      } catch (error) {
+        console.log('Auth context not ready yet, retrying...');
+        // Retry after a short delay
+        setTimeout(async () => {
+          try {
+            const { useAuth } = await import('./AuthContext');
+            const auth = useAuth();
+            setAuthContext(auth);
+            setAuthReady(true);
+          } catch (e) {
+            console.log('Auth context still not ready, using fallbacks');
+            setAuthReady(true); // Allow component to render with fallbacks
+          }
+        }, 100);
+      }
+    };
+    
+    setupAuth();
+  }, []);
 
   const fetchResumes = async (showToast = false) => {
     if (!isAuthenticated) {
@@ -171,8 +206,10 @@ export const ResumeProvider: React.FC<ResumeProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    fetchResumes();
-  }, [isAuthenticated]);
+    if (authReady) {
+      fetchResumes();
+    }
+  }, [authReady, isAuthenticated]);
 
   const value: ResumeContextType = {
     resumes,
