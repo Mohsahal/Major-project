@@ -6,10 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from '@/components/ui/use-toast';
 import SimpleTemplate from '@/components/Resume/templates/SimpleTemplate';
-import ModernTemplate from '@/components/Resume/templates/ModernTemplate';
 import MinimalTemplate from '@/components/Resume/templates/MinimalTemplate';
 import ProfessionalTemplate from '@/components/Resume/templates/ProfessionalTemplate';
-import CreativeTemplate from '@/components/Resume/templates/CreativeTemplate';
 import ExecutiveTemplate from '@/components/Resume/templates/ExecutiveTemplate';
 import TemplateSelector from '@/components/Resume/TemplateSelector';
 import ResumeForm from '@/components/Resume/ResumeForm';
@@ -33,10 +31,8 @@ import { API_ENDPOINTS } from '@/config/api';
 
 const templateThumbnails = {
   simple: 'https://placehold.co/200x250/e2e8f0/1e293b?text=Simple',
-  modern: 'https://placehold.co/200x250/e2e8f0/1e293b?text=Modern',
   minimal: 'https://placehold.co/200x250/e2e8f0/1e293b?text=Minimal',
   professional: 'https://placehold.co/200x250/e2e8f0/1e293b?text=Professional',
-  creative: 'https://placehold.co/200x250/e2e8f0/1e293b?text=Creative',
   executive: 'https://placehold.co/200x250/e2e8f0/1e293b?text=Executive'
 };
 
@@ -46,12 +42,6 @@ const templates = [
     name: "Simple Classic",
     description: "Traditional resume layout with clear sections",
     thumbnail: templateThumbnails.simple,
-  },
-  {
-    id: "modern",
-    name: "Modern Sidebar",
-    description: "Contemporary design with sidebar for key info",
-    thumbnail: templateThumbnails.modern,
   },
   {
     id: "minimal",
@@ -64,12 +54,6 @@ const templates = [
     name: "Professional",
     description: "Polished design with emphasis on experience and skills",
     thumbnail: templateThumbnails.professional,
-  },
-  {
-    id: "creative",
-    name: "Creative",
-    description: "Modern and artistic layout with visual elements",
-    thumbnail: templateThumbnails.creative,
   },
   {
     id: "executive",
@@ -259,14 +243,10 @@ const ResumeBuilder = () => {
     switch (selectedTemplate) {
       case 'simple':
         return <SimpleTemplate data={resumeData} />;
-      case 'modern':
-        return <ModernTemplate data={resumeData} />;
       case 'minimal':
         return <MinimalTemplate data={resumeData} />;
       case 'professional':
         return <ProfessionalTemplate data={resumeData} />;
-      case 'creative':
-        return <CreativeTemplate data={resumeData} />;
       case 'executive':
         return <ExecutiveTemplate data={resumeData} />;
       default:

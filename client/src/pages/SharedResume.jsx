@@ -2,10 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import PlainLayout from '@/components/layout/PlainLayout';
 import SimpleTemplate from '@/components/Resume/templates/SimpleTemplate';
-import ModernTemplate from '@/components/Resume/templates/ModernTemplate';
 import MinimalTemplate from '@/components/Resume/templates/MinimalTemplate';
 import ProfessionalTemplate from '@/components/Resume/templates/ProfessionalTemplate';
-import CreativeTemplate from '@/components/Resume/templates/CreativeTemplate';
 import ExecutiveTemplate from '@/components/Resume/templates/ExecutiveTemplate';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -72,14 +70,10 @@ const SharedResume = () => {
     switch (selectedTemplate) {
       case 'simple':
         return <SimpleTemplate data={resumeData} />;
-      case 'modern':
-        return <ModernTemplate data={resumeData} />;
       case 'minimal':
         return <MinimalTemplate data={resumeData} />;
       case 'professional':
         return <ProfessionalTemplate data={resumeData} />;
-      case 'creative':
-        return <CreativeTemplate data={resumeData} />;
       case 'executive':
         return <ExecutiveTemplate data={resumeData} />;
       default:

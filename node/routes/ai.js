@@ -38,6 +38,7 @@ The summary should:
 Only return the summary itself, written in first person.
 `;
 
+
     const result = await model.generateContent(prompt);
     const summary = result.response.text();
 
