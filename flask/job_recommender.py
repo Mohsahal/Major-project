@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
-from sentence_transformers import SentenceTransformer
+# from sentence_transformers import SentenceTransformer (Lazy loaded)
 import logging
 from typing import List, Dict, Tuple, Optional
 import os
@@ -327,6 +327,7 @@ class JobRecommender:
             
             # Initialize Sentence Transformer
             logger.info(f"Loading Sentence Transformer model: {self.model_name}")
+            from sentence_transformers import SentenceTransformer
             self.sentence_model = SentenceTransformer(self.model_name)
             
             # Create embeddings for all jobs
@@ -371,6 +372,7 @@ class JobRecommender:
             self.tfidf_matrix = data['tfidf_matrix']
             self.job_embeddings = data['job_embeddings']
             # We still need re-init sentence model for inference (it's not pickled usually)
+            from sentence_transformers import SentenceTransformer
             self.sentence_model = SentenceTransformer(self.model_name)
             
             # Verify data consistency (simple check)

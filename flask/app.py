@@ -12,12 +12,8 @@ import json
 from datetime import datetime
 
 # for skill gap analysis
-from langchain_community.vectorstores import FAISS
-from langchain_core.prompts import PromptTemplate
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from langchain_text_splitters import CharacterTextSplitter
+# LangChain imports removed to improve startup time
+# (Moved to lazy loading inside functions if needed)
 
 # Import skill gap analyzer
 from skill_gap_analyzer import SkillGapAnalyzer
