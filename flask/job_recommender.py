@@ -410,8 +410,11 @@ class JobRecommender:
             with open(cache_file, 'rb') as f:
                 data = pickle.load(f)
                 
+                
             self.tfidf_vectorizer = data['tfidf_vectorizer']
+            self.tfidf_matrix = data['tfidf_matrix']  # ← ADD THIS LINE
             self.job_embeddings = data['job_embeddings']
+            
             # We still need re-init sentence model for inference (it's not pickled usually)
             print(f"DEBUG: Cache loaded. Re-initializing SentenceTransformer for inference...")
             from sentence_transformers import SentenceTransformer
