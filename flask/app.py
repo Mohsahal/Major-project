@@ -31,20 +31,26 @@ import dotenv
 from config import ALLOWED_ORIGINS, ALLOW_ALL_ORIGINS, FLASK_PORT
 
 app = Flask(__name__)
-if ALLOW_ALL_ORIGINS:
-    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
-else:
-    # Explicitly allow all origins for debugging
-    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_headers=["Content-Type", "Authorization"])
+# CORS(app) - DISABLING LIBRARY TO USE MANUAL HEADERS
+
 app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
-# Force CORS on every response (Brute Force Fix)
+# MANUAL CORS MIDDLEWARE
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add("Access-Control-Allow-Headers", "*")
+        response.headers.add("Access-Control-Allow-Methods", "*")
+        return response
+
 @app.after_request
 def add_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, PUT, DELETE"
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add("Access-Control-Allow-Headers", "*")
+    response.headers.add("Access-Control-Allow-Methods", "*")
     return response
 
 # Global Error Handlers (Ensure CORS headers are present on errors)
