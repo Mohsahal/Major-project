@@ -34,7 +34,8 @@ app = Flask(__name__)
 if ALLOW_ALL_ORIGINS:
     CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 else:
-    CORS(app, resources={r"/*": {"origins": ALLOWED_ORIGINS}}, supports_credentials=True)
+    # Explicitly allow all origins for debugging
+    CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True, allow_headers=["Content-Type", "Authorization"])
 app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 

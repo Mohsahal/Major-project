@@ -350,10 +350,27 @@ class JobRecommender:
             from sentence_transformers import SentenceTransformer
             self.sentence_model = SentenceTransformer(self.model_name)
             
-            # Create embeddings for all jobs
-            print("DEBUG: Creating job embeddings (Encoding)...")
-            logger.info("Creating job embeddings...")
-            self.job_embeddings = self.sentence_model.encode(job_texts, show_progress_bar=True)
+            # Create embeddings for all jobs (Batched to prevent OOM)
+            print("DEBUG: Creating job embeddings (Batched Encoding)...")
+            logger.info("Creating job embeddings (Batched)...")
+            
+            self.job_embeddings = []
+            batch_size = 32 # Small batch size for 512MB RAM
+            total_jobs = len(job_texts)
+            
+            for i in range(0, total_jobs, batch_size):
+                batch = job_texts[i:i + batch_size]
+                print(f"DEBUG: Encoding batch {i//batch_size + 1}/{(total_jobs + batch_size - 1)//batch_size}")
+                batch_embeddings = self.sentence_model.encode(batch, show_progress_bar=False)
+                if len(self.job_embeddings) == 0:
+                    self.job_embeddings = batch_embeddings
+                else:
+                    self.job_embeddings = np.vstack((self.job_embeddings, batch_embeddings))
+                
+                # Cleanup after each batch
+                del batch
+                del batch_embeddings
+                gc.collect()
             
             # Save to cache
             print("DEBUG: Saving to cache...")
@@ -381,12 +398,12 @@ class JobRecommender:
             if os.path.exists(naukri_path):
                 naukri_mtime = os.path.getmtime(naukri_path)
                 if naukri_mtime > cache_mtime:
-                    logger.info("Cache invalid: Naukri data newer than cache")
-                    return False
+                    logger.warning("Cache might be stale (Naukri data newer), but loading anyway to prevent OOM")
+                    # return False
 
             if data_mtime > cache_mtime:
-                logger.info("Cache invalid: Data file newer than cache")
-                return False
+                logger.warning("Cache might be stale (Data file newer), but loading anyway to prevent OOM")
+                # return False
                 
             logger.info("Loading models from cache...")
             with open(cache_file, 'rb') as f:
