@@ -9,6 +9,8 @@ services:
     buildCommand: npm install
     startCommand: npm start
     envVars:
+      - key: NODE_VERSION
+        value: 20.10.0
       - key: PORT
         value: 1000
       - key: MONGODB_URI
@@ -19,8 +21,6 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
-      - key: NODE_VERSION
-        value: 20.10.0
 
   # ------------------------------------
   # Flask Backend Service
@@ -32,6 +32,8 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.12
       - key: PORT
         value: 2000
       - key: GEMINI_API_KEY
@@ -40,11 +42,9 @@ services:
         sync: false
       - key: SECRET_KEY
         generateValue: true
-      - key: PYTHON_VERSION
-        value: 3.10.12
 
   # ------------------------------------
-  # Client Frontend (Static Site)
+  # Client Frontend (Vite + React)
   # ------------------------------------
   - type: static
     name: job-recommendation-client
@@ -52,6 +52,13 @@ services:
     root: client
     buildCommand: npm install && npm run build
     publishDir: dist
+
+    # 🔥 FIX FOR PAGE REFRESH (SPA ROUTING)
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
     envVars:
       - key: VITE_API_BASE_URL
         fromService:
