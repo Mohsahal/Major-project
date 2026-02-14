@@ -55,17 +55,14 @@ def add_cors_headers(response):
     return response
 
 # Global Error Handlers (Ensure CORS headers are present on errors)
+# Global Error Handlers (CORS headers added by after_request)
 @app.errorhandler(500)
 def handle_500(e):
-    response = jsonify({'error': 'Internal Server Error', 'details': str(e)})
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response, 500
+    return jsonify({'error': 'Internal Server Error', 'details': str(e)}), 500
 
 @app.errorhandler(404)
 def handle_404(e):
-    response = jsonify({'error': 'Not Found'})
-    response.headers.add("Access-Control-Allow-Origin", "*")
-    return response, 404
+    return jsonify({'error': 'Not Found'}), 404
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
