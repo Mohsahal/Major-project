@@ -1,0 +1,5 @@
+# Environment variables (sensitive data)
+.env
+.env.*
+**/.env
+**/.env.*
