@@ -53,7 +53,7 @@ services:
     # 🔥 FIX FOR PAGE REFRESH (SPA ROUTING)
     routes:
       - type: rewrite
-        source: /*
+        source: /.*
         destination: /index.html
 
     envVars:
