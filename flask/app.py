@@ -1207,8 +1207,8 @@ if __name__ == '__main__':
     app.run(
         host="0.0.0.0", 
         port=port, 
-        debug=True,
-        use_reloader=False,  # Disabled to prevent infinite reload loops from venv
-        extra_files=[]  # Empty list prevents watching all files
+        debug=os.environ.get("FLASK_DEBUG", "false").lower() == "true",
+        use_reloader=False,
+        extra_files=[]
     )
     

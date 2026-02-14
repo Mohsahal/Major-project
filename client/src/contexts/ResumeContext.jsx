@@ -19,24 +19,15 @@ export const ResumeProvider = ({ children }) => {
     const fetchResumes = useCallback(async (showToast = false) => {
         // Don't clear resumes if auth is still loading - wait for it to finish
         // This is critical to prevent clearing resumes during page refresh
-        if (authLoading) {
-            console.log('[ResumeContext] Auth still loading, skipping fetch');
-            return;
-        }
+        if (authLoading) return;
         // Don't clear resumes just because isAuthenticated is false
         // Only clear if API returns 401/403 - this prevents clearing during page refresh
         // If user is not authenticated, just return without fetching
-        if (!isAuthenticated) {
-            console.log('[ResumeContext] User not authenticated, skipping fetch (keeping existing resumes)');
-            return;
-        }
-        console.log('[ResumeContext] Fetching resumes...');
+        if (!isAuthenticated) return;
         try {
             setIsLoading(true);
             const token = getToken();
             if (!token) {
-                // Don't clear resumes if token is missing - might be temporary
-                console.log('[ResumeContext] No token available, skipping fetch (keeping existing resumes)');
                 setIsLoading(false);
                 return;
             }
@@ -47,7 +38,6 @@ export const ResumeProvider = ({ children }) => {
             });
             if (response.ok) {
                 const data = await response.json();
-                console.log('[ResumeContext] Successfully fetched', data.length, 'resumes');
                 setResumes(data);
                 // Set the most recent resume
                 if (data.length > 0) {

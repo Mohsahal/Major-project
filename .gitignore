@@ -3,3 +3,32 @@
 .env.*
 **/.env
 **/.env.*
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+client/dist/
+build/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+env/
+
+# Logs
+*.log
+logs/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

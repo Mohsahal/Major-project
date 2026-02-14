@@ -261,7 +261,6 @@ export const ensureFlaskAwake = async () => {
         return response.ok;
     }
     catch (error) {
-        console.warn("Flask backend is not responding:", error);
         return false;
     }
 };
