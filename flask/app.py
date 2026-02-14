@@ -49,8 +49,16 @@ dotenv.load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
 
-# Initialize skill gap analyzer
-skill_analyzer = SkillGapAnalyzer(GEMINI_API_KEY, YOUTUBE_API_KEY)
+# Initialize skill gap analyzer (lazy loading)
+skill_analyzer = None
+
+def get_skill_analyzer():
+    """Get or initialize skill gap analyzer (singleton pattern)"""
+    global skill_analyzer
+    if skill_analyzer is None:
+        print("🚀 Initializing SkillGapAnalyzer for the first time...")
+        skill_analyzer = SkillGapAnalyzer(GEMINI_API_KEY, YOUTUBE_API_KEY)
+    return skill_analyzer
 
 # Initialize job recommender (lazy loading to avoid reload on debug restart)
 job_recommender = None
@@ -486,7 +494,8 @@ def skill_gap_analysis():
                 return jsonify({'error': 'Could not extract text from resume. Please ensure the file contains readable text.'}), 400
             
             # Analyze skill gap using the SkillGapAnalyzer (stateless processing - no data stored)
-            skill_analysis_result = skill_analyzer.analyze_skill_gap_with_resources(resume_text, job_description)
+            analyzer = get_skill_analyzer()
+            skill_analysis_result = analyzer.analyze_skill_gap_with_resources(resume_text, job_description)
             
             skill_analysis = skill_analysis_result['analysis']
             learning_resources = skill_analysis_result['learning_resources']
