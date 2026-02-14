@@ -11,8 +11,6 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20.10.0
-      - key: PORT
-        value: 1000
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
@@ -30,12 +28,11 @@ services:
     env: python
     root: flask
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    # 🔥 FIX: Bind Gunicorn to Render’s PORT
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
         value: 3.10.12
-      - key: PORT
-        value: 2000
       - key: GEMINI_API_KEY
         sync: false
       - key: YOUTUBE_API_KEY
