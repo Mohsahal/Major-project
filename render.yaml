@@ -1,0 +1,67 @@
+services:
+  # ------------------------------------
+  # Node.js Backend Service
+  # ------------------------------------
+  - type: web
+    name: job-recommendation-node
+    env: node
+    root: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 1000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: NODE_VERSION
+        value: 20.10.0
+
+  # ------------------------------------
+  # Flask Backend Service
+  # ------------------------------------
+  - type: web
+    name: job-recommendation-flask
+    env: python
+    root: flask
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PORT
+        value: 2000
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: YOUTUBE_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.10.12
+
+  # ------------------------------------
+  # Client Frontend (Static Site)
+  # ------------------------------------
+  - type: static
+    name: job-recommendation-client
+    env: static
+    root: client
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: job-recommendation-node
+          property: url
+      - key: VITE_FLASK_BASE_URL
+        fromService:
+          type: web
+          name: job-recommendation-flask
+          property: url
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
