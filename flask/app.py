@@ -16,7 +16,8 @@ from datetime import datetime
 # (Moved to lazy loading inside functions if needed)
 
 # Import skill gap analyzer
-from skill_gap_analyzer import SkillGapAnalyzer
+# Import skill gap analyzer (Lazy loaded below)
+# from skill_gap_analyzer import SkillGapAnalyzer
 
 # Import job recommender
 from job_recommender import JobRecommender
@@ -53,6 +54,7 @@ def get_skill_analyzer():
     global skill_analyzer
     if skill_analyzer is None:
         print("🚀 Initializing SkillGapAnalyzer for the first time...")
+        from skill_gap_analyzer import SkillGapAnalyzer
         skill_analyzer = SkillGapAnalyzer(GEMINI_API_KEY, YOUTUBE_API_KEY)
     return skill_analyzer
 
