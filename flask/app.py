@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, send_file, make_response
-from flask_cors import CORS
+# from flask_cors import CORS (Manual CORS implemented)
 import os
 import tempfile
 from werkzeug.utils import secure_filename
@@ -138,8 +138,9 @@ def analyze_skill_gap(resume_text, job_description):
             raise Exception("GEMINI_API_KEY not configured")
         
         # First, extract skills from both resume and job description using a more direct approach
+        from langchain_google_genai import ChatGoogleGenerativeAI
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
+            model="gemini-1.5-flash", # Fixed invalid model name
             temperature=0.1,
             max_output_tokens=2000,
             google_api_key=GEMINI_API_KEY

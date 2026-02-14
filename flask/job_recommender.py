@@ -6,10 +6,10 @@ Analyzes resume content and matches with job descriptions from data.json
 import json
 import pickle
 import re
-import numpy as np
-import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+# import numpy as np (Moved to lazy loading)
+# import pandas as pd (Moved to lazy loading)
+# from sklearn.feature_extraction.text import TfidfVectorizer (Moved to lazy loading)
+# from sklearn.metrics.pairwise import cosine_similarity (Moved to lazy loading)
 # from sentence_transformers import SentenceTransformer (Lazy loaded)
 import logging
 from typing import List, Dict, Tuple, Optional
@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class JobRecommender:
-    def __init__(self, data_path: str = None, model_name: str = "all-MiniLM-L6-v2"):
+    def __init__(self, data_path: str = None, model_name: str = "paraphrase-MiniLM-L3-v2"): # Smaller 45MB model
         """
         Initialize the Job Recommender (Stateless Mode)
         
@@ -94,13 +94,12 @@ class JobRecommender:
             print(f"DEBUG: Error loading Naukri data: {e}")
             logger.error(f"Error loading Naukri data: {e}")
 
-        # Remove duplicates
+        # Deduplicate
         self.jobs_data = self.remove_duplicates(all_jobs)
         print(f"DEBUG: Total unique jobs after deduplication: {len(self.jobs_data)}")
-        logger.info(f"After deduplication: {len(self.jobs_data)} unique jobs")
         
-        # Clean and preprocess job data
-        self.preprocess_jobs()
+        # PREPROCESSING MOVED TO initialize_models TO SAVE MEMORY
+        # self.preprocess_jobs() 
 
     def normalize_naukri_jobs(self, naukri_jobs: List[Dict]) -> List[Dict]:
         """Normalize Naukri job data to match the primary data schema"""
@@ -315,18 +314,19 @@ class JobRecommender:
         try:
             # Initialize TF-IDF
             print("DEBUG: Initializing TF-IDF vectorizer...")
-            logger.info("Initializing TF-IDF vectorizer...")
+            from sklearn.feature_extraction.text import TfidfVectorizer
             
             # Cache file path
             cache_file = os.path.join(os.path.dirname(self.data_path), 'model_cache.pkl')
-            print(f"DEBUG: Checking cache at {cache_file}")
             
-            # Check if cache exists and is valid
+            # Check if cache exists
             if self._load_from_cache(cache_file):
                 print("DEBUG: Cache hit! Models loaded from disk.")
                 return
 
-            print("DEBUG: Cache miss. Initializing from scratch (Warning: High Memory Usage)")
+            print("DEBUG: Cache miss. Preprocessing jobs...")
+            self.preprocess_jobs() # Process only on miss
+            
             self.tfidf_vectorizer = TfidfVectorizer(
                 max_features=5000,
                 stop_words='english',
@@ -337,7 +337,7 @@ class JobRecommender:
             
             # Create TF-IDF matrix from job descriptions
             print("DEBUG: Fitting TF-IDF...")
-            job_texts = [job['combined_text'] for job in self.jobs_data]
+            job_texts = [job.get('combined_text', '') for job in self.jobs_data]
             self.tfidf_matrix = self.tfidf_vectorizer.fit_transform(job_texts)
             
             # Initialize Sentence Transformer
@@ -362,6 +362,7 @@ class JobRecommender:
                 batch = job_texts[i:i + batch_size]
                 print(f"DEBUG: Encoding batch {i//batch_size + 1}/{(total_jobs + batch_size - 1)//batch_size}")
                 batch_embeddings = self.sentence_model.encode(batch, show_progress_bar=False)
+                import numpy as np
                 if len(self.job_embeddings) == 0:
                     self.job_embeddings = batch_embeddings
                 else:
@@ -681,9 +682,11 @@ class JobRecommender:
             resume_vector = self.tfidf_vectorizer.transform([resume_text])
             
             # Calculate cosine similarity
+            from sklearn.metrics.pairwise import cosine_similarity
+            import numpy as np
             similarities = cosine_similarity(resume_vector, self.tfidf_matrix).flatten()
             
-            # Get top matches (include all matches, even with low similarity)
+            # Get top matches
             top_indices = np.argsort(similarities)[::-1][:top_k]
             
             logger.info(f"TF-IDF: Found {len(similarities)} total similarities, max: {similarities.max():.4f}")
@@ -706,9 +709,11 @@ class JobRecommender:
             resume_embedding = self.sentence_model.encode([resume_text])
             
             # Calculate cosine similarity
+            from sklearn.metrics.pairwise import cosine_similarity
+            import numpy as np
             similarities = cosine_similarity(resume_embedding, self.job_embeddings).flatten()
             
-            # Get top matches (include all matches, even with low similarity)
+            # Get top matches
             top_indices = np.argsort(similarities)[::-1][:top_k]
             
             logger.info(f"Embeddings: Found {len(similarities)} total similarities, max: {similarities.max():.4f}")
