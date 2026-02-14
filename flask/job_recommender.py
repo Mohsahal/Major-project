@@ -21,14 +21,19 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class JobRecommender:
-    def __init__(self, data_path: str = "data.json", model_name: str = "all-MiniLM-L6-v2"):
+    def __init__(self, data_path: str = None, model_name: str = "all-MiniLM-L6-v2"):
         """
         Initialize the Job Recommender (Stateless Mode)
         
         Args:
-            data_path: Path to the jobs JSON file
+            data_path: Path to the jobs JSON file (defaults to data.json in same dir)
             model_name: Sentence transformer model name
         """
+        if data_path is None:
+            # Use absolute path relative to this file to ensure it works on Render
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            data_path = os.path.join(base_dir, "data.json")
+            
         self.data_path = data_path
         self.model_name = model_name
         self.jobs_data = []
