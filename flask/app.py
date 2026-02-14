@@ -39,6 +39,19 @@ else:
 app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
+# Global Error Handlers (Ensure CORS headers are present on errors)
+@app.errorhandler(500)
+def handle_500(e):
+    response = jsonify({'error': 'Internal Server Error', 'details': str(e)})
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response, 500
+
+@app.errorhandler(404)
+def handle_404(e):
+    response = jsonify({'error': 'Not Found'})
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response, 404
+
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'pdf', 'docx', 'txt'}
 
