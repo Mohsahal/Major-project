@@ -16,6 +16,8 @@ from typing import List, Dict, Tuple, Optional
 import os
 from datetime import datetime
 
+import gc
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -303,21 +305,28 @@ class JobRecommender:
     
     def initialize_models(self):
         """Initialize TF-IDF and Sentence Transformer models"""
+        print(f"DEBUG: Entering initialize_models. Memory cleanup...")
+        gc.collect()
+        
         if not self.jobs_data:
             logger.warning("No jobs data available for model initialization")
             return
         
         try:
             # Initialize TF-IDF
+            print("DEBUG: Initializing TF-IDF vectorizer...")
             logger.info("Initializing TF-IDF vectorizer...")
             
             # Cache file path
             cache_file = os.path.join(os.path.dirname(self.data_path), 'model_cache.pkl')
+            print(f"DEBUG: Checking cache at {cache_file}")
             
             # Check if cache exists and is valid
             if self._load_from_cache(cache_file):
+                print("DEBUG: Cache hit! Models loaded from disk.")
                 return
 
+            print("DEBUG: Cache miss. Initializing from scratch (Warning: High Memory Usage)")
             self.tfidf_vectorizer = TfidfVectorizer(
                 max_features=5000,
                 stop_words='english',
@@ -327,25 +336,35 @@ class JobRecommender:
             )
             
             # Create TF-IDF matrix from job descriptions
+            print("DEBUG: Fitting TF-IDF...")
             job_texts = [job['combined_text'] for job in self.jobs_data]
             self.tfidf_matrix = self.tfidf_vectorizer.fit_transform(job_texts)
             
             # Initialize Sentence Transformer
+            print(f"DEBUG: Loading Sentence Transformer model: {self.model_name}")
             logger.info(f"Loading Sentence Transformer model: {self.model_name}")
+            
+            # Explicit GC before heavy import
+            gc.collect()
+            
             from sentence_transformers import SentenceTransformer
             self.sentence_model = SentenceTransformer(self.model_name)
             
             # Create embeddings for all jobs
+            print("DEBUG: Creating job embeddings (Encoding)...")
             logger.info("Creating job embeddings...")
             self.job_embeddings = self.sentence_model.encode(job_texts, show_progress_bar=True)
             
             # Save to cache
+            print("DEBUG: Saving to cache...")
             self._save_to_cache(cache_file)
             
             logger.info("Models initialized successfully")
             
         except Exception as e:
+            print(f"DEBUG: Error initializing models: {e}")
             logger.error(f"Error initializing models: {e}")
+            raise e
 
     def _load_from_cache(self, cache_file: str) -> bool:
         """Load models from cache if valid"""
@@ -374,13 +393,14 @@ class JobRecommender:
                 data = pickle.load(f)
                 
             self.tfidf_vectorizer = data['tfidf_vectorizer']
-            self.tfidf_matrix = data['tfidf_matrix']
             self.job_embeddings = data['job_embeddings']
             # We still need re-init sentence model for inference (it's not pickled usually)
+            print(f"DEBUG: Cache loaded. Re-initializing SentenceTransformer for inference...")
             from sentence_transformers import SentenceTransformer
             self.sentence_model = SentenceTransformer(self.model_name)
             
             # Verify data consistency (simple check)
+            print(f"DEBUG: Cache verification - Matrix shape: {self.tfidf_matrix.shape}")
             if self.tfidf_matrix.shape[0] != len(self.jobs_data):
                 logger.warning("Cache mismatch: Job count differs")
                 return False
