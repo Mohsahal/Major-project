@@ -1,6 +1,5 @@
 """Flask application: job recommendations, skill gap analysis, resume parsing."""
 from flask import Flask
-from flask_cors import CORS
 import os
 import dotenv
 
@@ -13,8 +12,32 @@ dotenv.load_dotenv()
 
 app = Flask(__name__)
 
-# CORS: Flask-CORS only (no manual headers - avoids duplicate with Render proxy)
-CORS(app, resources={r"/*": {"origins": "*", "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"], "allow_headers": ["Content-Type", "Authorization"]}}, supports_credentials=False)
+
+@app.after_request
+def add_cors_headers(response):
+    """Add CORS headers to every response (errors, timeouts handled by Render may not have them)."""
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    return response
+
+
+@app.route("/<path:path>", methods=["OPTIONS"])
+@app.route("/", methods=["OPTIONS"])
+def options_handler(path=""):
+    """Handle preflight for all routes."""
+    return "", 204
+
+
+@app.route("/warm", methods=["GET"])
+def warm():
+    """Preload job recommender (call after deploy to avoid cold-start timeout on first /upload-resume)."""
+    try:
+        from services import get_job_recommender
+        get_job_recommender()
+        return {"status": "ok", "message": "Job recommender warmed"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 500
 
 app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size

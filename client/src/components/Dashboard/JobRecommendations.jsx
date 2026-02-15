@@ -20,11 +20,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
-import { submitResumeForJobs, ensureFlaskAwake } from "@/config/api";
+import { submitResumeForJobs, ensureFlaskAwake, warmFlaskJobRecommender } from "@/config/api";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const ACCEPTED_TYPES = ["application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "text/plain"];
@@ -167,6 +167,10 @@ export default function JobRecommendations({ onJobsUpdated }) {
   const fileInputRef = useRef(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    warmFlaskJobRecommender();
+  }, []);
 
   const validateFile = (file) => {
     if (!ACCEPTED_TYPES.includes(file.type)) {

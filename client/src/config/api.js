@@ -254,15 +254,17 @@ export const ensureFlaskAwake = async () => {
     try {
         const response = await fetch(`${FLASK_BASE_URL}/health`, {
             method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
         });
         return response.ok;
-    }
-    catch (error) {
+    } catch (error) {
         return false;
     }
+};
+
+// Preload job recommender (call when user opens job recommendations to avoid cold-start timeout)
+export const warmFlaskJobRecommender = () => {
+    fetch(`${FLASK_BASE_URL}/warm`, { method: "GET" }).catch(() => {});
 };
 // Default export for convenience
 export default {
@@ -272,5 +274,6 @@ export default {
     API_ENDPOINTS,
     ApiClient,
     ensureFlaskAwake,
+    warmFlaskJobRecommender,
     submitResumeForJobs,
 };
