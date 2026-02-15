@@ -20,7 +20,7 @@ Major-project/
 │   └── ...
 │
 ├── flask/              # Python ML API (job recommendations, skill gap)
-│   ├── app.py          # Entry point, CORS, blueprints
+│   ├── app.py          # Entry point, CORS, /warm, blueprints
 │   ├── config.py       # Environment config
 │   ├── services.py     # Lazy singletons
 │   ├── skill_gap/      # Skill gap analysis (AI + fallback + YouTube)
@@ -28,6 +28,7 @@ Major-project/
 │   ├── routes/         # health, jobs, skill_gap
 │   └── utils/          # resume_parser
 │
+├── render.yaml         # Render deployment (Node, Flask, Static)
 └── README.md
 ```
 
@@ -35,7 +36,7 @@ Major-project/
 
 1. **Client** – React app, calls Node API (auth, resumes, interviews) and Flask API (jobs, skill gap).
 2. **Node** – Auth (JWT, Google), MongoDB, Gemini for interview AI.
-3. **Flask** – Job matching (TF-IDF + sentence embeddings), skill gap (Gemini + regex fallback), learning resources (YouTube).
+3. **Flask** – Job matching (TF-IDF + sentence embeddings), skill gap (Gemini + regex fallback), learning resources (YouTube). `/warm` preloads job recommender to avoid cold-start timeouts.
 
 ## Tech Stack
 
@@ -77,6 +78,10 @@ cd client && npm run dev       # :8080
 ```
 
 Open [http://localhost:8080](http://localhost:8080).
+
+## Deployment (Render)
+
+Use `render.yaml` for blueprints. Services: Node (auth, API), Flask (jobs, skill gap), Static (client). Set env vars in Render dashboard (MONGODB_URI, GEMINI_API_KEY, YOUTUBE_API_KEY, JWT_SECRET, etc.).
 
 ## License
 

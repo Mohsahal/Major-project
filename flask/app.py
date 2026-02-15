@@ -1,6 +1,7 @@
 """Flask application: job recommendations, skill gap analysis, resume parsing."""
 from flask import Flask
 import os
+import threading
 import dotenv
 
 from config import FLASK_PORT
@@ -13,9 +14,17 @@ dotenv.load_dotenv()
 app = Flask(__name__)
 
 
+def _preload_job_recommender():
+    try:
+        from services import get_job_recommender
+        get_job_recommender()
+    except Exception:
+        pass
+
+
 @app.after_request
 def add_cors_headers(response):
-    """Add CORS headers to every response (errors, timeouts handled by Render may not have them)."""
+    """Add CORS headers to every response."""
     response.headers["Access-Control-Allow-Origin"] = "*"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
@@ -31,13 +40,9 @@ def options_handler(path=""):
 
 @app.route("/warm", methods=["GET"])
 def warm():
-    """Preload job recommender (call after deploy to avoid cold-start timeout on first /upload-resume)."""
-    try:
-        from services import get_job_recommender
-        get_job_recommender()
-        return {"status": "ok", "message": "Job recommender warmed"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}, 500
+    """Return 200 immediately; preload job recommender in background (avoids Render 30s timeout)."""
+    threading.Thread(target=_preload_job_recommender, daemon=True).start()
+    return {"status": "ok", "message": "Preload started"}
 
 app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
